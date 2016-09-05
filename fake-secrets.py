@@ -1,0 +1,1 @@
+GITHUB_AUTH='this is where i paste by github auth key'
