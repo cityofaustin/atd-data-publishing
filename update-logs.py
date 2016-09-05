@@ -3,11 +3,13 @@ import base64
 import csv
 import requests
 import arrow
-from secrets import GITHUB_AUTH
+from secrets import GITHUB_USERNAME
+from secrets import GITHUB_TOKEN
 
 REPO_URL = 'https://api.github.com/repos/cityofaustin/transportation-logs/contents'
 DATA_URL = 'https://raw.githubusercontent.com/cityofaustin/transportation-logs/master/'
 FIELDNAMES = ['date_time', 'change_detected']
+GITHUB_AUTH = (GITHUB_USERNAME, GITHUB_TOKEN)
 
 today = arrow.now('America/Chicago')
 
@@ -21,8 +23,6 @@ request_url = REPO_URL + filename
 def url_for_path(path):
     return '{}/{}'.format(REPO_URL, path.strip('/'))
 
-
-
 def commit_file_github(path, branch, content, message, auth=GITHUB_AUTH):
 
     url = url_for_path(path)
@@ -35,16 +35,13 @@ def commit_file_github(path, branch, content, message, auth=GITHUB_AUTH):
         'message': message,
     }
 
-
     res = requests.put(url, json=data, auth=auth)
-    
-    print("OCEANS")
 
-    # print(res.text)
+    print(res.text)
 
-    # res.raise_for_status()
+    res.raise_for_status()
 
-    # return res.json()
+    return res.json()
 
 
 
@@ -98,6 +95,5 @@ def log_signal_status_etl(date):
 
 
 log_signal_status_etl(today)
-
 
 
