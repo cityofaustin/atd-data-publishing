@@ -1,0 +1,8 @@
+.env
+*.pyc
+.DS_Store
+__pycache__
+*.zip
+dist
+secrets.py
+outfile.txt
