@@ -25,6 +25,8 @@ def url_for_path(path):
 
 def commit_file_github(path, branch, content, message, auth=GITHUB_AUTH):
 
+    print('commit to github')
+
     url = url_for_path(path)
 
     encoded_content = base64.b64encode(content)
@@ -37,29 +39,29 @@ def commit_file_github(path, branch, content, message, auth=GITHUB_AUTH):
 
     res = requests.put(url, json=data, auth=auth)
 
-    print(res.text)
-
     res.raise_for_status()
 
     return res.json()
 
 
 
-def write_permits(file, date, fieldnames):
+def write_logfile(date, fieldnames):
+    file = StringIO()
     writer = csv.writer(file, fieldnames, lineterminator='\n')
     writer.writerow(fieldnames)
     writer.writerow([date.format('YYYY-MM-DD HH:mm:ss'), 'YES'])
+    return file
 
 
 
-def update_logfile_github(date):
-    print("UPDATE_LOGFILE")
+def update_logfile_github(file, date, fieldnames):
+    print(file)
+    reader = csv.reader(file, fieldnames, lineterminator='\n')
 
 
 
 def create_logfile_github(date):
-    fh = StringIO()
-    write_permits(fh, date, FIELDNAMES)
+    fh = write_logfile(date, FIELDNAMES)
     csv_text = StringIO.getvalue(fh)
     commit_file_github(filename, 'master', csv_text, 'Automated commit {}'.format(filename_short))
 
@@ -83,7 +85,7 @@ def log_signal_status_etl(date):
         html = fetch_logfile(date)
 
         if not 'Not Found' in html:
-            update_logfile_github(date)
+            update_logfile_github(html, date, FIELDNAMES)
 
         else:
             create_logfile_github(date)
