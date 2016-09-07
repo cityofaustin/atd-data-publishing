@@ -6,6 +6,7 @@ import arrow
 import requests
 import json
 from secrets import KITS_CREDENTIALS
+from secrets import SOCRATA_CREDENTIALS
 import updateLogs
 
 import pdb
@@ -95,6 +96,20 @@ def detect_changes(new, old):
 
     return [changed, not_changed, new_id]
 
+def upsert_open_data(upsert_data):
+
+    try:
+        auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
+
+        upsert_data = json.dumps(upsert_data)
+
+        res = requests.post(url, data=json_data, auth=auth)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+    
+    return res.json()
+
 def main(date_time):
     print('starting stuff now')
 
@@ -112,7 +127,7 @@ def main(date_time):
         updateLogs.log_signal_status_etl(date_time, log_update)
 
         return log_update
- 
+    
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
