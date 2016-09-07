@@ -14,7 +14,7 @@ json_data = [{
 
 res = requests.post(url, data=json_data, auth=auth)
 
-print(res.json)
+print(res.json())
 res.raise_for_status()
 
 
