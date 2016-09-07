@@ -1,5 +1,4 @@
 #  enable request verification
-#  pass date and params in function
 #  logging and stuff
 #  fieldnames! e.g. atd_intersection_id
 #  dodgy error handling in change detection
