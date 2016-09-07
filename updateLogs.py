@@ -12,7 +12,7 @@ DATA_URL = 'https://raw.githubusercontent.com/cityofaustin/transportation-logs/m
 FIELDNAMES = ['date_time', 'changed', 'not_changed', 'new']
 GITHUB_AUTH = (GITHUB_USERNAME, GITHUB_TOKEN)
  
-today = arrow.now('America/Chicago')
+today = arrow.now()
  
 filename_short = today.format('YYYY-MM-DD')
  
@@ -21,11 +21,13 @@ filename = 'logs/signals-on-flash/{}.csv'.format(today.format('YYYY-MM-DD'))
 request_url = REPO_URL + filename
  
 def fetch_logfile_data(date):
+    print('fetch logfile data')
     res = requests.get(DATA_URL + filename)
     return str(res.text)
  
  
 def update_logfile_github(file, existing_file, new_data, date, fieldnames):
+    print('prepare updated logfile for github')
     old_data = StringIO(file)
     reader = csv.reader(old_data, fieldnames, lineterminator='\n')
     
@@ -49,7 +51,7 @@ def url_for_path(path):
  
  
 def commit_file_github(path, branch, content, existing_file, message, auth=GITHUB_AUTH):
-    print('commit to github')
+    print('commit logfile to github')
     url = url_for_path(path)
     encoded_content = base64.b64encode(content)
  
@@ -70,6 +72,7 @@ def commit_file_github(path, branch, content, existing_file, message, auth=GITHU
  
  
 def create_logfile(date, fieldnames, new_data):
+    print('create new logfile')
     file = StringIO()
     writer = csv.writer(file, fieldnames, lineterminator='\n')
     writer.writerow(fieldnames)
@@ -79,6 +82,7 @@ def create_logfile(date, fieldnames, new_data):
  
  
 def create_logfile_github(date, new_data):
+    print('prepare new github logfile')
     fh = create_logfile(date, FIELDNAMES, new_data)
     csv_text = StringIO.getvalue(fh)
     commit_file_github(filename, 'master', csv_text, None, 'Automated commit {}'.format(filename_short))

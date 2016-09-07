@@ -12,10 +12,10 @@ import pdb
 
 PUBLISHED_DATA_URL = 'https://data.austintexas.gov/resource/utgi-umz5.json'
 
-now = arrow.now('America/Chicago')
+then = arrow.now()
 
 def fetch_kits_data():
-
+    print('fetch kits data')
     conn = pymssql.connect(
         server=KITS_CREDENTIALS['server'],
         user=KITS_CREDENTIALS['user'],
@@ -50,6 +50,7 @@ def fetch_kits_data():
 
 
 def fetch_published_data():
+    print('fetch published data')
     try:
         res = requests.get(PUBLISHED_DATA_URL, verify=False)
 
@@ -60,6 +61,7 @@ def fetch_published_data():
 
 
 def group_data(dataset, key):
+    print('group data')
     grouped_data = {}
     
     for row in dataset:
@@ -69,6 +71,8 @@ def group_data(dataset, key):
     return grouped_data
 
 def detect_changes(new, old):
+    print('detect changes')
+
     changed = 0
     not_changed = 0
     new_id = 0
@@ -92,6 +96,8 @@ def detect_changes(new, old):
     return [changed, not_changed, new_id]
 
 def main(date_time):
+    print('starting stuff now')
+
     try:
         new_data = fetch_kits_data()
         new_data_grouped = group_data(new_data, 'INTID')
@@ -112,6 +118,6 @@ def main(date_time):
         print(e)
         raise e
  
-delta = main(now)
+delta = main(then)
 
-print(arrow.now('America/Chicago') - now)
+print(arrow.now() - then)
