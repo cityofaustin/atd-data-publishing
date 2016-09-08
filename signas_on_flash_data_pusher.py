@@ -3,6 +3,7 @@
 #  fieldnames! e.g. atd_intersection_id
 #  dodgy error handling in change detection
 #  use ATD intersection ID as row identifier
+#  append new intersections to historical dataset?
 
 import pymssql
 import arrow
@@ -14,10 +15,11 @@ from secrets import SOCRATA_CREDENTIALS
 
 import pdb
 
-REPO_URL_GITHUB = 'https://api.github.com/repos/cityofaustin/transportation-logs/contents/'
-DATA_URL_GITHUB = 'https://raw.githubusercontent.com/cityofaustin/transportation-logs/master/'
+REPO_URL_GITHUB = 'https://api.github.com/repos/cityofaustin/transportation-data-publishing/contents/'
+DATA_URL_GITHUB = 'https://raw.githubusercontent.com/cityofaustin/transportation-data-publishing/master/'
 LOGFILE_FIELDNAMES = ['date_time', 'socrata_errors', 'socrata_updated', 'socrata_created', 'socrata_deleted', 'no_update', 'update_requests', 'insert_requests', 'delete_requests', 'not_processed','response_message']
 SOCRATA_ENDPOINT = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
+SOCRATA_ENDPOINT_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
 IGNORE_INTESECTIONS =['959']
 
 then = arrow.now()
@@ -113,6 +115,7 @@ def detect_changes(new, old):
     insert = 0
     update= 0
     delete = 0    
+    upsert_historical = []
 
     for record in new:  #  compare KITS to socrata data
         lookup = str(new[record]['intid'])
@@ -137,10 +140,10 @@ def detect_changes(new, old):
                 update += 1
                 new[record]['intstatusprevious'] = old_status
                 upsert.append(new[record])
+                upsert_historical.append(old[lookup])
             
         else:
             insert += 1
-
             upsert.append(new[record])
 
     for record in old:  #  compare socrata to KITS to idenify deleted records
@@ -160,10 +163,12 @@ def detect_changes(new, old):
         'insert': insert,
         'update': update,
         'no_update':  no_update,
-        'delete': delete
+        'delete': delete,
+        'upsert_historical': upsert_historical
     }
 
 def prepare_socrata_payload(upsert_data):
+    print('prepare socrata payload')
     now = arrow.now()
 
     for row in upsert_data:
@@ -174,13 +179,14 @@ def prepare_socrata_payload(upsert_data):
 
 
 
-def upsert_open_data(payload):
+def upsert_open_data(payload, url):
+    print('upsert open data ' + url)
     try:
         auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
 
         json_data = json.dumps(payload)
 
-        res = requests.post(SOCRATA_ENDPOINT, data=json_data, auth=auth, verify=False)
+        res = requests.post(url, data=json_data, auth=auth, verify=False)
 
     except requests.exceptions.HTTPError as e:
         raise e
@@ -235,7 +241,9 @@ def main(date_time):
 
         socrata_payload = prepare_socrata_payload(change_detection_results['upsert'])
         
-        socrata_response = upsert_open_data(socrata_payload)
+        socrata_response = upsert_open_data(socrata_payload, SOCRATA_ENDPOINT)
+
+        socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_ENDPOINT_HISTORICAL)
 
         logfile_data = package_log_data(date_time, change_detection_results, socrata_response)
 
@@ -243,6 +251,7 @@ def main(date_time):
 
         return {
             'res': socrata_response,
+            'res_historical': socrata_response_historical,
             'payload': socrata_payload,
             'logfile': logfile_data
         }
