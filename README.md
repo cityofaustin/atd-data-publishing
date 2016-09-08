@@ -1,4 +1,4 @@
-# transportation-logs
+# transportation-data-publishing
 
 This repo is used for storing publishing scripts and logfiles for Austin Transportation's open data projects.
 
