@@ -2,6 +2,7 @@
 #  logging and stuff
 #  fieldnames! e.g. atd_intersection_id
 #  dodgy error handling in change detection
+#  use ATD intersection ID as row identifier
 
 import pymssql
 import arrow
@@ -17,6 +18,7 @@ REPO_URL_GITHUB = 'https://api.github.com/repos/cityofaustin/transportation-logs
 DATA_URL_GITHUB = 'https://raw.githubusercontent.com/cityofaustin/transportation-logs/master/'
 LOGFILE_FIELDNAMES = ['date_time', 'socrata_errors', 'socrata_updated', 'socrata_created', 'socrata_deleted', 'no_update', 'update_requests', 'insert_requests', 'delete_requests', 'not_processed','response_message']
 SOCRATA_ENDPOINT = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
+IGNORE_INTESECTIONS =['959']
 
 then = arrow.now()
 logfile_filename = 'logs/signals-on-flash/{}.csv'.format(then.format('YYYY-MM-DD'))
@@ -83,7 +85,7 @@ def reformat_sql_data(dataset):
             new_key = str(key)
             new_value = str(row[key])
             formatted_row[new_key] = new_value
-
+        
         reformatted_data.append(formatted_row)
 
     return reformatted_data
@@ -115,15 +117,17 @@ def detect_changes(new, old):
     for record in new:  #  compare KITS to socrata data
         lookup = str(new[record]['intid'])
 
+        if lookup in IGNORE_INTESECTIONS:
+            continue
+            
         if lookup in old:
             new_status = str(new[record]['intstatus'])
             
             try:
-                old_status = old[lookup]['intstatus']
+                old_status = str(old[lookup]['intstatus'])
 
             except:
                 not_processed.append(new[record]['intid'])
-
                 continue
             
             if new_status == old_status:
@@ -131,7 +135,7 @@ def detect_changes(new, old):
             
             else:
                 update += 1
-                new[record]['instatusprevious'] = old_status
+                new[record]['intstatusprevious'] = old_status
                 upsert.append(new[record])
             
         else:
@@ -207,7 +211,10 @@ def package_log_data(date, changes, response):
     update_requests = changes['update']
     insert_requests = changes['insert']
     delete_requests = changes['delete']
-    not_processed = str(changes['not_processed'])
+    if changes['not_processed']:
+        not_processed = str(changes['not_processed'])
+    else:
+        not_processed = ''
      
     return [date, socrata_errors, socrata_updated, socrata_created, socrata_deleted, no_update, update_requests, insert_requests, delete_requests, not_processed, response_message]
     
@@ -248,6 +255,7 @@ def main(date_time):
 
 results = main(then)
 
+print(results['res'])
 print('Elapsed time: {}'.format(str(arrow.now() - then)))
 
 
