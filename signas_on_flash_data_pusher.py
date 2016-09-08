@@ -9,17 +9,14 @@ import pymssql
 import arrow
 import requests
 import json
-import github_updater
 from secrets import KITS_CREDENTIALS
 from secrets import SOCRATA_CREDENTIALS
 
 import pdb
 
-REPO_URL_GITHUB = 'https://api.github.com/repos/cityofaustin/transportation-data-publishing/contents/'
-DATA_URL_GITHUB = 'https://raw.githubusercontent.com/cityofaustin/transportation-data-publishing/master/'
-LOGFILE_FIELDNAMES = ['date_time', 'socrata_errors', 'socrata_updated', 'socrata_created', 'socrata_deleted', 'no_update', 'update_requests', 'insert_requests', 'delete_requests', 'not_processed','response_message']
-SOCRATA_ENDPOINT = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
-SOCRATA_ENDPOINT_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
+SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
+SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
+SOCRATA_SIGNAL_STATUS_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
 IGNORE_INTESECTIONS =['959']
 
 then = arrow.now()
@@ -66,7 +63,7 @@ def fetch_kits_data():
 def fetch_published_data():
     print('fetch published data')
     try:
-        res = requests.get(SOCRATA_ENDPOINT, verify=False)
+        res = requests.get(SOCRATA_SIGNAL_STATUS, verify=False)
 
     except requests.exceptions.HTTPError as e:
         raise e
@@ -196,33 +193,47 @@ def upsert_open_data(payload, url):
 
 
 def package_log_data(date, changes, response):
+    
+    timestamp = arrow.now().timestamp
 
     date = date.format('YYYY-MM-DD HH:mm:ss')
    
     if 'error' in response.keys():
         response_message = response['message']
-        socrata_errors = ''
-        socrata_updated = ''
-        socrata_created = ''
-        socrata_deleted = ''
+        errors = ''
+        updated = ''
+        created = ''
+        deleted = ''
 
     else:
-        socrata_errors = response['Errors']
-        socrata_updated = response['Rows Updated']
-        socrata_created = response['Rows Created']
-        socrata_deleted = response['Rows Deleted']
+        errors = response['Errors']
+        updated = response['Rows Updated']
+        created = response['Rows Created']
+        deleted = response['Rows Deleted']
         response_message = ''
 
     no_update = changes['no_update']
     update_requests = changes['update']
     insert_requests = changes['insert']
     delete_requests = changes['delete']
+
     if changes['not_processed']:
         not_processed = str(changes['not_processed'])
     else:
         not_processed = ''
      
-    return [date, socrata_errors, socrata_updated, socrata_created, socrata_deleted, no_update, update_requests, insert_requests, delete_requests, not_processed, response_message]
+    return [ {
+        'timestamp': timestamp, 
+        'date_time':  date,
+        'errors': errors ,
+        'updated': updated,
+        'created': created,
+        'deleted': deleted,
+        'no_update': no_update,
+        'not_processed': not_processed,
+        'response_message': response_message
+    } ]
+
     
 
     
@@ -241,13 +252,13 @@ def main(date_time):
 
         socrata_payload = prepare_socrata_payload(change_detection_results['upsert'])
         
-        socrata_response = upsert_open_data(socrata_payload, SOCRATA_ENDPOINT)
+        socrata_response = upsert_open_data(socrata_payload, SOCRATA_SIGNAL_STATUS)
 
-        socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_ENDPOINT_HISTORICAL)
+        socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_SIGNAL_STATUS_HISTORICAL)
 
         logfile_data = package_log_data(date_time, change_detection_results, socrata_response)
 
-        github_updater.update_github_repo(date_time, logfile_data, LOGFILE_FIELDNAMES, REPO_URL_GITHUB, DATA_URL_GITHUB, logfile_filename)
+        logfile_response = upsert_open_data(logfile_data, SOCRATA_SIGNAL_STATUS_LOGS)
 
         return {
             'res': socrata_response,
