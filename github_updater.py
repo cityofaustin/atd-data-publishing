@@ -1,3 +1,5 @@
+
+
 from StringIO import StringIO
 import arrow
 import requests
@@ -13,10 +15,14 @@ GITHUB_AUTH = (GITHUB_USERNAME, GITHUB_TOKEN)
 
 def fetch_logfile_data(data_url, filename):
     print('fetch logfile data')
-    res = requests.get(data_url + filename)
+    
+    headers = {'Cache-Control': 'no-store'}
+
+    res = requests.get(data_url + filename, headers=headers)
     return str(res.text)
  
  
+
 def update_logfile_github(file, existing_file, new_data, fieldnames, url, filename):
     print('prepare updated logfile for github')
     old_data = StringIO(file)
@@ -27,7 +33,6 @@ def update_logfile_github(file, existing_file, new_data, fieldnames, url, filena
 
 
     for row in reader:
-        print(row)
         writer.writerow(row)
  
     writer.writerow(new_data)    
@@ -42,6 +47,8 @@ def commit_file_github(url, branch, content, existing_file, message, auth=GITHUB
     print('commit logfile to github')
     
     encoded_content = base64.b64encode(content)
+
+    headers = {'Cache-Control': 'no-store'}
  
     data = {
         'content': encoded_content,
@@ -52,7 +59,7 @@ def commit_file_github(url, branch, content, existing_file, message, auth=GITHUB
     if existing_file:
         data['sha'] = existing_file
 
-    res = requests.put(url, json=data, auth=auth)
+    res = requests.put(url, headers=headers, json=data, auth=auth)
     res.raise_for_status()
  
     return res.json()
@@ -81,7 +88,8 @@ def fetch_logfile(date, url):
     print('fetching github data')
  
     try:
-        res = requests.get(url)
+        headers = {'Cache-Control': 'no-store'}
+        res = requests.get(url, headers=headers)
     
     except requests.exceptions.HTTPError as e:
         raise e
