@@ -223,6 +223,7 @@ def package_log_data(date, changes, response):
         not_processed = ''
      
     return [ {
+        'event': 'signal_status_update'
         'timestamp': timestamp, 
         'date_time':  date,
         'errors': errors ,
