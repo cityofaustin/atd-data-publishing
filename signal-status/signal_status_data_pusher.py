@@ -51,7 +51,7 @@ def fetch_kits_data():
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
-            ORDER BY i.[INTID] ASC
+            ORDER BY e.DATETIME DESC
     '''
 
     cursor.execute(search_string)  
