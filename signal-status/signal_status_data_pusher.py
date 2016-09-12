@@ -1,3 +1,4 @@
+#  checking for stale but not doing anything about it.
 #  enable request verification
 #  logging and stuff
 #  fieldnames! e.g. atd_intersection_id
@@ -9,6 +10,7 @@ import pymssql
 import arrow
 import requests
 import json
+import email_alert
 from secrets import KITS_CREDENTIALS
 from secrets import SOCRATA_CREDENTIALS
 
@@ -18,6 +20,8 @@ SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
 SOCRATA_SIGNAL_STATUS_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
 IGNORE_INTESECTIONS =['959']
+
+EMAIL_TO = ['john.clary@austintexas.gov']
 
 then = arrow.now()
 logfile_filename = 'logs/signals-on-flash/{}.csv'.format(then.format('YYYY-MM-DD'))
@@ -92,6 +96,7 @@ def reformat_sql_data(dataset):
 
 
 def group_data(dataset, key):
+    
     print('group data')
     grouped_data = {}
     
@@ -101,6 +106,16 @@ def group_data(dataset, key):
 
     return grouped_data
 
+def check_for_stale_data(dataset):
+    
+    status_times = []
+
+    for record in dataset:
+        if record['intstatusdatetime']:
+            compare = arrow.get(record['intstatusdatetime'])
+            status_times.append(compare)
+
+    oldest_record =  max(status_times)
 
 
 def detect_changes(new, old):
@@ -243,10 +258,15 @@ def main(date_time):
 
     try:
         new_data = fetch_kits_data()
+        
         new_data_reformatted = reformat_sql_data(new_data)
+        
+        check_for_stale_data(new_data)
+        
         new_data_grouped = group_data(new_data_reformatted, 'intid')
                 
         old_data = fetch_published_data()
+        
         old_data_grouped = group_data(old_data, 'intid')
 
         change_detection_results = detect_changes(new_data_grouped, old_data_grouped)
@@ -271,6 +291,7 @@ def main(date_time):
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
+        email_alert.send_email(EMAIL_TO, 'DATA_PROCESSING_ALERT: Signal Status Update Failure', e)
         raise e
  
 
