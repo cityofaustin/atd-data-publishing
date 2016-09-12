@@ -14,8 +14,6 @@ import email_alert
 from secrets import KITS_CREDENTIALS
 from secrets import SOCRATA_CREDENTIALS
 
-import pdb
-
 SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
 SOCRATA_SIGNAL_STATUS_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
@@ -131,6 +129,8 @@ def check_for_stale_data(dataset):
         subject = 'DATA PROCESSING ALERT: KITS Data > {} mintues old'.format(str(delta_minutes))
 
         body = 'DATA PROCESSING ALERT: KITS intersection status data has not been updated for more than {} minutes.'.format(str(delta_minutes))
+
+        body = body + EMAIL_FOOTER
 
         email_alert.send_email(EMAIL_TO, subject, body)
 
@@ -308,7 +308,7 @@ def main(date_time):
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
-        email_alert.send_email(EMAIL_TO, 'DATA PROCESSING ALERT: Signal Status Update Failure', e)
+        email_alert.send_email(EMAIL_TO, 'DATA PROCESSING ALERT: Signal Status Update Failure', e + EMAIL_FOOTER)
         raise e
  
 
