@@ -1,15 +1,12 @@
-
-
 from StringIO import StringIO
 import arrow
 import requests
 import json
 import csv
 import base64
-from secrets import GITHUB_USERNAME
-from secrets import GITHUB_TOKEN
+from secrets import GITHUB_CREDENTIALS
 
-GITHUB_AUTH = (GITHUB_USERNAME, GITHUB_TOKEN)
+GITHUB_AUTH = (GITHUB_CREDENTIALS['GITHUB_USERNAME'], GITHUB_CREDENTIALS['GITHUB_TOKEN'])
 
 
 
