@@ -52,8 +52,6 @@ def get_sql_data_as_dict(connection, query):
 
         dict_results[unique_id] = record
 
-    connection.commit()
-
     return dict_results
 
 
@@ -102,6 +100,8 @@ def update_database(connection, payload):
 
         cursor.execute(statement)
 
+        connection.commit()
+        
         updated += 1
 
     return updated
