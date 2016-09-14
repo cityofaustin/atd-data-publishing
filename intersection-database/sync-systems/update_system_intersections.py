@@ -1,6 +1,6 @@
 import pyodbc
 import csv
-from secrets import IDB_TEST_CREDENTIALS
+from secrets import IDB_PROD_CREDENTIALS  # or IDB_TEST_CREDENTIALS
 
 QUERY = '''
     select * from Access.SYSTEM_INTERSECTIONS
@@ -19,10 +19,10 @@ def connect_db():
             'UID={};'
             'PWD={}'
             .format(
-                IDB_TEST_CREDENTIALS['server'],
-                IDB_TEST_CREDENTIALS['database'],
-                IDB_TEST_CREDENTIALS['user'],
-                IDB_TEST_CREDENTIALS['password'] 
+                IDB_PROD_CREDENTIALS['server'],
+                IDB_PROD_CREDENTIALS['database'],
+                IDB_PROD_CREDENTIALS['user'],
+                IDB_PROD_CREDENTIALS['password'] 
         ))
 
     return conn
@@ -40,8 +40,6 @@ def get_sql_data_as_dict(connection, query):
     cursor.execute(query)
 
     columns = [column[0] for column in cursor.description]
-
-    print columns
 
     for row in cursor.fetchall():
         cursor.fetchall()
