@@ -96,7 +96,7 @@ def update_database(connection, payload):
             UPDATE Access.SYSTEM_INTERSECTIONS
             SET ISOLATED='{}'
             WHERE ID='{}' 
-        '''.format((record['ISOLATED']=='True'), record['ID'])
+        '''.format((record['ISOLATED']=='Yes'), record['ID'])
 
         cursor.execute(statement)
 
