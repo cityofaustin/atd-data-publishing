@@ -52,6 +52,8 @@ def get_sql_data_as_dict(connection, query):
 
         dict_results[unique_id] = record
 
+    connection.commit()
+
     return dict_results
 
 
@@ -114,5 +116,5 @@ update_payload = package_update(sql_data, csv_data)
 
 results = update_database(conn, update_payload)
 
-print('{} records updated'.format(str(updated)))
+print('{} records updated'.format(str(results)))
 
