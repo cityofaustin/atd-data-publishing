@@ -284,12 +284,12 @@ def prepare_socrata_payload(upsert_data, int_db_data):
         atd_intersection_id = row['atd_intersection_id']
 =======
         row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-        row['record_id'] = '{}_{}'.format(row['database_id'], str(now.timestamp))
+        row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
 >>>>>>> origin/master
 
         if atd_intersection_id in int_db_data:
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-            row['record_id'] = '{}_{}'.format(row['database_id'], str(now.timestamp))
+            row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
             row['primary_street'] = int_db_data[atd_intersection_id]['STREET_SEGMENTS.FULL_STREET_NAME']
     
             if int_db_data[atd_intersection_id]['STREET_SEGMENTS_1.FULL_STREET_NAME']:
