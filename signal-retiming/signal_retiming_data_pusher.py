@@ -19,7 +19,8 @@ import pdb
 
 
 SOCRATA_SYNC_CORRIDORS = 'https://data.austintexas.gov/resource/efct-8fs9.json'
-SOCRATA_RETIMINGS = 'https://data.austintexas.gov/resource/eyaq-uimn'
+SOCRATA_RETIMINGS = 'https://data.austintexas.gov/resource/eyaq-uimn.json'
+SOCRATA_PUB_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
 
 EMAIL_FOOTER = '''
     \n
@@ -31,8 +32,11 @@ then = arrow.now()
 
 def fetch_published_data(dataset_url):
     print('fetch published data')
+    
+    auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
+
     try:
-        res = requests.get(dataset_url, verify=False)
+        res = requests.get(dataset_url, verify=False, auth=auth)
 
     except requests.exceptions.HTTPError as e:
         raise e
@@ -77,16 +81,27 @@ def get_int_db_data_as_dict(connection, table, key):
     cursor.execute(query)
 
     columns = [column[0] for column in cursor.description]
+    columns = [c.lower() for c in columns]  #  database fieldnames are in caps :[
 
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
 
-    for row in results:
+    for row in results:  #  sloppy conversion of sql object
+        
+        for val in row:
+            try:
+                row[val] = str(int(row[val]))
+
+            except (ValueError, TypeError):
+                row[val] = str(row[val])
+            
+            if row[val] == 'None':
+                row[val] = ''
+        
         new_key = str(int(row[key]))
         grouped_data[new_key] = row
 
     return grouped_data
-
 
 
 def group_socrata_data(dataset, key):
@@ -105,21 +120,24 @@ def group_socrata_data(dataset, key):
 
 def detect_changes(new, old):
     print('detect changes')
-
+    
     upsert = []  #  see https://dev.socrata.com/publishers/upsert.html
     delete = 0    
-
+    
     for record in new:
         upsert.append(new[record])
 
     for record in old:
-        lookup = old[record]['record_id']
-        
+        try:
+            lookup = record['id']
+        except:
+            print record
+            
         if lookup not in new:
             delete += 1
 
-            upsert.append({ 
-                'record_id': lookup,
+            upsert.append({     
+                'id': lookup,
                 ':deleted': True
             })
 
@@ -130,7 +148,8 @@ def detect_changes(new, old):
 
 
 def upsert_open_data(payload, url):
-    print('upsert open data ' + url)
+    print('upsert open data {}'.format(url))
+
     try:
         auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
 
@@ -145,7 +164,9 @@ def upsert_open_data(payload, url):
 
 
 
-def package_log_data(date, changes, response):
+
+def package_log_data(date, changes, response, event):
+    print('package logfile data for {}'.format(event))
     
     timestamp = arrow.now().timestamp
 
@@ -154,7 +175,7 @@ def package_log_data(date, changes, response):
     if 'error' in response.keys():
         response_message = response['message']
         
-        email_alert.send_email(ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Socrata Upload Status Update Failure', response_message + EMAIL_FOOTER)
+        email_alert.send_email(ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Signal Retiming Upload Failure', response_message + EMAIL_FOOTER)
 
         errors = ''
         updated = ''
@@ -168,26 +189,14 @@ def package_log_data(date, changes, response):
         deleted = response['Rows Deleted']
         response_message = ''
 
-    no_update = changes['no_update']
-    update_requests = changes['update']
-    insert_requests = changes['insert']
-    delete_requests = changes['delete']
-
-    if changes['not_processed']:
-        not_processed = str(changes['not_processed'])
-    else:
-        not_processed = ''
-     
     return [ {
-        'event': 'signal_status_update',
+        'event': event,
         'timestamp': timestamp, 
         'date_time':  date,
         'errors': errors ,
         'updated': updated,
         'created': created,
         'deleted': deleted,
-        'no_update': no_update,
-        'not_processed': not_processed,
         'response_message': response_message
     } ]
 
@@ -199,28 +208,31 @@ def main(date_time):
 
     try:
        
-        old_retiming_data = fetch_published_data(SOCRATA_RETIMINGS)
-
-        old_sync_systems = fetch_published_data(SOCRATA_SYNC_CORRIDORS)
-
         conn = connect_int_db(IDB_PROD_CREDENTIALS)
 
-        new_retiming_data = get_int_db_data_as_dict(conn, 'RETIMING_QUERY', 'ID')
+        new_retiming_data = get_int_db_data_as_dict(conn, 'RETIMING_QUERY', 'id')
+        new_sync_systems = get_int_db_data_as_dict(conn, 'SYNC_INTERSECTIONS_QUERY', 'id')
 
-        new_sync_systems = get_int_db_data_as_dict(conn, 'SYNC_INTERSECTIONS_QUERY', 'ID')
+        old_retiming_data = fetch_published_data(SOCRATA_RETIMINGS)
+        old_sync_systems = fetch_published_data(SOCRATA_SYNC_CORRIDORS)
 
         retiming_detection_results = detect_changes(new_retiming_data, old_retiming_data)
-
         sync_systems_results = detect_changes(new_sync_systems, old_sync_systems)
 
-        pdb.set_trace()
+        socrata_response_retiming = upsert_open_data(retiming_detection_results['upsert'], SOCRATA_RETIMINGS)
+        socrata_response_sync_systems = upsert_open_data(sync_systems_results['upsert'], SOCRATA_SYNC_CORRIDORS)        
+
+        logfile_retiming = package_log_data(date_time, retiming_detection_results['delete'], socrata_response_retiming, 'corridor_retiming_update')
+        logfile_sync_systems = package_log_data(date_time, sync_systems_results['delete'], socrata_response_sync_systems, 'sync_corridors_update')
+
+        retiming_logfile_response = upsert_open_data(logfile_retiming, SOCRATA_PUB_LOGS)
+        sync_systems_logfile_response = upsert_open_data(logfile_sync_systems, SOCRATA_PUB_LOGS)
 
         return {
-            'res': socrata_response,
-            'res_historical': socrata_response_historical,
-            'payload': socrata_payload[0],
-            'logfile': logfile_data,
-            'not_found': socrata_payload[1]
+            'res_retiming': socrata_response_retiming,
+            'res_sync_systems': socrata_response_sync_systems,
+            'logfile_retiming': retiming_logfile_response,
+            'logfile_sync_systems': sync_systems_logfile_response
         }
     
     except Exception as e:
@@ -231,5 +243,6 @@ def main(date_time):
  
 results = main(then)
 
-print(results['res'])
+print(results['res_retiming'])
+print(results['res_sync_systems'])
 print('Elapsed time: {}'.format(str(arrow.now() - then)))
