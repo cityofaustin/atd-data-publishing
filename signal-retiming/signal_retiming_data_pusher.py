@@ -89,19 +89,30 @@ def get_int_db_data_as_dict(connection, table, key):
     for row in results:  #  sloppy conversion of sql object
         
         for val in row:
+            
             try:
-                row[val] = str(int(row[val]))
+                row[val] = str(row[val])
 
             except (ValueError, TypeError):
-                row[val] = str(row[val])
+                pass
             
             if row[val] == 'None':
                 row[val] = ''
         
-        new_key = str(int(row[key]))
+            try:
+                if row[val][-2:] == '.0':
+                    row[val] = row[val].replace('.0','')
+
+            except:
+                pass
+
+            if val == key:
+                new_key = row[key]
+
         grouped_data[new_key] = row
 
     return grouped_data
+
 
 
 def group_socrata_data(dataset, key):
