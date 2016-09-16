@@ -1,4 +1,3 @@
-#  checking for stale but not doing anything about it.
 #  enable request verification
 #  logging and stuff
 #  fieldnames! e.g. atd_intersection_id
@@ -17,7 +16,7 @@ from secrets import ALERTS_DISTRIBUTION
 
 
 SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
-SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/kn2s-yypv.json'
+SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/x62n-vjpq.json'
 SOCRATA_SIGNAL_STATUS_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
 
 IGNORE_INTESECTIONS =['959']
@@ -42,16 +41,16 @@ def fetch_kits_data():
     cursor = conn.cursor(as_dict=True)
 
     search_string = '''
-        SELECT i.INTID as intid
-            , e.INTNAME as intname
-            , e.DATETIME as intstatusdatetime
-            , e.STATUS as intstatus
-            , i.POLLST as pollstatus
-            , e.OPERATION as operationstate
-            , e.PLANID as planid
-            , i.STREETN1 as streetn1
-            , i.STREETN2 as streetn2
-            , i.ASSETNUM as assetnum
+        SELECT i.INTID as database_id
+            , e.INTNAME as atd_intersection_id
+            , e.DATETIME as status_datetime
+            , e.STATUS as intersection_status
+            , i.POLLST as poll_status
+            , e.OPERATION as operation_state
+            , e.PLANID as plan_id
+            , i.STREETN1 as primary_street
+            , i.STREETN2 as secondary_street
+            , i.ASSETNUM as atd_intersection_id
             , i.LATITUDE as latitude
             , i.LONGITUDE as longitude
             FROM [KITS].[INTERSECTION] i
@@ -116,8 +115,8 @@ def check_for_stale_data(dataset):
     status_times = []
 
     for record in dataset:
-        if record['intstatusdatetime']:
-            compare = arrow.get(record['intstatusdatetime'])
+        if record['status_datetime']:
+            compare = arrow.get(record['status_datetime'])
             status_times.append(compare)
 
     oldest_record =  arrow.get(max(status_times)).replace(tzinfo='US/Central')  #  have to swap TZ info here because the database query is incorrectly storing datetimes as UTC
@@ -149,19 +148,19 @@ def detect_changes(new, old):
     upsert_historical = []
 
     for record in new:  #  compare KITS to socrata data
-        lookup = str(new[record]['intid'])
+        lookup = str(new[record]['database_id'])
 
         if lookup in IGNORE_INTESECTIONS:
             continue
             
         if lookup in old:
-            new_status = str(new[record]['intstatus'])
+            new_status = str(new[record]['intersection_status'])
             
             try:
-                old_status = str(old[lookup]['intstatus'])
+                old_status = str(old[lookup]['intersection_status'])
 
             except:
-                not_processed.append(new[record]['intid'])
+                not_processed.append(new[record]['database_id'])
                 continue
             
             if new_status == old_status:
@@ -169,7 +168,7 @@ def detect_changes(new, old):
             
             else:
                 update += 1
-                new[record]['intstatusprevious'] = old_status
+                new[record]['intersection_status_previous'] = old_status
                 upsert.append(new[record])
                 upsert_historical.append(old[lookup])
             
@@ -178,13 +177,13 @@ def detect_changes(new, old):
             upsert.append(new[record])
 
     for record in old:  #  compare socrata to KITS to idenify deleted records
-        lookup = old[record]['intid']
+        lookup = old[record]['database_id']
         
         if lookup not in new:
             delete += 1
 
             upsert.append({ 
-                'intid': lookup,
+                'database_id': lookup,
                 ':deleted': True
             })
 
@@ -203,8 +202,8 @@ def prepare_socrata_payload(upsert_data):
     now = arrow.now()
 
     for row in upsert_data:
-        row['processeddatetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-        row['recordid'] = '{}_{}'.format(row['intid'], str(now.timestamp))
+        row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
+        row['record_id'] = '{}_{}'.format(row['database_id'], str(now.timestamp))
 
     return upsert_data
 
@@ -285,11 +284,11 @@ def main(date_time):
         
         check_for_stale_data(new_data)
         
-        new_data_grouped = group_data(new_data_reformatted, 'intid')
+        new_data_grouped = group_data(new_data_reformatted, 'database_id')
                 
         old_data = fetch_published_data()
         
-        old_data_grouped = group_data(old_data, 'intid')
+        old_data_grouped = group_data(old_data, 'database_id')
 
         change_detection_results = detect_changes(new_data_grouped, old_data_grouped)
 
