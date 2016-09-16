@@ -47,10 +47,6 @@ def fetch_kits_data():
 
     search_string = '''
         SELECT i.INTID as database_id
-<<<<<<< HEAD
-=======
-            , e.INTNAME as atd_intersection_id
->>>>>>> origin/master
             , e.DATETIME as status_datetime
             , e.STATUS as intersection_status
             , i.POLLST as poll_status
@@ -280,13 +276,9 @@ def prepare_socrata_payload(upsert_data, int_db_data):
     
 
     for row in upsert_data:
-<<<<<<< HEAD
         atd_intersection_id = row['atd_intersection_id']
-=======
         row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
         row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
->>>>>>> origin/master
-
         if atd_intersection_id in int_db_data:
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
             row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
@@ -387,11 +379,7 @@ def main(date_time):
         new_data_grouped = group_data(new_data_reformatted, 'database_id')
                 
         old_data = fetch_published_data()
-<<<<<<< HEAD
-         
-=======
-        
->>>>>>> origin/master
+
         old_data_grouped = group_data(old_data, 'database_id')
 
         change_detection_results = detect_changes(new_data_grouped, old_data_grouped)
