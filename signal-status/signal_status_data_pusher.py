@@ -21,7 +21,7 @@ from secrets import SOCRATA_CREDENTIALS
 from secrets import ALERTS_DISTRIBUTION
 from secrets import IDB_PROD_CREDENTIALS
 
-
+import pdb
 
 SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/x62n-vjpq.json'
@@ -161,7 +161,8 @@ def detect_changes(new, old):
 
         if lookup in old:
             new_status = str(new[record]['intersection_status'])
-            
+            #  new_status = str(9999)  #  tests
+
             try:
                 old_status = str(old[lookup]['intersection_status'])
 
@@ -248,6 +249,7 @@ def prep_int_db_query(upsert_data):
 
 
 def get_int_db_data_as_dict(connection, query, key):
+
     print('get intersection database data')
     
     results = []
@@ -259,14 +261,35 @@ def get_int_db_data_as_dict(connection, query, key):
     cursor.execute(query)
 
     columns = [column[0] for column in cursor.description]
-
+    
+    
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
+    
+    for row in results:  #  sloppy conversion of sql object
+        
+        for val in row:
+            
+            try:
+                row[val] = str(row[val])
 
-    for row in results:
-        new_key = str(int(row[key]))
+            except (ValueError, TypeError):
+                pass
+            
+            if row[val] == 'None':
+                row[val] = ''
+
+            try:
+                if row[val][-2:] == '.0':
+                    row[val] = row[val].replace('.0','')
+            except:
+                pass
+
+            if val == key:
+                new_key = row[key]
+
         grouped_data[new_key] = row
-
+    
     return grouped_data
 
 
@@ -307,6 +330,7 @@ def prepare_socrata_payload(upsert_data, int_db_data):
 
 def upsert_open_data(payload, url):
     print('upsert open data ' + url)
+    
     try:
         auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
 
