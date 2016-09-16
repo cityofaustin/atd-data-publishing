@@ -25,7 +25,7 @@ from secrets import IDB_PROD_CREDENTIALS
 
 SOCRATA_SIGNAL_STATUS = 'https://data.austintexas.gov/resource/5zpr-dehc.json'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'https://data.austintexas.gov/resource/x62n-vjpq.json'
-SOCRATA_SIGNAL_STATUS_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
+SOCRATA_PUB_LOGS = 'https://data.austintexas.gov/resource/n5kp-f8k4.json'
 
 EMAIL_FOOTER = '''
     \n
@@ -402,7 +402,7 @@ def main(date_time):
 
         logfile_data = package_log_data(date_time, change_detection_results, socrata_response)
 
-        logfile_response = upsert_open_data(logfile_data, SOCRATA_SIGNAL_STATUS_LOGS)
+        logfile_response = upsert_open_data(logfile_data, SOCRATA_PUB_LOGS)
 
         return {
             'res': socrata_response,
