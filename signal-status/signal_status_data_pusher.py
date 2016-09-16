@@ -1,8 +1,5 @@
-<<<<<<< HEAD
 #  status duration
 #  dont upload if no data
-=======
->>>>>>> origin/master
 #  enable request verification
 #  fieldnames! e.g. atd_intersection_id
 #  dodgy error handling in change detection
