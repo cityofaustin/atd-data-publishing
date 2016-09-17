@@ -161,7 +161,7 @@ def detect_changes(new, old):
 
         if lookup in old:
             new_status = str(new[record]['intersection_status'])
-            #  new_status = str(9999)  #  tests
+            #   new_status = str(9999)  #  tests
 
             try:
                 old_status = str(old[lookup]['intersection_status'])
@@ -318,7 +318,7 @@ def prepare_socrata_payload(upsert_data, int_db_data):
                 row['intersection_name'] = row['primary_street'] + " (NO CROSS ST)"
 
             row['latitude'] = int_db_data[atd_intersection_id]['LATITUDE']
-            row['latitude'] = int_db_data[atd_intersection_id]['LONGITUDE']
+            row['longitude'] = int_db_data[atd_intersection_id]['LONGITUDE']
 
         else:
             not_found.append(atd_intersection_id)
