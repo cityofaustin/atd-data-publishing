@@ -91,7 +91,7 @@ def get_int_db_data_as_dict(connection, table, key):
         for val in row:
             
             try:
-                if val in  ['atd_intersection_id', 'system_id']:
+                if val in  ['atd_intersection_id', 'system_id', 'signals_retimed']:
                     row[val] = str(int(row[val]))
                 
                 else: 
