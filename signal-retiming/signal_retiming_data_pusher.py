@@ -176,7 +176,7 @@ def upsert_open_data(payload, url):
 
 
 
-def package_log_data(date, changes, response, event):
+def package_log_data(date, response, event):
     print('package logfile data for {}'.format(event))
     
     timestamp = arrow.now().timestamp
@@ -233,8 +233,8 @@ def main(date_time):
         socrata_response_retiming = upsert_open_data(retiming_detection_results['upsert'], SOCRATA_RETIMINGS)
         socrata_response_sync_systems = upsert_open_data(sync_systems_results['upsert'], SOCRATA_SYNC_CORRIDORS)        
 
-        logfile_retiming = package_log_data(date_time, retiming_detection_results['delete'], socrata_response_retiming, 'corridor_retiming_update')
-        logfile_sync_systems = package_log_data(date_time, sync_systems_results['delete'], socrata_response_sync_systems, 'sync_corridors_update')
+        logfile_retiming = package_log_data(date_time, socrata_response_retiming, 'corridor_retiming_update')
+        logfile_sync_systems = package_log_data(date_time, socrata_response_sync_systems, 'sync_corridors_update')
 
         retiming_logfile_response = upsert_open_data(logfile_retiming, SOCRATA_PUB_LOGS)
         sync_systems_logfile_response = upsert_open_data(logfile_sync_systems, SOCRATA_PUB_LOGS)
