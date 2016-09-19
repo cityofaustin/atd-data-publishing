@@ -37,7 +37,107 @@ logfile_filename = 'logs/signals-on-flash/{}.csv'.format(then.format('YYYY-MM-DD
 
 
 
-def fetch_kits_data():
+def connect_int_db(credentials):
+    print('connecting to intersection database')
+
+    conn = pyodbc.connect(
+        'DRIVER={{SQL Server}};' 
+            'SERVER={};'
+            'PORT=1433;'
+            'DATABASE={};'
+            'UID={};'
+            'PWD={}'
+            .format(
+                credentials['server'],
+                credentials['database'],
+                credentials['user'],
+                credentials['password'] 
+        ))
+
+    cursor = conn.cursor()
+    
+    return conn
+
+
+
+def get_int_db_data_as_dict(connection, key):
+
+    print('get intersection database data')
+
+    query = '''
+        SELECT *
+        FROM GIS_QUERY
+        WHERE SIGNAL_STATUS = 1 AND SIGNAL_TYPE = 'TRAFFIC'
+    '''
+
+    results = []
+
+    grouped_data = {}
+
+    cursor = connection.cursor()
+    
+    cursor.execute(query)
+
+    columns = [column[0].lower() for column in cursor.description]
+    
+    for row in cursor.fetchall():
+        results.append(dict(zip(columns, row)))
+    
+    for row in results:  #  sloppy conversion of sql object
+        
+        for val in row:
+            
+            try:
+                row[val] = str(row[val])
+
+            except (ValueError, TypeError):
+                pass
+            
+            if row[val] == 'None':
+                row[val] = ''
+
+            try:
+                if row[val][-2:] == '.0':
+                    row[val] = row[val].replace('.0','')
+            except:
+                pass
+
+            if val == key:
+                new_key = row[key]
+
+        grouped_data[new_key] = row
+    
+    return grouped_data
+
+
+
+def prep_kits_query(intersection_data):
+    print('prep kits query')
+
+    ids = intersection_data.keys()
+
+    where = str(ids).translate(None, "[]")
+
+    query  = '''
+        SELECT i.INTID as kits_id
+            , e.DATETIME as status_datetime
+            , e.STATUS as intersection_status
+            , i.POLLST as poll_status
+            , e.OPERATION as operation_state
+            , e.PLANID as plan_id
+            , i.ASSETNUM as atd_intersection_id
+            FROM [KITS].[INTERSECTION] i
+            LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
+            ON i.[INTID] = e.[INTID]
+            WHERE i.ASSETNUM IN ({})
+            ORDER BY e.DATETIME DESC
+    '''.format(where)
+
+    return query
+
+
+
+def fetch_kits_data(query):
     print('fetch kits data')
 
     conn = pymssql.connect(
@@ -49,39 +149,9 @@ def fetch_kits_data():
 
     cursor = conn.cursor(as_dict=True)
 
-    search_string = '''
-        SELECT i.INTID as database_id
-            , e.DATETIME as status_datetime
-            , e.STATUS as intersection_status
-            , i.POLLST as poll_status
-            , e.OPERATION as operation_state
-            , e.PLANID as plan_id
-            , i.STREETN1 as primary_street
-            , i.STREETN2 as secondary_street
-            , i.ASSETNUM as atd_intersection_id
-            , i.LATITUDE as latitude
-            , i.LONGITUDE as longitude
-            FROM [KITS].[INTERSECTION] i
-            LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
-            ON i.[INTID] = e.[INTID]
-            ORDER BY e.DATETIME DESC
-    '''
-
-    cursor.execute(search_string)  
+    cursor.execute(query)  
 
     return cursor.fetchall()
-
-
-
-def fetch_published_data():
-    print('fetch published data')
-    try:
-        res = requests.get(SOCRATA_SIGNAL_STATUS, verify=False)
-
-    except requests.exceptions.HTTPError as e:
-        raise e
-
-    return res.json()
 
 
 
@@ -145,6 +215,46 @@ def check_for_stale_data(dataset):
 
 
 
+def merge_data(intersection_data, kits_data):
+    print('merge intersection and kits data')
+
+    not_in_kits = []
+
+    count = 0
+
+    kits_source_fields = ['kits_id', 'status_datetime', 'intersection_status', 'poll_status', 'operation_state', 'plan_id']
+    
+    for key in intersection_data.keys():
+
+        if key in kits_data:
+            for field in kits_source_fields:
+                intersection_data[key][field] = kits_data[key][field]
+
+        else:
+            not_in_kits.append(key)
+            del intersection_data[key]
+
+    print(str(len(not_in_kits)) + " records not found in kits!")
+
+    return {
+        'new_data': intersection_data,
+        'not_in_kits': not_in_kits
+    }
+
+
+
+def fetch_published_data():
+    print('fetch published data')
+    try:
+        res = requests.get(SOCRATA_SIGNAL_STATUS, verify=False)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+
+    return res.json()
+
+
+
 def detect_changes(new, old):
     print('detect changes')
 
@@ -156,8 +266,8 @@ def detect_changes(new, old):
     delete = 0    
     upsert_historical = []
 
-    for record in new:  #  compare KITS to socrata data
-        lookup = str(new[record]['database_id'])
+    for record in new:
+        lookup = str(new[record]['atd_intersection_id'])
 
         if lookup in old:
             new_status = str(new[record]['intersection_status'])
@@ -167,7 +277,7 @@ def detect_changes(new, old):
                 old_status = str(old[lookup]['intersection_status'])
 
             except:
-                not_processed.append(new[record]['database_id'])
+                not_processed.append(new[record]['atd_intersection_id'])
                 continue
             
             if new_status == old_status:
@@ -184,13 +294,13 @@ def detect_changes(new, old):
             upsert.append(new[record])
 
     for record in old:  #  compare socrata to KITS to idenify deleted records
-        lookup = old[record]['database_id']
+        lookup = old[record]['atd_intersection_id']
         
         if lookup not in new:
             delete += 1
 
             upsert.append({ 
-                'database_id': lookup,
+                'atd_intersection_id': lookup,
                 ':deleted': True
             })
 
@@ -206,125 +316,33 @@ def detect_changes(new, old):
 
 
 
-def connect_int_db(credentials):
-    print('connecting to intersection database')
-
-    conn = pyodbc.connect(
-        'DRIVER={{SQL Server}};' 
-            'SERVER={};'
-            'PORT=1433;'
-            'DATABASE={};'
-            'UID={};'
-            'PWD={}'
-            .format(
-                credentials['server'],
-                credentials['database'],
-                credentials['user'],
-                credentials['password'] 
-        ))
-
-    cursor = conn.cursor()
-    
-    return conn
-
-
-
-def prep_int_db_query(upsert_data):
-    ids = []
-    
-    print('prep intersection database query')
-
-    for row in upsert_data:
-        ids.append(row['atd_intersection_id'])
-
-    where = str(ids).translate(None, "[]")
-
-    query  = '''
-        SELECT * FROM GIS_QUERY
-        WHERE GIS_QUERY.ATD_INTERSECTION_ID IN ({})
-    '''.format(where)
-
-    return query
-
-
-
-def get_int_db_data_as_dict(connection, query, key):
-
-    print('get intersection database data')
-    
-    results = []
-
-    grouped_data = {}
-
-    cursor = connection.cursor()
-    
-    cursor.execute(query)
-
-    columns = [column[0] for column in cursor.description]
-    
-    
-    for row in cursor.fetchall():
-        results.append(dict(zip(columns, row)))
-    
-    for row in results:  #  sloppy conversion of sql object
-        
-        for val in row:
-            
-            try:
-                row[val] = str(row[val])
-
-            except (ValueError, TypeError):
-                pass
-            
-            if row[val] == 'None':
-                row[val] = ''
-
-            try:
-                if row[val][-2:] == '.0':
-                    row[val] = row[val].replace('.0','')
-            except:
-                pass
-
-            if val == key:
-                new_key = row[key]
-
-        grouped_data[new_key] = row
-    
-    return grouped_data
-
-
-
-def prepare_socrata_payload(upsert_data, int_db_data):
+def prepare_socrata_payload(upsert_data):
     print('prepare socrata payload')
-    
-    not_found = []
 
     now = arrow.now()
-    
 
     for row in upsert_data:
-        atd_intersection_id = row['atd_intersection_id']
-        row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-        row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
-        if atd_intersection_id in int_db_data:
+        if (':deleted' not in row.keys()):
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
             row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
-            row['primary_street'] = int_db_data[atd_intersection_id]['STREET_SEGMENTS.FULL_STREET_NAME']
-    
-            if int_db_data[atd_intersection_id]['STREET_SEGMENTS_1.FULL_STREET_NAME']:
-                row['cross_street'] = int_db_data[atd_intersection_id]['STREET_SEGMENTS_1.FULL_STREET_NAME']
-                row['intersection_name'] = row['primary_street'] + " / " + row['cross_street']
+            row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
+            
+            if row['street_segments.full_street_name']:
+                row['primary_street'] = row.pop('street_segments.full_street_name')
+            
             else:
-                row['intersection_name'] = row['primary_street'] + " (NO CROSS ST)"
+                print(row['atd_intersection_id'])
+                row['primary_street'] = ''
 
-            row['latitude'] = int_db_data[atd_intersection_id]['LATITUDE']
-            row['longitude'] = int_db_data[atd_intersection_id]['LONGITUDE']
+            if row['street_segments_1.full_street_name']:
+                row['cross_street'] = row.pop('street_segments_1.full_street_name')
+            
+            else:
+                row['cross_street'] = ''
 
-        else:
-            not_found.append(atd_intersection_id)
-            upsert_data.remove(row)
+            row['intersection_name'] = row['primary_street'] + " / " + row['cross_street']
 
-    return (upsert_data, not_found)
+    return upsert_data
 
 
 
@@ -397,30 +415,32 @@ def package_log_data(date, changes, response):
 def main(date_time):
     print('starting stuff now')
 
-    try:
-        new_data = fetch_kits_data()
-
-        new_data_reformatted = reformat_kits_data(new_data)
-        
-        check_for_stale_data(new_data)
-        
-        new_data_grouped = group_data(new_data_reformatted, 'database_id')
-                
-        old_data = fetch_published_data()
-
-        old_data_grouped = group_data(old_data, 'database_id')
-
-        change_detection_results = detect_changes(new_data_grouped, old_data_grouped)
-
+    try:       
         conn = connect_int_db(IDB_PROD_CREDENTIALS)
 
-        int_db_query = prep_int_db_query(change_detection_results['upsert'])
+        int_db_data = get_int_db_data_as_dict(conn, 'atd_intersection_id')
+        
+        kits_query = prep_kits_query(int_db_data)
 
-        int_db_data = get_int_db_data_as_dict(conn, int_db_query, 'ATD_INTERSECTION_ID')
+        kits_data = fetch_kits_data(kits_query)
 
-        socrata_payload = prepare_socrata_payload(change_detection_results['upsert'], int_db_data)
+        check_for_stale_data(kits_data)
 
-        socrata_response = upsert_open_data(socrata_payload[0], SOCRATA_SIGNAL_STATUS)
+        kits_data = reformat_kits_data(kits_data)
+        
+        kits_data = group_data(kits_data, 'atd_intersection_id')
+
+        merge_results = merge_data(int_db_data, kits_data)
+
+        old_data = fetch_published_data()
+
+        old_data = group_data(old_data, 'atd_intersection_id')
+
+        change_detection_results = detect_changes(merge_results['new_data'], old_data)
+
+        socrata_payload = prepare_socrata_payload(change_detection_results['upsert'])
+        
+        socrata_response = upsert_open_data(socrata_payload, SOCRATA_SIGNAL_STATUS)
 
         socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_SIGNAL_STATUS_HISTORICAL)
 
@@ -431,9 +451,9 @@ def main(date_time):
         return {
             'res': socrata_response,
             'res_historical': socrata_response_historical,
-            'payload': socrata_payload[0],
+            'payload': socrata_payload,
             'logfile': logfile_data,
-            'not_found': socrata_payload[1]
+            'not_in_kits': merge_results['not_in_kits']
         }
     
     except Exception as e:
