@@ -164,7 +164,7 @@ def detect_changes(new, old):
 
 def upsert_open_data(payload, url):
     print('upsert open data {}'.format(url))
-    pdb.set_trace()
+    
     try:
         auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
 
