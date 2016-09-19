@@ -86,12 +86,16 @@ def get_int_db_data_as_dict(connection, table, key):
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
 
-    for row in results:  #  sloppy conversion of sql object
+    for row in results:
         
         for val in row:
             
             try:
-                row[val] = str(row[val])
+                if val in  ['atd_intersection_id', 'system_id']:
+                    row[val] = str(int(row[val]))
+                
+                else: 
+                    row[val] = str(row[val])
 
             except (ValueError, TypeError):
                 pass
@@ -160,7 +164,7 @@ def detect_changes(new, old):
 
 def upsert_open_data(payload, url):
     print('upsert open data {}'.format(url))
-
+    pdb.set_trace()
     try:
         auth = (SOCRATA_CREDENTIALS['user'], SOCRATA_CREDENTIALS['password'])
 

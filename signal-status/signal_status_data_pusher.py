@@ -79,7 +79,7 @@ def get_int_db_data_as_dict(connection, key):
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
     
-    for row in results:  #  sloppy conversion of sql object
+    for row in results:
         
         for val in row:
             
