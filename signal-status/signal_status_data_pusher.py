@@ -1,9 +1,5 @@
 #  status duration
-#  dont upload if no data
 #  enable request verification
-#  fieldnames! e.g. atd_intersection_id
-#  dodgy error handling in change detection
-#  use ATD intersection ID as row identifier
 #  append new intersections to historical dataset?
 
 if __name__ == '__main__' and __package__ is None:
@@ -363,41 +359,46 @@ def upsert_open_data(payload, url):
 
 
 
-def package_log_data(date, changes, response):
-    
+
+def package_log_data(date, changes, response, event):
+    print('package logfile data for {}'.format(event))
+
     timestamp = arrow.now().timestamp
 
     date = date.format('YYYY-MM-DD HH:mm:ss')
-   
-    if 'error' in response.keys():
-        response_message = response['message']
-        
-        email_alert.send_email(ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Socrata Upload Status Update Failure', response_message + EMAIL_FOOTER)
 
-        errors = ''
-        updated = ''
-        created = ''
-        deleted = ''
+    errors = '0'
+    updated = '0'
+    created = '0'
+    deleted = '0'
+    response_message = ''
+    no_update = '0'
 
-    else:
-        errors = response['Errors']
-        updated = response['Rows Updated']
-        created = response['Rows Created']
-        deleted = response['Rows Deleted']
-        response_message = ''
+    if (response):
 
-    no_update = changes['no_update']
-    update_requests = changes['update']
-    insert_requests = changes['insert']
-    delete_requests = changes['delete']
+        if 'error' in response.keys():
+            response_message = response['message']
+            
+            email_alert.send_email(ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Socrata Upload Status Update Failure', response_message + EMAIL_FOOTER)
+
+        else:
+            errors = response['Errors']
+            updated = response['Rows Updated']
+            created = response['Rows Created']
+            deleted = response['Rows Deleted']
+            response_message = ''
+
+    if changes['no_update']:
+        no_update = str(changes['no_update'])
 
     if changes['not_processed']:
         not_processed = str(changes['not_processed'])
+
     else:
         not_processed = ''
      
     return [ {
-        'event': 'signal_status_update',
+        'event': event,
         'timestamp': timestamp, 
         'date_time':  date,
         'errors': errors ,
@@ -409,7 +410,6 @@ def package_log_data(date, changes, response):
         'response_message': response_message
     } ]
 
-    
 
     
 def main(date_time):
@@ -437,22 +437,39 @@ def main(date_time):
         old_data = group_data(old_data, 'atd_intersection_id')
 
         change_detection_results = detect_changes(merge_results['new_data'], old_data)
-
-        socrata_payload = prepare_socrata_payload(change_detection_results['upsert'])
         
-        socrata_response = upsert_open_data(socrata_payload, SOCRATA_SIGNAL_STATUS)
+        socrata_payload = prepare_socrata_payload(change_detection_results['upsert'])
 
-        socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_SIGNAL_STATUS_HISTORICAL)
+        if socrata_payload:
+            socrata_response = upsert_open_data(socrata_payload, SOCRATA_SIGNAL_STATUS)
 
-        logfile_data = package_log_data(date_time, change_detection_results, socrata_response)
+        else:
+            print('no new status data to upload')
+            socrata_response = None
 
-        logfile_response = upsert_open_data(logfile_data, SOCRATA_PUB_LOGS)
+        if change_detection_results['upsert_historical']:
+            socrata_response_historical = upsert_open_data(change_detection_results['upsert_historical'], SOCRATA_SIGNAL_STATUS_HISTORICAL)
 
+        else:
+            print('no new historical status data to upload')
+            socrata_response_historical = None
+
+        status_logfile_data = package_log_data(date_time, change_detection_results, socrata_response, 'signal_status_update')
+        logfile_response = upsert_open_data(status_logfile_data, SOCRATA_PUB_LOGS)  #  always log status ETL
+
+        if change_detection_results['upsert_historical']:  #  only logging the historical status ETL when the dataset changes
+            historical_logfile_data = package_log_data(date_time, change_detection_results, socrata_response, 'historical_signal_status_update')
+            logfile_response = upsert_open_data(historical_logfile_data, SOCRATA_PUB_LOGS)
+        
+        else: 
+            historical_logfile_data = None
+        
         return {
             'res': socrata_response,
             'res_historical': socrata_response_historical,
             'payload': socrata_payload,
-            'logfile': logfile_data,
+            'status_logfile': status_logfile_data,
+            'historical_logfile': historical_logfile_data,
             'not_in_kits': merge_results['not_in_kits']
         }
     
