@@ -1,4 +1,4 @@
-#  status duration
+#  status duration enabled
 #  enable request verification
 #  append new intersections to historical dataset?
 
@@ -281,8 +281,19 @@ def detect_changes(new, old):
             
             else:
                 update += 1
+                
                 new[record]['intersection_status_previous'] = old_status
+                
                 upsert.append(new[record])
+                
+                record_retired_datetime = arrow.now()
+                old[lookup]['record_retired_datetime'] = record_retired_datetime
+
+                processed_datetime = arrow.get(old[lookup][processed_datetime]).replace(tzinfo='US/Central')
+
+                delta = record_retired_datetime - processed_datetime
+                old[lookup]['status_duration'] = delta.seconds
+                
                 upsert_historical.append(old[lookup])
             
         else:
