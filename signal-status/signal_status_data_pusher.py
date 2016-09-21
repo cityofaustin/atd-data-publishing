@@ -12,6 +12,7 @@ import arrow
 import requests
 import json
 import email_alert
+import sys
 from secrets import KITS_CREDENTIALS
 from secrets import SOCRATA_CREDENTIALS
 from secrets import ALERTS_DISTRIBUTION
@@ -176,6 +177,8 @@ def group_data(dataset, key):
 def check_for_stale_data(dataset):
     print('check for stale data')
 
+    stale = False
+
     status_times = []
 
     for record in dataset:
@@ -191,6 +194,8 @@ def check_for_stale_data(dataset):
 
     if delta_minutes > 15:  #  if more than 15 minutes have passed since a status update
 
+        stale = True
+
         subject = 'DATA PROCESSING ALERT: KITS Status Data is {} mintues old'.format(str(delta_minutes))
 
         body = 'DATA PROCESSING ALERT: KITS intersection status data has not been updated for more than {} minutes.'.format(str(delta_minutes))
@@ -199,6 +204,24 @@ def check_for_stale_data(dataset):
 
         email_alert.send_email(ALERTS_DISTRIBUTION, subject, body)
 
+    return stale
+
+
+def prep_stale_data_log(date_time):
+    print('prep stale data log')
+
+    return [ {
+        'event': 'signal_status_update',
+        'timestamp': date_time.timestamp, 
+        'date_time':  date_time.format('YYYY-MM-DD HH:mm:ss'),
+        'errors': '1',
+        'updated': '',
+        'created': '',
+        'deleted': '',
+        'no_update': '',
+        'not_processed': '',
+        'response_message': 'WARNING: stale data detected'
+    } ]
 
 
 def merge_data(intersection_data, kits_data):
@@ -257,7 +280,7 @@ def detect_changes(new, old):
 
         if lookup in old:
             new_status = str(new[record]['signal_status'])
-            new_status = str(9999)  #  tests
+            #   new_status = str(9999)  #  tests
 
             try:
                 old_status = str(old[lookup]['signal_status'])
@@ -410,7 +433,12 @@ def main(date_time):
 
         kits_data = fetch_kits_data(kits_query)
 
-        check_for_stale_data(kits_data)
+        stale = check_for_stale_data(kits_data)
+
+        if stale:
+            stale_data_log = prep_stale_data_log(date_time)
+            upsert_open_data(stale_data_log, SOCRATA_PUB_LOGS)
+            sys.exit()
 
         kits_data = reformat_kits_data(kits_data)
         
