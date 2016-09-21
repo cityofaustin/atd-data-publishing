@@ -117,7 +117,7 @@ def prep_kits_query(intersection_data):
     query  = '''
         SELECT i.INTID as kits_id
             , e.DATETIME as status_datetime
-            , e.STATUS as intersection_status
+            , e.STATUS as signal_status
             , i.POLLST as poll_status
             , e.OPERATION as operation_state
             , e.PLANID as plan_id
@@ -218,7 +218,7 @@ def merge_data(intersection_data, kits_data):
 
     count = 0
 
-    kits_source_fields = ['kits_id', 'status_datetime', 'intersection_status', 'poll_status', 'operation_state', 'plan_id']
+    kits_source_fields = ['kits_id', 'status_datetime', 'signal_status', 'poll_status', 'operation_state', 'plan_id']
     
     for key in intersection_data.keys():
 
@@ -266,11 +266,11 @@ def detect_changes(new, old):
         lookup = str(new[record]['atd_signal_id'])
 
         if lookup in old:
-            new_status = str(new[record]['intersection_status'])
+            new_status = str(new[record]['signal_status'])
             #   new_status = str(9999)  #  tests
 
             try:
-                old_status = str(old[lookup]['intersection_status'])
+                old_status = str(old[lookup]['signal_status'])
 
             except:
                 not_processed.append(new[record]['atd_signal_id'])
@@ -282,7 +282,7 @@ def detect_changes(new, old):
             else:
                 update += 1
                 
-                new[record]['intersection_status_previous'] = old_status
+                new[record]['signal_status_previous'] = old_status
                 
                 upsert.append(new[record])
                 
