@@ -121,7 +121,7 @@ def prep_kits_query(intersection_data):
             , i.POLLST as poll_status
             , e.OPERATION as operation_state
             , e.PLANID as plan_id
-            , i.ASSETNUM as atd_intersection_id
+            , i.ASSETNUM as atd_signal_id
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
@@ -263,7 +263,7 @@ def detect_changes(new, old):
     upsert_historical = []
 
     for record in new:
-        lookup = str(new[record]['atd_intersection_id'])
+        lookup = str(new[record]['atd_signal_id'])
 
         if lookup in old:
             new_status = str(new[record]['intersection_status'])
@@ -273,7 +273,7 @@ def detect_changes(new, old):
                 old_status = str(old[lookup]['intersection_status'])
 
             except:
-                not_processed.append(new[record]['atd_intersection_id'])
+                not_processed.append(new[record]['atd_signal_id'])
                 continue
             
             if new_status == old_status:
@@ -301,13 +301,13 @@ def detect_changes(new, old):
             upsert.append(new[record])
 
     for record in old:  #  compare socrata to KITS to idenify deleted records
-        lookup = old[record]['atd_intersection_id']
+        lookup = old[record]['atd_signal_id']
         
         if lookup not in new:
             delete += 1
 
             upsert.append({ 
-                'atd_intersection_id': lookup,
+                'atd_signal_id': lookup,
                 ':deleted': True
             })
 
@@ -331,14 +331,14 @@ def prepare_socrata_payload(upsert_data):
     for row in upsert_data:
         if (':deleted' not in row.keys()):
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-            row['record_id'] = '{}_{}'.format(row['atd_intersection_id'], str(now.timestamp))
+            row['record_id'] = '{}_{}'.format(row['atd_signal_id'], str(now.timestamp))
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
             
             if row['street_segments.full_street_name']:
                 row['primary_street'] = row.pop('street_segments.full_street_name')
             
             else:
-                print(row['atd_intersection_id'])
+                print(row['atd_signal_id'])
                 row['primary_street'] = ''
 
             if row['street_segments_1.full_street_name']:
@@ -429,7 +429,7 @@ def main(date_time):
     try:       
         conn = connect_int_db(IDB_PROD_CREDENTIALS)
 
-        int_db_data = get_int_db_data_as_dict(conn, 'atd_intersection_id')
+        int_db_data = get_int_db_data_as_dict(conn, 'atd_signal_id')
         
         kits_query = prep_kits_query(int_db_data)
 
@@ -439,13 +439,13 @@ def main(date_time):
 
         kits_data = reformat_kits_data(kits_data)
         
-        kits_data = group_data(kits_data, 'atd_intersection_id')
+        kits_data = group_data(kits_data, 'atd_signal_id')
 
         merge_results = merge_data(int_db_data, kits_data)
 
         old_data = fetch_published_data()
 
-        old_data = group_data(old_data, 'atd_intersection_id')
+        old_data = group_data(old_data, 'atd_signal_id')
 
         change_detection_results = detect_changes(merge_results['new_data'], old_data)
         
