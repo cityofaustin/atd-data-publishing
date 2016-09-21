@@ -74,7 +74,7 @@ def get_int_db_data_as_dict(connection, key):
     
     cursor.execute(query)
 
-    columns = [column[0].lower() for column in cursor.description]
+    columns = [column[0] for column in cursor.description]
     
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
@@ -82,21 +82,11 @@ def get_int_db_data_as_dict(connection, key):
     for row in results:
         
         for val in row:
-            
-            try:
-                row[val] = str(row[val])
 
-            except (ValueError, TypeError):
-                pass
-            
+            row[val] = str(row[val])
+
             if row[val] == 'None':
                 row[val] = ''
-
-            try:
-                if row[val][-2:] == '.0':
-                    row[val] = row[val].replace('.0','')
-            except:
-                pass
 
             if val == key:
                 new_key = row[key]
@@ -267,7 +257,7 @@ def detect_changes(new, old):
 
         if lookup in old:
             new_status = str(new[record]['signal_status'])
-            #   new_status = str(9999)  #  tests
+            new_status = str(9999)  #  tests
 
             try:
                 old_status = str(old[lookup]['signal_status'])
@@ -287,9 +277,9 @@ def detect_changes(new, old):
                 upsert.append(new[record])
                 
                 record_retired_datetime = arrow.now()
-                old[lookup]['record_retired_datetime'] = record_retired_datetime
+                old[lookup]['record_retired_datetime'] = record_retired_datetime.format('YYYY-MM-DD HH:mm:ss')
 
-                processed_datetime = arrow.get(old[lookup][processed_datetime]).replace(tzinfo='US/Central')
+                processed_datetime = arrow.get(old[lookup]['processed_datetime']).replace(tzinfo='US/Central')
 
                 delta = record_retired_datetime - processed_datetime
                 old[lookup]['status_duration'] = delta.seconds
@@ -332,22 +322,7 @@ def prepare_socrata_payload(upsert_data):
         if (':deleted' not in row.keys()):
             row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
             row['record_id'] = '{}_{}'.format(row['atd_signal_id'], str(now.timestamp))
-            row['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-            
-            if row['street_segments.full_street_name']:
-                row['primary_street'] = row.pop('street_segments.full_street_name')
-            
-            else:
-                print(row['atd_signal_id'])
-                row['primary_street'] = ''
-
-            if row['street_segments_1.full_street_name']:
-                row['cross_street'] = row.pop('street_segments_1.full_street_name')
-            
-            else:
-                row['cross_street'] = ''
-
-            row['intersection_name'] = row['primary_street'] + " / " + row['cross_street']
+            row['location'] = '({},{})'.format(row['latitude'], row['longitude'])
 
     return upsert_data
 
