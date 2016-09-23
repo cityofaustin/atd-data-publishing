@@ -103,7 +103,7 @@ def prep_kits_query(intersection_data):
 
     ids = intersection_data.keys()
 
-    where = str(ids).translate(None, "[]")
+    where = str(tuple(ids))
 
     query  = '''
         SELECT i.INTID as kits_id
@@ -116,7 +116,7 @@ def prep_kits_query(intersection_data):
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
-            WHERE i.ASSETNUM IN ({})
+            WHERE i.ASSETNUM IN {}
             ORDER BY e.DATETIME DESC
     '''.format(where)
 

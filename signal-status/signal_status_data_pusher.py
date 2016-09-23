@@ -102,9 +102,9 @@ def prep_kits_query(intersection_data):
     print('prep kits query')
 
     ids = intersection_data.keys()
-
-    where = str(ids).translate(None, "[]")
-
+    
+    where = str(tuple(ids))
+    
     query  = '''
         SELECT i.INTID as kits_id
             , e.DATETIME as status_datetime
@@ -116,7 +116,7 @@ def prep_kits_query(intersection_data):
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
-            WHERE i.ASSETNUM IN ({})
+            WHERE i.ASSETNUM IN {}
             ORDER BY e.DATETIME DESC
     '''.format(where)
 
@@ -233,7 +233,7 @@ def merge_data(intersection_data, kits_data):
 
     kits_source_fields = ['kits_id', 'status_datetime', 'signal_status', 'poll_status', 'operation_state', 'plan_id']
     
-    for key in intersection_data.keys():
+    for key in list(intersection_data.keys()):
 
         if key in kits_data:
             for field in kits_source_fields:
