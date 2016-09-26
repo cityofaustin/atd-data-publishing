@@ -192,6 +192,8 @@ def check_for_stale_data(dataset):
 
     delta_minutes = delta.seconds/60
 
+    print(str(delta_minutes))
+
     if delta_minutes > 15:  #  if more than 15 minutes have passed since a status update
 
         stale = True
