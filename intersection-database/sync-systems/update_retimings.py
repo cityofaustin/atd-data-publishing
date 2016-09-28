@@ -1,14 +1,15 @@
 import pyodbc
 import csv
 from secrets import IDB_PROD_CREDENTIALS
+import pdb
 
-SOURCE_FILE = 'source-data/retiming_import_sep2016.csv'
+SOURCE_FILE = 'source-data/retiming_import_26sep2016.csv'
 
 wait = 'N'
 
 while wait != 'Y':
-    wait = raw_input('You are about to make changes to a production database. Press \'Y\' to continue.')
-    wait.upper()
+    wait = input('You are about to make changes to a production database. Press \'Y\' to continue: ')
+    wait = wait.upper()
 
 def connect_db():
     print('connecting to db')
@@ -46,13 +47,13 @@ def update_database(connection, payload):
 
     for record in payload:
 
-        columns = str(record.keys()).translate(None, "[]'")
+        columns = str(tuple(record.keys())).replace("'", "")
         
-        values = str(record.values()).translate(None, "[]")
-
+        values = str(tuple(record.values()))
+        
         statement = '''
-            INSERT INTO Access.RETIMING ({})
-            VALUES ({})
+            INSERT INTO RETIMING {}
+            VALUES {}
             '''.format(columns, values)
 
         print(statement)
