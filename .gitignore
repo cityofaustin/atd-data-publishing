@@ -6,3 +6,4 @@ __pycache__
 dist
 secrets.py
 schtask.txt
+intersection-database
