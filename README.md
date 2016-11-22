@@ -8,6 +8,9 @@ Query, add, and delete features from an ArcGIS Online Feature Service
 #### Data Helpers (data_helpers.py)
 Handy bits of code for common ETL tasks, mostly borrowed from Stack Overflow snippets.
 
+#### Socrata Helpers (knack_helpers.py)
+Use the Socrata Open Data API to publish #opendata. 
+
 #### Knack Helpers (knack_helpers.py)
 Scripts for accessing the [Knack API](http://knack.freshdesk.com/support/solutions/articles/5000444173-working-with-the-api).
 
