@@ -6,7 +6,7 @@ import json
 def GetToken(creds):
     print("Generate token")
     url = 'https://austin.maps.arcgis.com/sharing/rest/generateToken'
-    params = {'username' : creds['username'],'password' : creds['password'], 'referer' : 'http://www.arcgis.com','f' : 'pjson' }
+    params = {'username' : creds['user'],'password' : creds['password'], 'referer' : 'http://www.arcgis.com','f' : 'pjson' }
     res = requests.post(url, params=params)
     res = res.json()
     token = res['token']

@@ -1,10 +1,12 @@
 import requests
-
-
+import arrow
+import pdb
 
 def GetFields(knack_params):
-    
-    print('generate object/field list')
+    print('get knack field metadata')
+
+    objects_url = 'https://api.knack.com/v1/objects/'
+    table_url = 'https://api.knack.com/v1/pages/scene_{}/views/view_{}/records?rows_per_page=1000'.format( knack_params['SCENE'], knack_params['VIEW'])
 
     fields = []
     filtered_fields = {}
@@ -12,7 +14,7 @@ def GetFields(knack_params):
     headers = { 'x-knack-application-id': knack_params['APPLICATION_ID'], 'x-knack-rest-api-key': knack_params['API_KEY'] }
 
     try:
-        req = requests.get(knack_params['OBJECTS_URL'], headers=headers)
+        req = requests.get(objects_url, headers=headers)
 
     except requests.exceptions.HTTPError as e:
         raise e
@@ -25,7 +27,7 @@ def GetFields(knack_params):
 
             current_object = knack_object["key"]
 
-            url = "{}{}/fields?rows_per_page=1000".format(knack_params['OBJECTS_URL'], current_object)
+            url = "{}{}/fields?rows_per_page=1000".format(objects_url, current_object)
 
             try:
                 req = requests.get(url, headers=headers)
@@ -46,9 +48,9 @@ def GetFields(knack_params):
 
 
 def GetData(knack_params):
-    print('fetch data from query')
-
-    url = knack_params['TABLE_URL']
+    print('get knack data')
+    
+    table_url = 'https://api.knack.com/v1/pages/scene_{}/views/view_{}/records?rows_per_page=1000'.format( knack_params['SCENE'], knack_params['VIEW'])
 
     current_page = 1
 
@@ -57,7 +59,7 @@ def GetData(knack_params):
     params = {'page':current_page}
 
     try:
-        req = requests.get(url, headers=headers, params=params)
+        req = requests.get(table_url, headers=headers, params=params)
 
     except requests.exceptions.HTTPError as e:
         raise e
@@ -75,7 +77,7 @@ def GetData(knack_params):
             params = {'page':current_page}
 
             try:
-                req = requests.get(url, headers=headers, params=params)
+                req = requests.get(table_url, headers=headers, params=params)
 
                 data = data + req.json()['records']
             
@@ -87,8 +89,15 @@ def GetData(knack_params):
     return data
 
 
+def StandardizeDate(timestamp):
+    d = timestamp / 1000  #  convert from milliseconds
+    return arrow.get(d).format('YYYY-MM-DDTHH:mm:ss')
+    
+
 
 def ParseData(data, field_list, knack_params):
+    #  create a happy list of dicts from raw knack data
+    #  also reformats date/time to YYYY-MM-DDTHH:MM:SS
     print('parse Knack data')
     
     in_fields = knack_params['FIELD_NAMES']
@@ -131,10 +140,10 @@ def ParseData(data, field_list, knack_params):
                     new_record['LONGITUDE'] = record[key]['longitude']
 
                 elif field_type == 'date':
-                    new_record[field_label] = record[key]['date']
+                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
                 
                 elif field_type == 'date_time':
-                    new_record[field_label] = record[key]['date']
+                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
 
                 elif field_type == 'connection':
                     new_record[field_label] = record[key][0]['identifier']

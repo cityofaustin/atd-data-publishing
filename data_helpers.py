@@ -6,7 +6,7 @@ def FilterbyKey(data, key, val_list):
 
 
 def GroupByKey(dataset, key):
-    print('group data by '{}.format(key))
+    print('group data by {}'.format(key))
 
     grouped_data = {}
     
@@ -24,6 +24,26 @@ def ListKeyValues(list_of_dicts, key):
 
 
 
+def UpperCaseKeys(list_of_dicts):
+    upper = []
+
+    for record in list_of_dicts:
+        upper.append(dict((k.upper(), v) for k,v in record.items()))
+    
+    return upper
+
+
+
+def StringifyKeyValues(list_of_dicts):
+    stringified = []
+
+    for record in list_of_dicts:
+        stringified.append(dict((k, str(v)) for k,v in record.items()))
+
+    return stringified
+
+
+
 def MergeDicts(source_dict, merge_dict, join_field, merge_fields):
     #  insert fields from a merge dictionary to a source dictioary
     #  based on a matching key/val
@@ -34,13 +54,13 @@ def MergeDicts(source_dict, merge_dict, join_field, merge_fields):
 
     count = 0
 
-    source_key_list = ListKeyValues(source_dict, join_field)
-    merge_key_list = ListKeyValues(merge_dict, join_field)
+    source_keys = ListKeyValues(source_dict, join_field)
+    merge_keys = ListKeyValues(merge_dict, join_field)
     
     
-    for key in source_key_list:
+    for key in source_keys:
 
-        if key in merge_dict:
+        if key in merge_keys:
             for field in merge_fields:
                 source_dict[key][field] = merge_dict[key][field]
 
@@ -57,72 +77,49 @@ def MergeDicts(source_dict, merge_dict, join_field, merge_fields):
 
 
 
+def DetectChanges(old_data, new_data, join_key):
+    #  compare two list of dicts based on a unique join_key
+    #  only compare keys present in both dicts
+    print('detect changes between datasets')
 
-def DetectChanges(new, old, join_key, compare_key):
-    print('detect changes and generate historical list')
+    change = []
+    delete = []
+    new = []
+    no_change = []
 
-    changed_records = []  #  see https://dev.socrata.com/publishers/changed.html
-    new_records = []
-    not_processed = []
-    no_update = 0  
-    new_count = 0
-    update = 0
-    delete = 0    
-    changed_historical = []
+    old_keys = ListKeyValues(old_data, join_key)
+    new_keys = ListKeyValues(new_data, join_key)
+    
+    for old_record in old_data:  #  delete record
+        for new_record in new_data:
+            if old_record[join_key] == new_record[join_key]:
+                break
 
-    for record in new:
-        lookup = str(new[record][join_key])
-
-        if lookup in old:
-            new_value = str(new[record][compare_key])
-
-            try:
-                old_value = str(old[lookup][compare_key])
-
-            except:
-                not_processed.append(new[record][join_key])
-                continue
-            
-            if new_value == old_value:
-                no_update += 1
-            
-            else:
-                
-                new[record][compare_key + '_previous'] = old_value
-                
-                changed_records.append(new[record])
-                
-                record_retired_datetime = arrow.now()
-                old[lookup]['record_retired_datetime'] = record_retired_datetime.format('YYYY-MM-DD HH:mm:ss')
-
-                processed_datetime = arrow.get(old[lookup]['processed_datetime']).replace(tzinfo='US/Central')
-
-                delta = record_retired_datetime - processed_datetime
-                old[lookup][ compare_key + '_duration'] = delta.seconds
-                
-                changed_historical.append(old[lookup])
-            
         else:
-            new_records.append(new[record])
+            delete.append(old_record)
 
-    for record in old:  #  compare socrata to KITS to idenify deleted records
-        lookup = old[record]['atd_signal_id']
-        
-        if lookup not in new:
-            delete += 1
+    for new_record in new_data:
+        if new_record[join_key] not in old_keys:  #  new record
+            new.append(new_record)
+            continue
 
-            changed.append({ 
-                'atd_signal_id': lookup,
-                ':deleted': True
-            })
+        for old_record in old_data:
+            if new_record[join_key] == old_record[join_key]:  #  record match
+                
+                for key in new_record:
+                    if key in old_record:  #  key exists in old
+
+                        if new_record[key] != old_record[key]:  #  key/val unequal
+                            change.append(new_record)  #  change record
+                            break
+
+                else:
+                    no_change.append(new_record)  #  no change
+                    break
 
     return { 
-        'changed': changed,
-        'not_processed': not_processed,
-        'new_records': new_records,
+        'change': change,
         'new': new,
-        'update': len(changed),
-        'no_update':  no_update,
+        'no_change': no_change,
         'delete': delete,
-        'changed_historical': changed_historical
     }
