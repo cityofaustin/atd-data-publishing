@@ -1,6 +1,7 @@
 import requests
 import json
-
+import arrow
+import pdb
 
 
 def GetToken(creds):
@@ -14,7 +15,7 @@ def GetToken(creds):
 
 
 
-def QueryFeatures(url, token):
+def QueryAllFeatures(url, token):
     url = url + 'query'
     where = 'OBJECTID>0'
     params = {'f' : 'json','where': where , 'outFields'  : '*','token' : token, 'returnGeometry':False }
@@ -64,7 +65,7 @@ def DeleteFeatures(url, token):
 
 
 
-def BuildPayload(data):
+def BuildPayload(data, **options):
     print('build data payload')
     
     payload = []
@@ -75,15 +76,61 @@ def BuildPayload(data):
         new_record = { 'attributes': {}, 'geometry': { 'spatialReference': {'wkid': 4326} } }
 
         for attribute in record:
+            
             if attribute == 'LATITUDE':
                     new_record['geometry']['y'] = record[attribute]
 
             elif attribute == 'LONGITUDE':
                     new_record['geometry']['x'] = record[attribute]
 
-            else:
-                new_record['attributes'][attribute] = record[attribute]
+            if (options['convertUnixDates']):
+                if 'DATE' in attribute:
+                    try: 
+                        new_record[attribute] = arrow.get(record[attribute]).format('YYYY-MM-DD HH:mm:ss')
+                        continue
+                
+                    except:
+                        new_record[attribute] = ''
+                        continue
+
+            new_record['attributes'][attribute] = record[attribute]
                
         payload.append(new_record)
     
     return payload
+
+
+
+def ParseAttributes(query_results):
+    print('parse feature attributes')
+    results = []
+
+    for record in query_results['features']:
+        results.append(record['attributes'])
+
+    return results
+
+
+
+def StandardizeDate(data):
+    print('convert to unix seconds')
+
+    for record in data:
+        for key in record:
+            if '_DATE' in key:
+                if record[key] != None:
+                    print(record[key])
+                    record[key] = str(int(record[key]) / 1000)  #  convert from milliseconds
+
+    return data
+
+
+
+
+
+
+
+
+
+
+

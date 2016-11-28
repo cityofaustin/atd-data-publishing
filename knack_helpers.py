@@ -90,9 +90,7 @@ def GetData(knack_params):
 
 
 def StandardizeDate(timestamp):
-    d = timestamp / 1000  #  convert from milliseconds
-    return arrow.get(d).format('YYYY-MM-DDTHH:mm:ss')
-    
+    return timestamp / 1000  #  convert from milliseconds
 
 
 def ParseData(data, field_list, knack_params):

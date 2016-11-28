@@ -3,7 +3,6 @@ import requests
 import json
 
 
-
 def FetchPublicData(resource):
     print('fetch public socrata data')
     
@@ -96,3 +95,31 @@ def PrepPubLog(date_time, event, socrata_response):
         'deleted': socrata_response['Rows Deleted'],
         'response_message': response_message
     } ]
+
+
+def ConvertToUnix(data):
+    for record in data:
+        for key in record:
+            if '_DATE' in key:
+                d = arrow.get(record[key], 'YYYY-MM-DDTHH:mm:ss')
+                record[key] = str(d.timestamp)
+
+    return data
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

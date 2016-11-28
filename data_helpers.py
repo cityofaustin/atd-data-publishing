@@ -108,7 +108,7 @@ def DetectChanges(old_data, new_data, join_key):
                 
                 for key in new_record:
                     if key in old_record:  #  key exists in old
-
+                        
                         if new_record[key] != old_record[key]:  #  key/val unequal
                             change.append(new_record)  #  change record
                             break
@@ -116,6 +116,11 @@ def DetectChanges(old_data, new_data, join_key):
                 else:
                     no_change.append(new_record)  #  no change
                     break
+
+    print('change: {}'.format(len(change)))
+    print('new: {}'.format(len(new)))
+    print('delete: {}'.format(len(delete)))
+    print('no_change: {}'.format(len(no_change)))
 
     return { 
         'change': change,
