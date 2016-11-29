@@ -99,7 +99,7 @@ def StandardizeDate(timestamp):
 
 def ParseData(data, field_list, knack_params):
     #  create a happy list of dicts from raw knack data
-    #  also reformats date/time to YYYY-MM-DDTHH:MM:SS
+    
     print('parse Knack data')
     
     in_fields = knack_params['FIELD_NAMES']
