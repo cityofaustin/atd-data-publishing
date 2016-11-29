@@ -1,6 +1,6 @@
 # transportation-data-publishing
 
-This repo houses ETL scripts for Austin Transportation's open data projects. They're written in Python.
+This repo houses ETL scripts for Austin Transportation's open data projects. They're written in Python. Check out [sig_pub.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/sig_pub.py) to see the scripts be happy together.
 
 #### ArcGIS Online Helpers (agol_helpers.py)
 Query, add, and delete features from an ArcGIS Online Feature Service
