@@ -58,6 +58,8 @@ def GetData(knack_params):
     
     params = {'page':current_page}
 
+    pdb.set_trace()
+
     try:
         req = requests.get(table_url, headers=headers, params=params)
 
@@ -89,8 +91,10 @@ def GetData(knack_params):
     return data
 
 
+
 def StandardizeDate(timestamp):
     return timestamp / 1000  #  convert from milliseconds
+
 
 
 def ParseData(data, field_list, knack_params):
