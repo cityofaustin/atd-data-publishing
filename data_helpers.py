@@ -117,11 +117,6 @@ def DetectChanges(old_data, new_data, join_key):
                     no_change.append(new_record)  #  no change
                     break
 
-    print('change: {}'.format(len(change)))
-    print('new: {}'.format(len(new)))
-    print('delete: {}'.format(len(delete)))
-    print('no_change: {}'.format(len(no_change)))
-
     return { 
         'change': change,
         'new': new,
