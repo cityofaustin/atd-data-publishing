@@ -58,8 +58,6 @@ def GetData(knack_params):
     
     params = {'page':current_page}
 
-    pdb.set_trace()
-
     try:
         req = requests.get(table_url, headers=headers, params=params)
 
