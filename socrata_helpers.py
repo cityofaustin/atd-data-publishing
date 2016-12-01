@@ -38,8 +38,13 @@ def FetchPrivateData(creds, resource):
 def CreatePayload(detection_obj, prim_key):
     #  readies a socrata upsert from the results of change detection
     #  see https://dev.socrata.com/publishers/upsert.html
+    now = arrow.now()
     payload = []
     payload = payload + detection_obj['new'] + detection_obj['change']
+
+    for record in payload:
+        record['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
+        record['record_id'] = '{}_{}'.format(record[prim_key], str(now.timestamp))
 
     for record in detection_obj['delete']:
         payload.append( { prim_key : record[prim_key], ':deleted' : True } )
@@ -79,8 +84,14 @@ def UpsertData(creds, payload, resource):
 def PrepPubLog(date_time, event, socrata_response):
     print('prep publication log')
 
-    if socrata_response['Errors']:
+    if 'error' in socrata_response:
         response_message = socrata_response['message']
+        return [ {
+        'event': event,
+        'timestamp': date_time.timestamp, 
+        'date_time':  date_time.format('YYYY-MM-DD HH:mm:ss'),
+        'response_message': response_message
+    } ]
 
     else:
         response_message = ''
@@ -105,21 +116,27 @@ def ConvertToUnix(data):
                 record[key] = str(d.timestamp)
 
     return data
+
     
 
+def AddHistoricalFields(list_of_dicts):
 
+    for record in list_of_dicts:
+        
+        record_retired_datetime = arrow.now()
+        record['record_retired_datetime'] = record_retired_datetime.format('YYYY-MM-DD HH:mm:ss')
 
+        if 'processed_datetime' in record:
+            processed_datetime = arrow.get(record['processed_datetime']).replace(tzinfo='US/Central')
+        
+        else:
+            print(record)
+            continue
+        
+        delta = record_retired_datetime - processed_datetime
 
+        record['operation_state_duration'] = delta.seconds
 
-
-
-
-
-
-
-
-
-
-
+    return list_of_dicts
 
 

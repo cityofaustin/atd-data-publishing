@@ -20,7 +20,11 @@ def GroupByKey(dataset, key):
 
 def ListKeyValues(list_of_dicts, key):
     #  generate a list of key values from a list of dictionaries
-    return [record[key] for record in list_of_dicts]
+    if len(list_of_dicts) > 0:
+        return [record[key] for record in list_of_dicts]
+
+    else:
+        return []
 
 
 
@@ -34,6 +38,16 @@ def UpperCaseKeys(list_of_dicts):
 
 
 
+def LowerCaseKeys(list_of_dicts):
+    lower = []
+
+    for record in list_of_dicts:
+        lower.append(dict((k.lower(), v) for k,v in record.items()))
+    
+    return lower
+
+
+
 def StringifyKeyValues(list_of_dicts):
     stringified = []
 
@@ -44,36 +58,30 @@ def StringifyKeyValues(list_of_dicts):
 
 
 
-def MergeDicts(source_dict, merge_dict, join_field, merge_fields):
+def MergeDicts(source_dicts, merge_dicts, join_key, merge_keys):
     #  insert fields from a merge dictionary to a source dictioary
     #  based on a matching key/val
     #  join field must exist in both source and merge dictionaries
     print('merge data')
 
-    not_in_merger = []
-
-    count = 0
-
-    source_keys = ListKeyValues(source_dict, join_field)
-    merge_keys = ListKeyValues(merge_dict, join_field)
+    merged = []
     
+    for merge_dict in merge_dicts:
+
+        for source_dict in source_dicts: 
+            
+            if str(merge_dict[join_key]) == str(source_dict[join_key]):
+
+                for key in merge_dict:                
+
+                    if key in merge_keys:
     
-    for key in source_keys:
+                        source_dict[key] = merge_dict[key]
 
-        if key in merge_keys:
-            for field in merge_fields:
-                source_dict[key][field] = merge_dict[key][field]
+                merged.append(source_dict)
+                continue
 
-        else:
-            not_in_merger.append(key)
-            del source_dict[key]
-
-    print(str(len(not_in_merger)) + " records not found in merge dictionary!")
-
-    return {
-        'merged_data': source_dict,
-        'not_found': not_in_merger
-    }
+    return merged
 
 
 
@@ -87,35 +95,42 @@ def DetectChanges(old_data, new_data, join_key):
     new = []
     no_change = []
 
-    old_keys = ListKeyValues(old_data, join_key)
-    new_keys = ListKeyValues(new_data, join_key)
-    
-    for old_record in old_data:  #  delete record
-        for new_record in new_data:
-            if old_record[join_key] == new_record[join_key]:
-                break
 
-        else:
-            delete.append(old_record)
+    if new_data:        
 
-    for new_record in new_data:
-        if new_record[join_key] not in old_keys:  #  new record
-            new.append(new_record)
-            continue
-
-        for old_record in old_data:
-            if new_record[join_key] == old_record[join_key]:  #  record match
-                
-                for key in new_record:
-                    if key in old_record:  #  key exists in old
-                        
-                        if new_record[key] != old_record[key]:  #  key/val unequal
-                            change.append(new_record)  #  change record
-                            break
-
-                else:
-                    no_change.append(new_record)  #  no change
+        old_keys = ListKeyValues(old_data, join_key)
+        new_keys = ListKeyValues(new_data, join_key)
+        
+        for old_record in old_data:  #  delete record
+            
+            for new_record in new_data:
+                if old_record[join_key] == new_record[join_key]:
                     break
+
+            else:
+                delete.append(old_record)
+
+        for new_record in new_data:
+            if new_record[join_key] not in old_keys:  #  new record
+                new.append(new_record)
+                continue
+
+            for old_record in old_data:
+                if new_record[join_key] == old_record[join_key]:  #  record match
+                    
+                    for key in new_record:
+                        if key in old_record:  #  key exists in old
+                            
+                            if new_record[key] != old_record[key]:  #  key/val unequal
+                                change.append(new_record)  #  change record
+                                break
+
+                    else:
+                        no_change.append(new_record)  #  no change
+                        break
+
+    else:
+        delete = old_data
 
     return { 
         'change': change,

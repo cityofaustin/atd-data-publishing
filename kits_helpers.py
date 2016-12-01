@@ -9,11 +9,11 @@ def GenerateStatusIdQuery(data, id_key):
     where_ids = str(tuple(ids))
     
     query  = '''
-        SELECT i.INTID as kits_id
-            , e.DATETIME as operation_state_datetime
-            , e.STATUS as operation_state
-            , e.PLANID as plan_id
-            , i.ASSETNUM as atd_signal_id
+        SELECT i.INTID as KITS_ID
+            , e.DATETIME as OPERATION_STATE_DATETIME
+            , e.STATUS as OPERATION_STATE
+            , e.PLANID as PLAN_ID
+            , i.ASSETNUM as ATD_SIGNAL_ID
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
@@ -38,7 +38,7 @@ def GetDataAsDict(creds, query):
     cursor = conn.cursor(as_dict=True)
     cursor.execute(query)  
 
-    data = StringifyData(cursor.fetchall())
+    data = cursor.fetchall()
 
     return data
 

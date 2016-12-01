@@ -70,6 +70,8 @@ def main(date_time):
 
         add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
+        pdb.set_trace()
+
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
         socrata_data = data_helpers.UpperCaseKeys(socrata_data)

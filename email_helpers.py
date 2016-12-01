@@ -23,7 +23,7 @@ def SendStaleEmail(elapsed_time, to):
 
     subject = 'DATA PROCESSING ALERT: KITS Status Data is {} mintues old'.format(str(elapsed_time))
     
-    body = 'DATA PROCESSING ALERT: KITS intersection status data has not been updated for more than {} minutes.'.format(str(delta_minutes))
+    body = 'DATA PROCESSING ALERT: KITS intersection status data has not been updated for more than {} minutes.'.format(elapsed_time)
     
     EMAIL_FOOTER = '''
     \n
