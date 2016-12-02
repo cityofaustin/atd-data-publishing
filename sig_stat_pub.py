@@ -1,7 +1,3 @@
-#   biggest issue right now will be 
-#  - lower case fields from kits and upper from knack
-#  - socrata payload object change in detect changes
-
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))

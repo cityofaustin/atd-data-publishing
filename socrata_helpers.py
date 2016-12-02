@@ -84,10 +84,8 @@ def UpsertData(creds, payload, resource):
 def PrepPubLog(date_time, event, socrata_response):
     print('prep publication log')
 
-    pdb.set_trace()
-
     if 'error' in socrata_response:
-        print("WHOOOOPS!")
+        
         return [ {
             'event': event,
             'timestamp': date_time.timestamp, 
