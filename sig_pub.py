@@ -49,28 +49,13 @@ def main(date_time):
 
         knack_data = data_helpers.StringifyKeyValues(knack_data)
         
-        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        # token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
 
-        # detect changes between new and existing ArcGIS Online Features
-        # nixing this headache for now
+        # agol_payload = agol_helpers.BuildPayload(knack_data, convertUnixDates=True )
 
-        # agol_data = agol_helpers.QueryAllFeatures(SERVICE_URL, token)
+        # del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
 
-        # agol_data = agol_helpers.ParseAttributes(agol_data)
-
-        # agol_data = agol_helpers.StandardizeDate(agol_data)
-
-        # agol_data = data_helpers.StringifyKeyValues(agol_data)
-
-        # cd_results_0 = data_helpers.DetectChanges(agol_data, knack_data, PRIMARY_KEY)
-
-        agol_payload = agol_helpers.BuildPayload(knack_data, convertUnixDates=True )
-
-        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
-
-        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
-
-        pdb.set_trace()
+        # add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
@@ -89,6 +74,10 @@ def main(date_time):
 
         else:
             socrata_payload = []
+
+        socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+
+        socrata_payload = socrata_helpers.ConvertUnixToStandard(socrata_payload)
 
         upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
 

@@ -42,9 +42,9 @@ def CreatePayload(detection_obj, prim_key):
     payload = []
     payload = payload + detection_obj['new'] + detection_obj['change']
 
-    for record in payload:
-        record['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-        record['record_id'] = '{}_{}'.format(record[prim_key], str(now.timestamp))
+    #  for record in payload:
+        #  record['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
+        #  record['record_id'] = '{}_{}'.format(record[prim_key], str(now.timestamp))
 
     for record in detection_obj['delete']:
         payload.append( { prim_key : record[prim_key], ':deleted' : True } )
@@ -111,13 +111,24 @@ def PrepPubLog(date_time, event, socrata_response):
 def ConvertToUnix(data):
     for record in data:
         for key in record:
-            if '_DATE' in key:
+            if '_DATE' in key.upper():
                 d = arrow.get(record[key], 'YYYY-MM-DDTHH:mm:ss')
                 record[key] = str(d.timestamp)
 
     return data
 
-    
+
+
+def ConvertUnixToStandard(list_of_dicts):
+    for record in list_of_dicts:
+        for key in record:
+            if '_DATE' in key.upper():
+                print(record[key])
+                d = arrow.get(float(record[key]))
+                record[key] = d.format('YYYY-MM-DDTHH:mm:ss')
+    return list_of_dicts
+
+
 
 def AddHistoricalFields(list_of_dicts):
 
