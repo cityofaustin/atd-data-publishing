@@ -84,17 +84,20 @@ def UpsertData(creds, payload, resource):
 def PrepPubLog(date_time, event, socrata_response):
     print('prep publication log')
 
+    pdb.set_trace()
+
     if 'error' in socrata_response:
-        response_message = socrata_response['message']
+        print("WHOOOOPS!")
         return [ {
-        'event': event,
-        'timestamp': date_time.timestamp, 
-        'date_time':  date_time.format('YYYY-MM-DD HH:mm:ss'),
-        'response_message': response_message
-    } ]
+            'event': event,
+            'timestamp': date_time.timestamp, 
+            'date_time':  date_time.format('YYYY-MM-DD HH:mm:ss'),
+            'response_message': socrata_response['message']
+        }]
 
     else:
-        response_message = ''
+        if not socrata_response['message']:
+            socrata_response['message'] = ''
 
     return [ {
         'event': event,
@@ -104,7 +107,7 @@ def PrepPubLog(date_time, event, socrata_response):
         'updated': socrata_response['Rows Updated'],
         'created': socrata_response['Rows Created'],
         'deleted': socrata_response['Rows Deleted'],
-        'response_message': response_message
+        'response_message': socrata_response['message']
     } ]
 
 

@@ -74,7 +74,7 @@ def main(date_time):
 
         else:
             new_data = []
-    
+
         old_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
 
         old_data = data_helpers.UpperCaseKeys(old_data)
@@ -86,12 +86,12 @@ def main(date_time):
 
             socrata_payload = socrata_helpers.CreateLocationFields(socrata_payload)
 
+            socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+
+            status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
+        
         else:
-            socrata_payload = []
-
-        socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
-
-        status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
+            status_upsert_response = { 'Errors' : 0, 'message' : 'No signal status change detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
 
         if 'error' in status_upsert_response:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_response)
@@ -101,7 +101,7 @@ def main(date_time):
 
         log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_update', status_upsert_response)
 
-        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
+        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
 
         if cd_results['delete']:
 
