@@ -42,7 +42,7 @@ def main(date_time):
 
         knack_data = knack_helpers.GetData(KNACK_PARAMS)
 
-        knack_data_parsed = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS)
+        knack_data_parsed = knack_helpers.ParseLocationData(knack_data, field_list, KNACK_PARAMS)
 
         kits_query = kits_helpers.GenerateStatusIdQuery(knack_data_parsed, 'ATD_SIGNAL_ID')
         

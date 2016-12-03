@@ -1,7 +1,17 @@
+from operator import itemgetter
+from collections import defaultdict
+
 def FilterbyKey(data, key, val_list):
     #  filter a list of dictionaries by a list of key values
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in data if d[key] in val_list]  
+
+
+
+def FilterbyKeyExists(data, key):
+    #  filter a list of dictionaries by a list of key values
+    #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
+    return [d for d in data if d[key]]  
 
 
 
@@ -138,3 +148,65 @@ def DetectChanges(old_data, new_data, join_key):
         'no_change': no_change,
         'delete': delete,
     }
+
+
+def ConcatKeyVals(list_of_dicts, list_of_keys, new_key, join_string):
+
+    for d in list_of_dicts:
+        concat =[]
+            
+        for key in list_of_keys:
+            if not d[key]:
+                continue
+            concat.append( str(d[key]) )
+
+        d[new_key] = join_string.join(concat)
+
+    return list_of_dicts
+
+
+
+def GroupByUniqueValue(list_of_dicts, key):
+    grouped = {}
+    
+    for record in list_of_dicts:
+
+        if record[key] not in grouped:
+            grouped[record[key]] = [] 
+
+        grouped[record[key]].append(record)
+
+    return grouped
+
+
+
+def SortDictsInt(list_of_dicts, key):
+    #  sort a list of dictionarys based on an integer value
+    #  http://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-values-of-the-dictionary-in-python
+    return sorted(list_of_dicts, key=lambda k: int(k[key]), reverse=True) 
+    
+
+
+def createRankList(list_of_dicts):
+    #  create 'rank' key and assign rank based on position of dict in list
+    for record in list_of_dicts:
+        record['RANK'] = list_of_dicts.index(record) + 1 #  because list indices start at
+    
+    return list_of_dicts
+
+
+
+def ReduceDicts(list_of_dicts, list_of_keys):
+    #  del keys from dicts in a list of dicts
+    #  put the keys you want to keep in list_of_keys
+    out_list_of_dicts = []
+    
+    for d in list_of_dicts:
+        temp = {}
+        for key in d:
+            if key in list_of_keys:
+                temp[key] = d[key]
+
+        out_list_of_dicts.append(temp)
+
+    return out_list_of_dicts

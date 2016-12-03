@@ -45,7 +45,7 @@ def main(date_time):
 
         knack_data = knack_helpers.GetData(KNACK_PARAMS)
 
-        knack_data = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS)
+        knack_data = knack_helpers.ParseLocationData(knack_data, field_list, KNACK_PARAMS)
 
         knack_data = data_helpers.StringifyKeyValues(knack_data)
         
