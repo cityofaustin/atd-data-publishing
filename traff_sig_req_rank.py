@@ -18,6 +18,7 @@ PRIMARY_KEY = 'ATD_EVAL_ID'
 STATUS_KEY = 'TRAFFIC_EVAL_STATUS'
 GROUP_KEY = 'YR_MO_RND'
 SCORE_KEY = 'EVAL_SCORE'
+CONCAT_KEYS = ['RANK_ROUND_MO', 'RANK_ROUND_YR']
 
 KNACK_PARAMS = {  
     'REFERENCE_OBJECTS' : ['object_27'],
@@ -37,12 +38,9 @@ KNACK_PARAMS_2 = {
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
-CONCAT_KEYS = ['RANK_ROUND_MO', 'RANK_ROUND_YR']
-
 now = arrow.now()
 
 def main(date_time):
-    print('starting stuff now')
 
     try:       
         field_list = knack_helpers.GetFields(KNACK_PARAMS_2)
@@ -60,7 +58,7 @@ def main(date_time):
         knack_data = data_helpers.StringifyKeyValues(source_data)
 
         knack_data = data_helpers.FilterbyKey(knack_data, STATUS_KEY, ['NEW', 'IN PROGRESS', 'COMPLETED'])
-        
+
         knack_data = data_helpers.FilterbyKeyExists(knack_data, SCORE_KEY)
 
         knack_data = data_helpers.ConcatKeyVals(knack_data, CONCAT_KEYS, GROUP_KEY, '_')
@@ -69,7 +67,6 @@ def main(date_time):
         
         for d in knack_data_dict:
             knack_data_dict[d] = data_helpers.SortDictsInt(knack_data_dict[d], SCORE_KEY)
-
 
         for d in knack_data_dict:
             knack_data_dict[d] = data_helpers.createRankList(knack_data_dict[d])
@@ -85,6 +82,8 @@ def main(date_time):
 
         final_data = data_helpers.MergeDicts(ranked_data, id_data, PRIMARY_KEY, ['knack_id'])
 
+        pdb.set_trace()
+        
         return final_data
         
     except Exception as e:
@@ -94,5 +93,7 @@ def main(date_time):
 
 
 r = main(now)
+
+print(r)
 
 

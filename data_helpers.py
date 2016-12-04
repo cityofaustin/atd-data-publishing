@@ -7,6 +7,7 @@ import pdb
 
 
 def FilterbyKey(data, key, val_list):
+    print('filter by key {}'.format(key))
     #  filter a list of dictionaries by a list of key values
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in data if d[key] in val_list]  
@@ -14,9 +15,10 @@ def FilterbyKey(data, key, val_list):
 
 
 def FilterbyKeyExists(data, key):
-    #  filter a list of dictionaries by a list of key values
+    'filter by key exists: {}'.format(key)
+    #  return a list of dictionaries that have a specified key string
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
-    return [d for d in data if d[key]]  
+    return [d for d in data if key in d]  
 
 
 
@@ -229,12 +231,12 @@ def DetectChanges(old_data, new_data, join_key, **options):
 
 
 def ConcatKeyVals(list_of_dicts, list_of_keys, new_key, join_string):
-
+    print('concat keys {}'.format(list_of_keys))
     for d in list_of_dicts:
         concat =[]
             
         for key in list_of_keys:
-            if not d[key]:
+            if not key in d:
                 continue
             concat.append( str(d[key]) )
 
@@ -259,7 +261,7 @@ def GroupByUniqueValue(list_of_dicts, key):
 
 
 def SortDictsInt(list_of_dicts, key):
-    #  sort a list of dictionarys based on an integer value
+    #  sort a list of dictionarys based on an integer key value
     #  http://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-values-of-the-dictionary-in-python
     return sorted(list_of_dicts, key=lambda k: int(k[key]), reverse=True) 
     
