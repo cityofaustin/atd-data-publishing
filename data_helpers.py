@@ -128,7 +128,7 @@ def MergeDicts(source_dicts, merge_dicts, join_key, merge_keys):
     #  insert fields from a merge dictionary to a source dictioary
     #  based on a matching key/val
     #  join field must exist in both source and merge dictionaries
-    print('merge data')
+    print('merge dicts')
 
     merged = []
     
@@ -247,6 +247,7 @@ def ConcatKeyVals(list_of_dicts, list_of_keys, new_key, join_string):
 
 
 def GroupByUniqueValue(list_of_dicts, key):
+    print('groupd by key {}'.format(key))
     grouped = {}
     
     for record in list_of_dicts:
@@ -261,16 +262,18 @@ def GroupByUniqueValue(list_of_dicts, key):
 
 
 def SortDictsInt(list_of_dicts, key):
+    print('sort list of dicts')
     #  sort a list of dictionarys based on an integer key value
     #  http://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-values-of-the-dictionary-in-python
     return sorted(list_of_dicts, key=lambda k: int(k[key]), reverse=True) 
     
 
 
-def createRankList(list_of_dicts):
+def createRankList(list_of_dicts, rank_key_name):
+    print('create rank list')
     #  create 'rank' key and assign rank based on position of dict in list
     for record in list_of_dicts:
-        record['RANK'] = list_of_dicts.index(record) + 1 #  because list indices start at
+        record[rank_key_name] = list_of_dicts.index(record) + 1 #  because list indices start at
     
     return list_of_dicts
 
@@ -279,6 +282,7 @@ def createRankList(list_of_dicts):
 def ReduceDicts(list_of_dicts, list_of_keys):
     #  del keys from dicts in a list of dicts
     #  put the keys you want to keep in list_of_keys
+    print( 'reduce dictionary to keys {}'.format(list_of_keys) )
     out_list_of_dicts = []
     
     for d in list_of_dicts:
@@ -290,3 +294,28 @@ def ReduceDicts(list_of_dicts, list_of_keys):
         out_list_of_dicts.append(temp)
 
     return out_list_of_dicts
+
+
+
+def ReplaceDictKeys(list_of_dicts, lookup_dict):
+    print('replace keys')
+
+    for d in list_of_dicts:
+        for key in d:
+            if key in lookup_dict:
+                d[lookup_dict[key]] = d.pop(key)
+
+    return list_of_dicts
+
+
+
+
+
+
+
+
+
+
+
+
+

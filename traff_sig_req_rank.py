@@ -19,21 +19,20 @@ STATUS_KEY = 'TRAFFIC_EVAL_STATUS'
 GROUP_KEY = 'YR_MO_RND'
 SCORE_KEY = 'EVAL_SCORE'
 CONCAT_KEYS = ['RANK_ROUND_MO', 'RANK_ROUND_YR']
+RANK_KEY = 'TRAFFIC_EVAL_RANK'
 
 KNACK_PARAMS = {  
     'REFERENCE_OBJECTS' : ['object_27'],
     'SCENE' : '175',
     'VIEW' : '508',
-    'FIELD_NAMES' : ['ATD_EVAL_ID', 'TRAFFIC_EVAL_STATUS', 'EVAL_SCORE', 'RANK_ROUND_MO', 'RANK_ROUND_YR'],
-    'OUT_FIELDS' : ['ATD_EVAL_ID', 'TRAFFIC_EVAL_STATUS', 'EVAL_SCORE', 'RANK_ROUND_MO', 'RANK_ROUND_YR'],
+    'FIELD_NAMES' : [PRIMARY_KEY, 'TRAFFIC_EVAL_STATUS', 'EVAL_SCORE', 'RANK_ROUND_MO', 'RANK_ROUND_YR'],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
 KNACK_PARAMS_2 = {  
     'REFERENCE_OBJECTS' : ['object_27'],
-    'FIELD_NAMES' : ['ATD_EVAL_ID'],
-    'OUT_FIELDS' : ['ATD_EVAL_ID'],
+    'FIELD_NAMES' : [PRIMARY_KEY, RANK_KEY],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
@@ -43,17 +42,19 @@ now = arrow.now()
 def main(date_time):
 
     try:       
-        field_list = knack_helpers.GetFields(KNACK_PARAMS_2)
+        field_dict = knack_helpers.GetFields(KNACK_PARAMS_2)
+
+        field_lookup = knack_helpers.CreateFieldLookup(field_dict, parse_raw=True)
 
         id_data = knack_helpers.GetObjectData(KNACK_PARAMS_2)
 
-        id_data = knack_helpers.ParseData(id_data, field_list, KNACK_PARAMS_2, include_ids=True)
+        id_data = knack_helpers.ParseData(id_data, field_dict, KNACK_PARAMS_2, include_ids=True)
 
-        field_list = knack_helpers.GetFields(KNACK_PARAMS)
+        field_dict = knack_helpers.GetFields(KNACK_PARAMS)
 
         source_data = knack_helpers.GetData(KNACK_PARAMS)
 
-        source_data = knack_helpers.ParseData(source_data, field_list, KNACK_PARAMS)
+        source_data = knack_helpers.ParseData(source_data, field_dict, KNACK_PARAMS)
 
         knack_data = data_helpers.StringifyKeyValues(source_data)
 
@@ -69,10 +70,7 @@ def main(date_time):
             knack_data_dict[d] = data_helpers.SortDictsInt(knack_data_dict[d], SCORE_KEY)
 
         for d in knack_data_dict:
-            knack_data_dict[d] = data_helpers.createRankList(knack_data_dict[d])
-
-        for d in knack_data_dict:
-            knack_data_dict[d] = data_helpers.ReduceDicts(knack_data_dict[d], [PRIMARY_KEY, 'RANK', 'EVAL_SCORE'])
+            knack_data_dict[d] = data_helpers.createRankList(knack_data_dict[d], RANK_KEY)
 
         ranked_data = []
 
@@ -80,11 +78,19 @@ def main(date_time):
             for d in knack_data_dict[key]: 
                 ranked_data.append(d)
 
-        final_data = data_helpers.MergeDicts(ranked_data, id_data, PRIMARY_KEY, ['knack_id'])
+        ranked_data = data_helpers.MergeDicts(ranked_data, id_data, PRIMARY_KEY, ['KNACK_ID'])
 
-        pdb.set_trace()
-        
-        return final_data
+        ranked_data = data_helpers.ReduceDicts(ranked_data, [RANK_KEY, 'KNACK_ID'])
+
+        ranked_data = data_helpers.ReplaceDictKeys(ranked_data, field_lookup)
+
+        update_response = []
+
+        for record in ranked_data:
+            response_json = knack_helpers.UpdateRecord(record, KNACK_PARAMS)
+            update_response.append(response_json)
+
+        return update_response
         
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))

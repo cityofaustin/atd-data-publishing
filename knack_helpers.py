@@ -1,5 +1,26 @@
 import requests
+import json
 import pdb
+
+
+def UpdateRecord(record_dict, knack_params):
+    #  record object must have 'KNACK_ID' field
+    print('update knack record')
+
+    knack_id = record_dict['KNACK_ID']  #  extract knack ID and remove from update object
+    del record_dict['KNACK_ID']
+
+    update_url = 'https://api.knack.com/v1/objects/{}/records/{}'.format(knack_params['REFERENCE_OBJECTS'][0], knack_id)
+
+    headers = { 'x-knack-application-id': knack_params['APPLICATION_ID'], 'x-knack-rest-api-key': knack_params['API_KEY'], 'Content-type': 'application/json'}
+
+    try:
+        req = requests.put(update_url, headers=headers, json=record_dict)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+
+    return req.json()
 
 
 
@@ -42,8 +63,27 @@ def GetFields(knack_params):
         if field['label'] in knack_params['FIELD_NAMES']:
 
                 filtered_fields[field['key'] + '_raw'] = field  #  we append raw here because we only want to access the raw fields
-
+ 
     return filtered_fields
+
+
+
+def CreateFieldLookup(field_dict, **options): 
+    #  use options['parse_raw'] to handle 'raw' field names
+    #  its not ideal
+    if not 'parse_raw' in options:
+        options['parse_raw'] = False
+
+    field_lookup = {}
+    
+    for field in field_dict:
+        
+        if options['parse_raw']:
+            new_field = field.replace('_raw', '')
+
+        field_lookup[field_dict[field]['label']] = new_field
+
+    return field_lookup
 
 
 
@@ -159,7 +199,7 @@ def ParseData(data, field_list, knack_params, **options):
                     new_record[field_label] = record[key]
 
         if options['include_ids']:
-            new_record['knack_id'] = record['id']
+            new_record['KNACK_ID'] = record['id']
 
         if options['require_locations']:
             if  'LONGITUDE' in new_record:
