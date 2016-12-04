@@ -42,7 +42,9 @@ def main(date_time):
 
         knack_data = knack_helpers.GetData(KNACK_PARAMS)
 
-        knack_data_parsed = knack_helpers.ParseLocationData(knack_data, field_list, KNACK_PARAMS)
+        knack_data_parsed = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
+
+      
 
         kits_query = kits_helpers.GenerateStatusIdQuery(knack_data_parsed, 'ATD_SIGNAL_ID')
         
@@ -50,7 +52,11 @@ def main(date_time):
 
         kits_data = data_helpers.StringifyKeyValues(kits_data)
 
+      
+
         stale = kits_helpers.CheckForStaleData(kits_data, 'OPERATION_STATE_DATETIME', 15)
+
+
 
         if stale['stale']:
             email_helpers.SendStaleEmail(stale['delta_minutes'], secrets.ALERTS_DISTRIBUTION)
@@ -63,7 +69,11 @@ def main(date_time):
 
             sys.exit()
 
+
+
         kits_data = data_helpers.FilterbyKey(kits_data, 'OPERATION_STATE', FLASH_STATUSES)  #  filter by flash statuses
+
+        
 
         if kits_data:
             new_data = data_helpers.MergeDicts(knack_data_parsed, kits_data, 'ATD_SIGNAL_ID', ['OPERATION_STATE_DATETIME', 'OPERATION_STATE', 'PLAN_ID'])
@@ -71,11 +81,15 @@ def main(date_time):
         else:
             new_data = []
 
+       
+
         old_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
 
         old_data = data_helpers.UpperCaseKeys(old_data)
 
         cd_results = data_helpers.DetectChanges(old_data, new_data, 'ATD_SIGNAL_ID')
+
+
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.CreatePayload(cd_results, 'ATD_SIGNAL_ID')
@@ -89,15 +103,21 @@ def main(date_time):
         else:
             status_upsert_response = { 'Errors' : 0, 'message' : 'No signal status change detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
 
+
+
+        log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_update', status_upsert_response)
+
+        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
+
+
+
         if 'error' in status_upsert_response:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_response)
             
         elif status_upsert_response['Errors']:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_response)
 
-        log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_update', status_upsert_response)
 
-        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
 
         if cd_results['delete']:
 
@@ -110,6 +130,8 @@ def main(date_time):
             historical_log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_historical_update', status_upsert_historical_response)
 
             pub_log_historical_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, historical_log_payload, SOCRATA_PUB_LOG_ID)
+
+
 
         else:
             print('no new historical status data to upload')

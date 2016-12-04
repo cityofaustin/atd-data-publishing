@@ -65,7 +65,11 @@ def DeleteFeatures(url, token):
 
 
 
-def BuildPayload(data, **options):
+def BuildPayload(data):
+    #  assemble an ArcREST feature object dictionary
+    #  spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
+    #  records without 'LATITUDE' field are ignored
+
     print('build data payload')
     
     payload = []
@@ -75,6 +79,9 @@ def BuildPayload(data, **options):
     for record in data:
         new_record = { 'attributes': {}, 'geometry': { 'spatialReference': {'wkid': 4326} } }
 
+        if not 'LATITUDE' in record:
+            continue
+
         for attribute in record:
             
             if attribute == 'LATITUDE':
@@ -82,16 +89,6 @@ def BuildPayload(data, **options):
 
             elif attribute == 'LONGITUDE':
                     new_record['geometry']['x'] = record[attribute]
-
-            if (options['convertUnixDates']):
-                if 'DATE' in attribute:
-                    try: 
-                        new_record[attribute] = arrow.get(record[attribute]).format('YYYY-MM-DD HH:mm:ss')
-                        continue
-                
-                    except:
-                        new_record[attribute] = ''
-                        continue
 
             new_record['attributes'][attribute] = record[attribute]
                
@@ -111,18 +108,6 @@ def ParseAttributes(query_results):
     return results
 
 
-
-def StandardizeDate(data):
-    print('convert to unix seconds')
-
-    for record in data:
-        for key in record:
-            if '_DATE' in key:
-                if record[key] != None:
-                    print(record[key])
-                    record[key] = str(int(record[key]) / 1000)  #  convert from milliseconds
-
-    return data
 
 
 

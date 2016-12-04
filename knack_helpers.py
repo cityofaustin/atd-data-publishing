@@ -1,6 +1,7 @@
 import requests
-import arrow
 import pdb
+
+
 
 def GetFields(knack_params):
     print('get knack field metadata')
@@ -89,89 +90,24 @@ def GetData(knack_params):
 
 
 
-def StandardizeDate(timestamp):
-    return timestamp / 1000  #  convert from milliseconds
-
-
-
-def ParseLocationData(data, field_list, knack_params, **options):
-    #  create a happy list of dicts from raw knack data
-    #  data missing lat/lon is discarded
-    
-    print('parse knack data')
-    
-    in_fields = knack_params['FIELD_NAMES']
-
-    out_fields = knack_params['OUT_FIELDS']
-
-    parsed_data = []
-
-    count = 0
-
-    for record in data:
-
-        count += 1
-        
-        new_record = {}
-        
-        for key in record:
-            
-            if not record[key]:
-                continue
-
-            if key in field_list:
-                field_label = field_list[key]['label']
-
-                field_type = field_list[key]['type']
-
-            else:
-                continue
-
-            if field_label == 'GEOCODE':  #  world's hackiest solution
-                field_label = 'LATITUDE'
-
-            if field_label in out_fields:                
-                new_record[field_label] = ''
-
-                if field_type == 'address':
-
-                    print('WHHHHHYYYY')
-
-                    new_record['LATITUDE'] = record[key]['latitude']
-
-                    new_record['LONGITUDE'] = record[key]['longitude']
-
-                elif field_type == 'date':
-                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
-                
-                elif field_type == 'date_time':
-                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
-
-                elif field_type == 'connection':
-                    new_record[field_label] = record[key][0]['identifier']
-
-                else:
-                    new_record[field_label] = record[key]
-
-        for field in out_fields:
-
-            if field not in new_record:
-
-                new_record[field] = ''
-        
-        if  new_record['LONGITUDE']:  #  include only records with geometry
-            parsed_data.append(new_record)
-
-    return parsed_data
-
-
-
 def ParseData(data, field_list, knack_params, **options):
     print('parse knack data')
-    
-    in_fields = knack_params['FIELD_NAMES']
+    #  create a happy list of dicts from raw knack data
+    #  data is a list of dicts from knack database
+    #  only handles on location field
+    #  option include_ids adds a 'knack_id' field 
+    #  option require_location throws out dicts missing a 'LONGITUDE' field
 
-    out_fields = knack_params['OUT_FIELDS']
+    if 'include_ids' not in options:
+        options['include_ids'] = False
+
+    if 'require_locations' not in options:
+        options['require_locations'] = False
+
+    if 'convert_to_unix' not in options:
+        options['convert_to_unix'] = False
+    
+    field_names = knack_params['FIELD_NAMES']
 
     parsed_data = []
 
@@ -181,12 +117,12 @@ def ParseData(data, field_list, knack_params, **options):
 
         count += 1
         
-        new_record = {}
+        new_record = {}  #  parsed record goes here
         
-        for key in record:
-            
+        for key in record:  
+
             if not record[key]:
-                continue
+                continue  #  ignore empty fields
 
             if key in field_list:
                 field_label = field_list[key]['label']
@@ -194,25 +130,27 @@ def ParseData(data, field_list, knack_params, **options):
                 field_type = field_list[key]['type']
 
             else:
-                continue
+                continue  #  ignore fields not in in-field list
 
-            if field_label == 'GEOCODE':  #  world's hackiest solution
-                field_label = 'LATITUDE'
+            if field_label in field_names:  #  inclue only fields in out-field list                
 
-            if field_label in out_fields:                
-                new_record[field_label] = ''
-
-                if field_type == 'address':
+                if field_type == 'address':  #  converts location field to lat/lon  
 
                     new_record['LATITUDE'] = record[key]['latitude']
 
                     new_record['LONGITUDE'] = record[key]['longitude']
 
                 elif field_type == 'date':
-                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
+                    new_record[field_label] = record[key]['unix_timestamp']
+                    
+                    if options['convert_to_unix']:
+                        new_record[field_label] = int( float(new_record[field_label]) / 1000 ) 
                 
                 elif field_type == 'date_time':
-                    new_record[field_label] = StandardizeDate(record[key]['unix_timestamp'])
+                    new_record[field_label] = record[key]['unix_timestamp']
+
+                    if options['convert_to_unix']:
+                        new_record[field_label] =  int( float(new_record[field_label]) / 1000 )
 
                 elif field_type == 'connection':
                     new_record[field_label] = record[key][0]['identifier']
@@ -220,18 +158,15 @@ def ParseData(data, field_list, knack_params, **options):
                 else:
                     new_record[field_label] = record[key]
 
-        for field in out_fields:
+        if options['include_ids']:
+            new_record['knack_id'] = record['id']
 
-            if field not in new_record:
+        if options['require_locations']:
+            if  'LONGITUDE' in new_record:
+                parsed_data.append(new_record)
 
-                new_record[field] = ''
-
-        if 'include_ids' in options:
-            if options['include_ids']:
-                new_record['knack_id'] = record['id']
-
-
-        parsed_data.append(new_record)
+        else:
+            parsed_data.append(new_record)
 
     return parsed_data
 

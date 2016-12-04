@@ -1,6 +1,7 @@
 import arrow
 import requests
 import json
+import pdb
 
 
 def FetchPublicData(resource):
@@ -68,7 +69,7 @@ def UpsertData(creds, payload, resource):
     print('upsert open data ' + resource)
     
     url = 'https://data.austintexas.gov/resource/{}.json'.format(resource)
-
+    
     try:
         auth = (creds['user'], creds['password'])
         json_data = json.dumps(payload)
@@ -84,18 +85,17 @@ def UpsertData(creds, payload, resource):
 def PrepPubLog(date_time, event, socrata_response):
     print('prep publication log')
 
-    if 'error' in socrata_response:
-        
+    if 'message' not in socrata_response:
+        socrata_response['message'] = ''
+
+    if 'error' in socrata_response:        
+
         return [ {
             'event': event,
             'timestamp': date_time.timestamp, 
             'date_time':  date_time.format('YYYY-MM-DD HH:mm:ss'),
             'response_message': socrata_response['message']
         }]
-
-    else:
-        if not socrata_response['message']:
-            socrata_response['message'] = ''
 
     return [ {
         'event': event,
@@ -107,27 +107,6 @@ def PrepPubLog(date_time, event, socrata_response):
         'deleted': socrata_response['Rows Deleted'],
         'response_message': socrata_response['message']
     } ]
-
-
-def ConvertToUnix(data):
-    for record in data:
-        for key in record:
-            if '_DATE' in key.upper():
-                d = arrow.get(record[key], 'YYYY-MM-DDTHH:mm:ss')
-                record[key] = str(d.timestamp)
-
-    return data
-
-
-
-def ConvertUnixToStandard(list_of_dicts):
-    for record in list_of_dicts:
-        for key in record:
-            if '_DATE' in key.upper():
-                print(record[key])
-                d = arrow.get(float(record[key]))
-                record[key] = d.format('YYYY-MM-DDTHH:mm:ss')
-    return list_of_dicts
 
 
 
@@ -150,5 +129,8 @@ def AddHistoricalFields(list_of_dicts):
         record['operation_state_duration'] = delta.seconds
 
     return list_of_dicts
+
+
+
 
 
