@@ -56,7 +56,7 @@ def CheckForStaleData(dataset, time_field, minute_tolerance):
             compare = arrow.get(record[time_field])
             status_times.append(compare)
 
-    oldest_record =  arrow.get(max(status_times)).replace(tzinfo='US/Central')  #  have to swap TZ info here because the database query is incorrectly storing datetimes as UTC
+    oldest_record =  arrow.get(max(status_times)).replace(tzinfo='US/Central')  #  set timezone because KITS timestamp does not have it
 
     delta = arrow.now() - oldest_record
 
