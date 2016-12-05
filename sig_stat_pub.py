@@ -52,7 +52,7 @@ def main(date_time):
 
         kits_data = data_helpers.StringifyKeyValues(kits_data)
 
-      
+        
 
         stale = kits_helpers.CheckForStaleData(kits_data, 'OPERATION_STATE_DATETIME', 15)
 
@@ -73,21 +73,30 @@ def main(date_time):
 
         kits_data = data_helpers.FilterbyKey(kits_data, 'OPERATION_STATE', FLASH_STATUSES)  #  filter by flash statuses
 
-        
-
         if kits_data:
             new_data = data_helpers.MergeDicts(knack_data_parsed, kits_data, 'ATD_SIGNAL_ID', ['OPERATION_STATE_DATETIME', 'OPERATION_STATE', 'PLAN_ID'])
+
+            new_data = data_helpers.ConvertISOToUnix(new_data)
 
         else:
             new_data = []
 
-       
+        socrata_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
+        
+        socrata_data = data_helpers.UpperCaseKeys(socrata_data)
+        
+        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
 
-        old_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
+        socrata_data = data_helpers.ConvertISOToUnix(socrata_data)
 
-        old_data = data_helpers.UpperCaseKeys(old_data)
+        cd_results = data_helpers.DetectChanges(socrata_data, new_data, 'ATD_SIGNAL_ID', keys=['OPERATION_STATE'])
 
-        cd_results = data_helpers.DetectChanges(old_data, new_data, 'ATD_SIGNAL_ID')
+
+
+
+        for thing in cd_results:
+            print('{} : {}'.format(thing, len(cd_results[thing])))
+
 
 
 
@@ -97,6 +106,8 @@ def main(date_time):
             socrata_payload = socrata_helpers.CreateLocationFields(socrata_payload)
 
             socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+
+            socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
 
             status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
         
@@ -131,8 +142,6 @@ def main(date_time):
 
             pub_log_historical_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, historical_log_payload, SOCRATA_PUB_LOG_ID)
 
-
-
         else:
             print('no new historical status data to upload')
             status_upsert_historical_response = None
@@ -145,9 +154,10 @@ def main(date_time):
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
-        email_helpers.SendEmail(ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Signal Status Update Failure', str(e) + EMAIL_FOOTER)
+        email_helpers.SendEmail(secrets.ALERTS_DISTRIBUTION, 'DATA PROCESSING ALERT: Signal Status Update Failure', str(e))
         raise e
  
+
 
 results = main(then)
 
