@@ -116,19 +116,21 @@ def ConvertISOToUnix(list_of_dicts):
 def ConvertUnixToISO(list_of_dicts, **options):
     print('convert unix dates to ISO')
 
-    if not 'format_string' in options:
-        options['format_string'] = 'YYYY-MM-DDTHH:mm:ss'
+    if not 'out_format' in options:
+        options['out_format'] = 'YYYY-MM-DDTHH:mm:ss'
 
     if not 'tz_info' in options:
         options['tz_info'] = 'US/Central'
+
+    if not 'in_format' in options:
+        options['in_format'] = 'X'  #  http://crsmithdev.com/arrow/#tokens
 
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
                 if record[key]:
-                    d = arrow.get(float(record[key])).replace(tzinfo=options['tz_info'])
-                    record[key] = d.format(options['format_string'])
-                    print(record[key])
+                    d = arrow.get(str(record[key]), options['in_format'] ).replace(tzinfo=options['tz_info'])
+                    record[key] = d.format(options['out_format'])
 
     return list_of_dicts
 
