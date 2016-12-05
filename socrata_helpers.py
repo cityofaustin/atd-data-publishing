@@ -43,9 +43,9 @@ def CreatePayload(detection_obj, prim_key):
     payload = []
     payload = payload + detection_obj['new'] + detection_obj['change']
 
-    #  for record in payload:
-        #  record['processed_datetime']  = now.format('YYYY-MM-DD HH:mm:ss')
-        #  record['record_id'] = '{}_{}'.format(record[prim_key], str(now.timestamp))
+    for record in payload:
+        record['processed_datetime']  = now.timestamp
+        record['record_id'] = '{}_{}'.format(record[prim_key], str(now.timestamp))
 
     for record in detection_obj['delete']:
         payload.append( { prim_key : record[prim_key], ':deleted' : True } )
@@ -118,10 +118,9 @@ def AddHistoricalFields(list_of_dicts):
         record['record_retired_datetime'] = record_retired_datetime.format('YYYY-MM-DD HH:mm:ss')
 
         if 'processed_datetime' in record:
-            processed_datetime = arrow.get(record['processed_datetime']).replace(tzinfo='US/Central')
+            processed_datetime = arrow.get(record['processed_datetime'])
         
         else:
-            print(record)
             continue
         
         delta = record_retired_datetime - processed_datetime

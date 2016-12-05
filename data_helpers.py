@@ -105,20 +105,30 @@ def ConvertISOToUnix(list_of_dicts):
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
-                d = arrow.get(record[key], 'YYYY-MM-DDTHH:mm:ss')
-                record[key] = str(d.timestamp)
+                if record[key]:
+                    d = arrow.get(record[key])
+                    record[key] = str(d.timestamp)
 
     return list_of_dicts
 
 
 
-def ConvertUnixToISO(list_of_dicts):
+def ConvertUnixToISO(list_of_dicts, **options):
     print('convert unix dates to ISO')
+
+    if not 'format_string' in options:
+        options['format_string'] = 'YYYY-MM-DDTHH:mm:ss'
+
+    if not 'tz_info' in options:
+        options['tz_info'] = 'US/Central'
+
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
-                d = arrow.get(float(record[key]))
-                record[key] = d.format('YYYY-MM-DDTHH:mm:ss')
+                if record[key]:
+                    d = arrow.get(float(record[key])).replace(tzinfo=options['tz_info'])
+                    record[key] = d.format(options['format_string'])
+                    print(record[key])
 
     return list_of_dicts
 
@@ -161,7 +171,6 @@ def DetectChanges(old_data, new_data, join_key, **options):
     if 'keys' not in options:
         options['keys'] = []
 
-
     change = []
     delete = []
     new = []
@@ -178,10 +187,12 @@ def DetectChanges(old_data, new_data, join_key, **options):
                     break
 
             else:
+                print('delete record: {}'.format(old_record[join_key]))
                 delete.append(old_record)  #  delete old record if prim key not in new data
 
         for new_record in new_data:
             if new_record[join_key] not in old_keys:  #  new record if prim key not in old 
+                print('new record: {}'.format(new_record[join_key]))
                 new.append(new_record)
                 continue
 
