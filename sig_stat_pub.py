@@ -29,7 +29,7 @@ SOCRATA_SIGNAL_STATUS = '5zpr-dehc'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'x62n-vjpq'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
-FLASH_STATUSES = ['1', '2', '11']
+FLASH_STATUSES = ['1', '2', '11', '3']
 
 then = arrow.now()
 
@@ -78,16 +78,18 @@ def main(date_time):
 
             new_data = data_helpers.ConvertISOToUnix(new_data)
 
+            new_data = data_helpers.StringifyKeyValues(new_data)
+
         else:
             new_data = []
 
         socrata_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
         
         socrata_data = data_helpers.UpperCaseKeys(socrata_data)
-        
-        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
-
+    
         socrata_data = data_helpers.ConvertISOToUnix(socrata_data)
+
+        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
 
         cd_results = data_helpers.DetectChanges(socrata_data, new_data, 'ATD_SIGNAL_ID', keys=['OPERATION_STATE'])
 
@@ -96,8 +98,6 @@ def main(date_time):
 
         for thing in cd_results:
             print('{} : {}'.format(thing, len(cd_results[thing])))
-
-
 
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
@@ -141,6 +141,15 @@ def main(date_time):
             historical_log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_historical_update', status_upsert_historical_response)
 
             pub_log_historical_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, historical_log_payload, SOCRATA_PUB_LOG_ID)
+
+            
+            if 'error' in status_upsert_historical_response:
+                email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_historical_response)
+                
+            elif status_upsert_historical_response['Errors']:
+                email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_historical_response)
+
+
 
         else:
             print('no new historical status data to upload')
