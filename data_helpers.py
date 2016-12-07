@@ -18,7 +18,27 @@ def FilterbyKeyExists(data, key):
     'filter by key exists: {}'.format(key)
     #  return a list of dictionaries that have a specified key string
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
-    return [d for d in data if key in d]  
+    return [d for d in data if key in d ]  
+
+
+
+def AddMissingKeys(list_of_dicts, list_of_keys, key_value):
+    print('add missing keys {}'.format(list_of_keys))
+    #  look for keys in a list of dicts
+    #  and missing keys and set to a default value
+    #  case insensitive
+    for record in list_of_dicts:
+        for key in list_of_keys:
+            for match_key in record:
+                if key.upper() == match_key.upper():
+                    continue
+            else:  
+                print(record)
+                record[key] = key_value
+                print(record)
+
+    return list_of_dicts
+
 
 
 

@@ -13,7 +13,6 @@ import pdb
 
 
 #  KNACK CONFIG
-
 PRIMARY_KEY = 'ATD_EVAL_ID'
 STATUS_KEY = 'TRAFFIC_EVAL_STATUS'
 GROUP_KEY = 'YR_MO_RND'
@@ -59,9 +58,11 @@ def main(date_time):
         knack_data = data_helpers.StringifyKeyValues(source_data)
 
         knack_data = data_helpers.FilterbyKey(knack_data, STATUS_KEY, ['NEW', 'IN PROGRESS', 'COMPLETED'])
-
+        
+        knack_data = data_helpers.AddMissingKeys(knack_data, [SCORE_KEY], '0')
+        
         knack_data = data_helpers.FilterbyKeyExists(knack_data, SCORE_KEY)
-
+        
         knack_data = data_helpers.ConcatKeyVals(knack_data, CONCAT_KEYS, GROUP_KEY, '_')
         
         knack_data_dict = data_helpers.GroupByUniqueValue(knack_data, GROUP_KEY)
@@ -83,6 +84,8 @@ def main(date_time):
         ranked_data = data_helpers.ReduceDicts(ranked_data, [RANK_KEY, 'KNACK_ID'])
 
         ranked_data = data_helpers.ReplaceDictKeys(ranked_data, field_lookup)
+
+        pdb.set_trace()
 
         update_response = []
 
