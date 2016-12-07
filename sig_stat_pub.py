@@ -29,7 +29,7 @@ SOCRATA_SIGNAL_STATUS = '5zpr-dehc'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'x62n-vjpq'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
-FLASH_STATUSES = ['1', '2', '11', '3']
+FLASH_STATUSES = ['1', '2', '11']
 
 then = arrow.now()
 
