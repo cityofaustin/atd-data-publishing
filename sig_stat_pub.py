@@ -29,7 +29,7 @@ SOCRATA_SIGNAL_STATUS = '5zpr-dehc'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'x62n-vjpq'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
-FLASH_STATUSES = ['1', '2', '11']
+FLASH_STATUSES = ['1', '2', '11', '3']
 
 then = arrow.now()
 
@@ -120,8 +120,6 @@ def main(date_time):
 
         pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
 
-
-
         if 'error' in status_upsert_response:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_response)
             
@@ -150,11 +148,10 @@ def main(date_time):
                 email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_historical_response)
 
 
-
         else:
             print('no new historical status data to upload')
             status_upsert_historical_response = None
-        
+
         return {
             'res': status_upsert_response,
             'res_historical': status_upsert_historical_response,
