@@ -174,6 +174,7 @@ def ParseData(data, field_list, knack_params, **options):
 
             if field_label in field_names:  #  inclue only fields in out-field list                
 
+
                 if field_type == 'address':  #  converts location field to lat/lon  
 
                     new_record['LATITUDE'] = record[key]['latitude']
@@ -202,6 +203,7 @@ def ParseData(data, field_list, knack_params, **options):
             new_record['KNACK_ID'] = record['id']
 
         if options['require_locations']:
+            
             if  'LONGITUDE' in new_record:
                 parsed_data.append(new_record)
 

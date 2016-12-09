@@ -1,5 +1,5 @@
 
-#  sync signal data in asset database with Socrata, ArcGIS Online
+#  sync camera data in asset database with Socrata, ArcGIS Online
 
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
@@ -15,23 +15,25 @@ import data_helpers
 import secrets
 import pdb
 
-PRIMARY_KEY = 'ATD_SIGNAL_ID'
+PRIMARY_KEY = 'ATD_CAMERA_ID'
 
 #  KNACK CONFIG
 KNACK_PARAMS = {  
-    'REFERENCE_OBJECTS' : ['object_11', 'object_12'],
-    'SCENE' : '73',
-    'VIEW' : '197',
-    'FIELD_NAMES' : ['ATD_LOCATION_ID','ATD_SIGNAL_ID','COA_INTERSECTION_ID','CONTROL','COUNCIL_DISTRICT', 'CROSS_ST','CROSS_ST_AKA','CROSS_ST_SEGMENT_ID','JURISDICTION','LANDMARK','LOCATION_NAME','PRIMARY_ST', 'PRIMARY_ST_AKA','PRIMARY_ST_SEGMENT_ID','SIGNAL_ENG_AREA','SIGNAL_STATUS','SIGNAL_TYPE','TRAFFIC_ENG_AREA','MASTER_SIGNAL_ID', 'GEOCODE', 'IP_SWITCH', 'IP_CONTROL', 'SWITCH_COMM', 'COMM_PLAN', 'TURN_ON_DATE', 'MODIFIED_DATE', 'CROSS_ST_BLOCK', 'PRIMARY_ST_BLOCK', 'COUNTY'],
+    'REFERENCE_OBJECTS' : ['object_11', 'object_53'],
+    'SCENE' : '144',
+    'VIEW' : '395',
+    'FIELD_NAMES' : ['ATD_CAMERA_ID', 'CAMERA_MFG', 'TURN_ON_DATE', 'ATD_LOCATION_ID', 'PRIMARY_ST_SEGMENT_ID', 'CROSS_ST_SEGMENT_ID', 'LANDMARK', 'SIGNAL_ENG_AREA', 'COUNCIL_DISTRICT', 'JURISDICTION', 'LOCATION_TYPE', 'LOCATION_NAME', 'PRIMARY_ST', 'CROSS_ST', 'MODIFIED_DATE', 'PRIMARY_ST_BLOCK', 'COA_INTERSECTION_ID', 'CAMERA_STATUS', 'COUNTY', 'CROSS_ST_AKA', 'CROSS_ST_BLOCK', 'PRIMARY_ST_AKA', 'GEOCODE' ],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
+
+
 
 #  AGOL CONFIG
 SERVICE_URL = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/TRANSPORTATION_signals2/FeatureServer/0/'
 
 #  SOCRATA CONFIG
-SOCRATA_RESOURCE_ID = 'p53x-x73x'
+SOCRATA_RESOURCE_ID = 'b4k4-adkb'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
 
@@ -45,20 +47,20 @@ def main(date_time):
         field_list = knack_helpers.GetFields(KNACK_PARAMS)
 
         knack_data = knack_helpers.GetData(KNACK_PARAMS)
-
+        
         knack_data = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
 
         knack_data = data_helpers.StringifyKeyValues(knack_data)
         
         knack_data_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data))
 
-        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        # token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
 
-        agol_payload = agol_helpers.BuildPayload(knack_data_mills)
+        # agol_payload = agol_helpers.BuildPayload(knack_data_mills)
 
-        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
+        # del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
 
-        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
+        # add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
@@ -90,7 +92,7 @@ def main(date_time):
         elif upsert_response['Errors']:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
 
-        log_payload = socrata_helpers.PrepPubLog(date_time, 'signals_update', upsert_response)
+        log_payload = socrata_helpers.PrepPubLog(date_time, 'cameras_update', upsert_response)
 
         pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
 

@@ -33,9 +33,7 @@ def AddMissingKeys(list_of_dicts, list_of_keys, key_value):
                 if key.upper() == match_key.upper():
                     continue
             else:  
-                print(record)
                 record[key] = key_value
-                print(record)
 
     return list_of_dicts
 
@@ -244,14 +242,13 @@ def DetectChanges(old_data, new_data, join_key, **options):
                                     continue
 
                             if key not in new_record:  #  key in old data not in new data
-                                print('key in old data not in new data')
+                                print('key in old data not in new data: {} '.format(key))
                                 change.append(new_record)  #  change record
                                 break
 
                         else:
                             no_change.append(new_record)  #  no change
                         
-
     else:
         delete = old_data  #  if no new data then flag all old data as delete
 
