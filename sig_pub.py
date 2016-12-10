@@ -51,14 +51,14 @@ def main(date_time):
         knack_data = data_helpers.StringifyKeyValues(knack_data)
         
         knack_data_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data))
+        
+        # token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
 
-        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        # agol_payload = agol_helpers.BuildPayload(knack_data_mills)
 
-        agol_payload = agol_helpers.BuildPayload(knack_data_mills)
+        # del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
 
-        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
-
-        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
+        # add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
@@ -105,4 +105,10 @@ def main(date_time):
 results = main(now)
 
 print(results)
+
+
+
+
+
+
 
