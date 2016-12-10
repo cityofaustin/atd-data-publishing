@@ -140,14 +140,11 @@ def ConvertUnixToISO(list_of_dicts, **options):
     if not 'tz_info' in options:
         options['tz_info'] = 'US/Central'
 
-    if not 'in_format' in options:
-        options['in_format'] = 'X'  #  http://crsmithdev.com/arrow/#tokens
-
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
                 if record[key]:
-                    d = arrow.get(str(record[key]), options['in_format'] ).replace(tzinfo=options['tz_info'])
+                    d = arrow.get(str(record[key])).replace(tzinfo=options['tz_info'])
                     record[key] = d.format(options['out_format'])
 
     return list_of_dicts
@@ -243,6 +240,7 @@ def DetectChanges(old_data, new_data, join_key, **options):
 
                             if key not in new_record:  #  key in old data not in new data
                                 print('key in old data not in new data: {} '.format(key))
+                                new_record[key] = ''  #  must append empty key val or socrata will not modify
                                 change.append(new_record)  #  change record
                                 break
 
