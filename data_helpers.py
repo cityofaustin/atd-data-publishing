@@ -144,7 +144,13 @@ def ConvertUnixToISO(list_of_dicts, **options):
         for key in record:
             if '_DATE' in key.upper():
                 if record[key]:
-                    d = arrow.get(str(record[key])).replace(tzinfo=options['tz_info'])
+                    d = arrow.get(str(record[key]) )
+                    
+                    if 'replace_tz' in options:
+                        d = d.replace(tzinfo=options['tz_info'])  #  timestamp is in local, so assign that info (true with KTIS) 
+
+                    d.to(options['tz_info'])  #  timestamps in UTC, convert to local
+                
                     record[key] = d.format(options['out_format'])
 
     return list_of_dicts
