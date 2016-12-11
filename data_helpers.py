@@ -2,6 +2,7 @@ from operator import itemgetter
 from collections import defaultdict
 import itertools
 import arrow
+import pandas
 import pdb
 
 
@@ -36,7 +37,6 @@ def AddMissingKeys(list_of_dicts, list_of_keys, key_value):
                 record[key] = key_value
 
     return list_of_dicts
-
 
 
 
@@ -341,6 +341,17 @@ def ReplaceDictKeys(list_of_dicts, lookup_dict):
 
     return list_of_dicts
 
+
+
+def WriteToCSV(data, **options):
+    print('write data to file')
+
+    if not 'file_name' in options:
+        options['file_name'] = '{}'.format( arrow.now().timestamp )
+
+    df = pandas.DataFrame(data)
+
+    df.to_csv(options['file_name'], index=False)
 
 
 

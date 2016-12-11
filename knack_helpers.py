@@ -87,6 +87,18 @@ def CreateFieldLookup(field_dict, **options):
 
 
 
+def CreateFieldLabelList(list_of_fields, **options): 
+
+    field_labels = []
+    
+    for field in list_of_fields:
+
+        field_labels.append(field['label'])
+
+    return field_labels
+
+
+
 def GetData(knack_params):
     print('get knack data')
     
@@ -127,6 +139,27 @@ def GetData(knack_params):
     print("retrieved {} records".format(len(data)))
 
     return data
+
+
+
+def GetAllFields(knack_object, knack_params):
+    #  object must have < 1000 fields
+    #  return all field metadata for a given object
+    print('get all knack field metadata for {}'.format(knack_object))
+
+    objects_url = 'https://api.knack.com/v1/objects/'
+
+    headers = { 'x-knack-application-id': knack_params['APPLICATION_ID'], 'x-knack-rest-api-key': knack_params['API_KEY'] }
+
+    url = "{}{}/fields?rows_per_page=1000".format(objects_url, knack_object)
+
+    try:
+        req = requests.get(url, headers=headers)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+
+    return req.json()['fields']
 
 
 
@@ -214,10 +247,10 @@ def ParseData(data, field_list, knack_params, **options):
 
 
 
-def GetObjectData(knack_params):
+def GetObjectData(knack_object, knack_params):
     print('get knack data')
     
-    objects_url = 'https://api.knack.com/v1/objects/{}/records?rows_per_page=1000'.format( knack_params['REFERENCE_OBJECTS'][0] ) 
+    objects_url = 'https://api.knack.com/v1/objects/{}/records?rows_per_page=1000'.format( knack_object ) 
 
     current_page = 1
 

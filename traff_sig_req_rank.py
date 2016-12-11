@@ -13,6 +13,7 @@ import pdb
 
 
 #  KNACK CONFIG
+REFERENCE_OBJECT = 'object_27'
 PRIMARY_KEY = 'ATD_EVAL_ID'
 STATUS_KEY = 'TRAFFIC_EVAL_STATUS'
 GROUP_KEY = 'YR_MO_RND'
@@ -21,7 +22,7 @@ CONCAT_KEYS = ['RANK_ROUND_MO', 'RANK_ROUND_YR']
 RANK_KEY = 'TRAFFIC_EVAL_RANK'
 
 KNACK_PARAMS = {  
-    'REFERENCE_OBJECTS' : ['object_27'],
+    'REFERENCE_OBJECTS' : [REFERENCE_OBJECT],
     'SCENE' : '175',
     'VIEW' : '508',
     'FIELD_NAMES' : [PRIMARY_KEY, 'TRAFFIC_EVAL_STATUS', 'EVAL_SCORE', 'RANK_ROUND_MO', 'RANK_ROUND_YR'],
@@ -30,7 +31,7 @@ KNACK_PARAMS = {
 }
 
 KNACK_PARAMS_2 = {  
-    'REFERENCE_OBJECTS' : ['object_27'],
+    'REFERENCE_OBJECTS' : [REFERENCE_OBJECT],
     'FIELD_NAMES' : [PRIMARY_KEY, RANK_KEY],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
@@ -41,11 +42,11 @@ now = arrow.now()
 def main(date_time):
 
     try:       
-        field_dict = knack_helpers.GetFields(KNACK_PARAMS_2)
+        field_dict = knack_helpers.GetFields( KNACK_PARAMS_2 )
 
         field_lookup = knack_helpers.CreateFieldLookup(field_dict, parse_raw=True)
 
-        id_data = knack_helpers.GetObjectData(KNACK_PARAMS_2)
+        id_data = knack_helpers.GetObjectData( REFERENCE_OBJECT, KNACK_PARAMS_2 )
 
         id_data = knack_helpers.ParseData(id_data, field_dict, KNACK_PARAMS_2, include_ids=True)
 
