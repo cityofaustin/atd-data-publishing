@@ -22,6 +22,8 @@ KNACK_PARAMS = {
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
+BACKUP_DIRECTORY = secrets.BACKUP_DIRECTORY
+
 
 now = arrow.now()
 
@@ -52,7 +54,7 @@ def main(date_time):
             
             today = date_time.format('YYYY_MM_DD')
             
-            file_name = '{}_{}.csv'.format(obj, today)
+            file_name = '{}/{}_{}.csv'.format(BACKUP_DIRECTORY, obj, today)
 
             try:
                 data_helpers.WriteToCSV(parsed, file_name=file_name)
