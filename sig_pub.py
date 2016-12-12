@@ -34,6 +34,9 @@ SERVICE_URL = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/
 SOCRATA_RESOURCE_ID = 'p53x-x73x'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
+#  CSV OUTPUT
+CSV_DESTINATION = secrets.FME_DIRECTORY
+DATASET_NAME = 'atd_signals'
 
 now = arrow.now()
 
@@ -52,13 +55,13 @@ def main(date_time):
         
         knack_data_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data))
         
-        # token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
 
-        # agol_payload = agol_helpers.BuildPayload(knack_data_mills)
+        agol_payload = agol_helpers.BuildPayload(knack_data_mills)
 
-        # del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
+        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
 
-        # add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
+        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
@@ -94,7 +97,14 @@ def main(date_time):
 
         pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
 
-        return log_payload
+        #  write to csv
+        knack_data = data_helpers.ConvertUnixToISO(knack_data)
+        today = date_time.format('YYYY_MM_DD')
+        file_name = '{}/{}_{}.csv'.format(CSV_DESTINATION, DATASET_NAME, today)
+        data_helpers.WriteToCSV(knack_data, file_name=file_name)
+
+        return 'pizza'
+        # return log_payload
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))

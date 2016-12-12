@@ -144,14 +144,26 @@ def ConvertUnixToISO(list_of_dicts, **options):
         for key in record:
             if '_DATE' in key.upper():
                 if record[key]:
-                    d = arrow.get(str(record[key]) )
-                    
-                    if 'replace_tz' in options:
-                        d = d.replace(tzinfo=options['tz_info'])  #  timestamp is in local, so assign that info (true with KTIS) 
 
-                    d.to(options['tz_info'])  #  timestamps in UTC, convert to local
-                
-                    record[key] = d.format(options['out_format'])
+                    try:
+                        timestamp = float(record[key])
+                        
+                        #  we can't just use arrow.get(timestamp) here
+                        #  because negative timestamps will fail in windows
+                        #  so instead we shift from epoch by the timestamp value
+                        d = arrow.get(0).shift(seconds=timestamp)
+                                        
+                        if 'replace_tz' in options:
+                            d = d.replace(tzinfo=options['tz_info'])  #  timestamp is in local, so assign that info (true with KTIS) 
+
+                        d.to(options['tz_info'])  #  timestamps in UTC, convert to local
+                    
+                        record[key] = d.format(options['out_format'])
+
+                    
+                    except ValueError:
+                        print('{} not a valid unix timestamp'.format(record[key]))
+                        continue
 
     return list_of_dicts
 
