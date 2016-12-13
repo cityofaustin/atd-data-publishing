@@ -7,15 +7,11 @@ import requests
 import data_helpers
 import knack_helpers
 import csv
-from StringIO import StringIO
+from io import StringIO
 import github_helpers
 import secrets
 
 import pdb
-
-REPO_URL_GITHUB = 'https://api.github.com/repos/cityofaustin/transportation-logs/contents/'
-DATA_URL_GITHUB = 'https://raw.githubusercontent.com/cityofaustin/transportation-logs/master/'
-DATASET_FIELDNAMES = ['date_time', 'socrata_errors', 'socrata_updated', 'socrata_created', 'socrata_deleted', 'no_update', 'update_requests', 'insert_requests', 'delete_requests', 'not_processed','response_message']
 
 
 #  KNACK CONFIG
@@ -28,8 +24,9 @@ KNACK_PARAMS = {
 
 #  GIT CONFIG
 GIT_PARAMS = {
-    'REPO_URL' : 'https://github.com/cityofaustin/transportation',
-    'BRANCH' : 'gh-pages'
+    'REPO_URL' : 'https://api.github.com/repositories/55646931/contents',
+    'BRANCH' : 'gh-pages',
+    'PATH' : 'components/data/quote_of_the_week.csv'
 }
 
 then = arrow.now()
@@ -67,16 +64,17 @@ def main(date_time):
             #  prepare dates for the internet
             data = data_helpers.ConvertUnixToMills(data)
             
-            payload = data_helpers.WriteToCSV(data, stringify_only=True)
+            payload = data_helpers.WriteToCSV(data, in_memory=True)
 
-            git_auth = github_helpers.CreateAuthTuple(secrets.GITHUB_CREDENTIALS['transportation'])
+            git_auth = github_helpers.CreateAuthTuple(secrets.GITHUB_CREDENTIALS)
 
-            pdb.set_trace()
+            repo_data = github_helpers.GetFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], 'gh-pages', git_auth)
 
-            git_response = github_helpers.CommitFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', git_auth)
+            GIT_PARAMS['sha'] = repo_data['sha']
+
+            git_response = github_helpers.CommitFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', GIT_PARAMS['sha'], git_auth, existing_file=repo_data)
             
-            pdb.set_trace()
-        return 'youve got the newest now'
+        return git_response
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
@@ -88,4 +86,4 @@ results = main(then)
 
 print('Elapsed time: {}'.format(str(arrow.now() - then)))
 
-
+print(results)

@@ -369,16 +369,16 @@ def WriteToCSV(data, **options):
     #  requires arrow
     print('write data to file')
 
-    if not 'stringify_only' in options:
-        otions['stringify_only'] = False
+    if not 'in_memory' in options:
+        otions['in_memory'] = False
 
     if not 'file_name' in options:
         options['file_name'] = '{}'.format( arrow.now().timestamp )
 
     df = pandas.DataFrame(data)
 
-    if options['stringify_only']:
-        return df.to_csv(index=False)
+    if options['in_memory']:
+        return StringIO ( df.to_csv(index=False) )
 
     else:
         df.to_csv(options['file_name'], index=False)
@@ -400,14 +400,3 @@ def GetWebCSV(url, **options):
     data = csv.DictReader(file)
 
     return data
-
-
-
-
-
-
-
-
-
-
-
