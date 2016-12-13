@@ -377,7 +377,7 @@ def WriteToCSV(data, **options):
     df.to_csv(options['file_name'], index=False)
 
 
-def getWebCSV(url, **options):
+def GetWebCSV(url, **options):
     print('get CSV from web')
 
     import requests

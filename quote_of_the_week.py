@@ -38,7 +38,7 @@ def main(date_time):
     try:
         url = 'https://raw.githubusercontent.com/cityofaustin/transportation/gh-pages/components/data/quote_of_the_week.csv'
         
-        data = data_helpers.getWebCSV(url)
+        data = data_helpers.GetWebCSV(url)
 
         newest = {}
 
