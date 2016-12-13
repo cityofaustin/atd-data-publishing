@@ -99,10 +99,9 @@ def main(date_time):
 
         #  write to csv
         knack_data = data_helpers.ConvertUnixToISO(knack_data)
-        today = date_time.format('YYYY_MM_DD')
-        file_name = '{}/{}_{}.csv'.format(CSV_DESTINATION, DATASET_NAME, today)
+        file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
         data_helpers.WriteToCSV(knack_data, file_name=file_name)
-
+        
         return 'pizza'
         # return log_payload
 
