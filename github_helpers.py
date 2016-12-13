@@ -55,7 +55,7 @@ def CommitFile(url, path, branch, content, message, sha, auth, **options):
     }
 
     res = requests.put(url, json=data, auth=auth)
-    pdb.set_trace()
+    
     res.raise_for_status()
  
     return res.json()
