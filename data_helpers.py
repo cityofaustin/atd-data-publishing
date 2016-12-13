@@ -1,8 +1,3 @@
-from operator import itemgetter
-from collections import defaultdict
-import itertools
-import arrow
-import pandas
 import pdb
 
 
@@ -96,6 +91,7 @@ def StringifyKeyValues(list_of_dicts):
 
 def ConvertMillsToUnix(list_of_dicts):
     print('convert millesecond date to unix date')
+
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
@@ -109,6 +105,7 @@ def ConvertMillsToUnix(list_of_dicts):
 
 def ConvertUnixToMills(list_of_dicts):
     print('convert unix dates to milleseconds')
+
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
@@ -119,7 +116,12 @@ def ConvertUnixToMills(list_of_dicts):
 
 
 def ConvertISOToUnix(list_of_dicts):
+    #  requires arrow
+    #  convert ISO datetimes to unix
     print('convert ISO dates to unix')
+    
+    import arrow
+
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
@@ -132,7 +134,12 @@ def ConvertISOToUnix(list_of_dicts):
 
 
 def ConvertUnixToISO(list_of_dicts, **options):
+    #  requires arrow
+    #  convert timestamps to unix
+    #  ignores timestamps that cannot be converted to floats
     print('convert unix dates to ISO')
+
+    import arrow
 
     if not 'out_format' in options:
         options['out_format'] = 'YYYY-MM-DDTHH:mm:ss'
@@ -147,7 +154,6 @@ def ConvertUnixToISO(list_of_dicts, **options):
 
                     try:
                         timestamp = float(record[key])
-                        
                         #  we can't just use arrow.get(timestamp) here
                         #  because negative timestamps will fail in windows
                         #  so instead we shift from epoch by the timestamp value
@@ -356,7 +362,12 @@ def ReplaceDictKeys(list_of_dicts, lookup_dict):
 
 
 def WriteToCSV(data, **options):
+    #  requires pandas
+    #  requires arrow
     print('write data to file')
+    
+    import pandas
+    import arrow
 
     if not 'file_name' in options:
         options['file_name'] = '{}'.format( arrow.now().timestamp )
