@@ -5,10 +5,10 @@
 import arrow
 import requests
 import data_helpers
+import knack_helpers
 import csv
 from StringIO import StringIO
-#  import github_updater
-#  import knack_helpers
+import github_helpers
 import secrets
 
 import pdb
@@ -20,14 +20,17 @@ DATASET_FIELDNAMES = ['date_time', 'socrata_errors', 'socrata_updated', 'socrata
 
 #  KNACK CONFIG
 KNACK_PARAMS = {  
-    'REFERENCE_OBJECTS' : ['object_11', 'object_12'],
-    'SCENE' : '73',
-    'VIEW' : '197',
-    'FIELD_NAMES' : ['ATD_LOCATION_ID','ATD_SIGNAL_ID','COA_INTERSECTION_ID','CONTROL','COUNCIL_DISTRICT', 'CROSS_ST','CROSS_ST_AKA','CROSS_ST_SEGMENT_ID','JURISDICTION','LANDMARK','LOCATION_NAME','PRIMARY_ST', 'PRIMARY_ST_AKA','PRIMARY_ST_SEGMENT_ID','SIGNAL_ENG_AREA','SIGNAL_STATUS','SIGNAL_TYPE','TRAFFIC_ENG_AREA','MASTER_SIGNAL_ID', 'GEOCODE', 'IP_SWITCH', 'IP_CONTROL', 'SWITCH_COMM', 'COMM_PLAN', 'TURN_ON_DATE', 'MODIFIED_DATE', 'CROSS_ST_BLOCK', 'PRIMARY_ST_BLOCK', 'COUNTY'],
+    'REFERENCE_OBJECTS' : ['object_67'],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
+
+#  GIT CONFIG
+GIT_PARAMS = {
+    'REPO_URL' : 'https://github.com/cityofaustin/transportation',
+    'BRANCH' : 'gh-pages'
+}
 
 then = arrow.now()
 
@@ -38,27 +41,41 @@ def main(date_time):
     try:
         url = 'https://raw.githubusercontent.com/cityofaustin/transportation/gh-pages/components/data/quote_of_the_week.csv'
         
-        data = data_helpers.GetWebCSV(url)
 
-        newest = {}
-
-        newest['quote_date'] = arrow.get('1/1/1900')
-
-        for row in data:
+        #  get new quote data from Knack database
+        #  this is where the user maintains the quotes
+        for obj in KNACK_PARAMS['REFERENCE_OBJECTS']:
             
-            if 'quote_date' in row:
-        
-                this_time = arrow.get(row['quote_date'], 'MM/DD/YYYY')
-                
-                if this_time.timestamp > newest['quote_date'].timestamp:
-                    newest = row
+            #  get field metadata
+            fields = knack_helpers.GetAllFields(obj, KNACK_PARAMS)
+            
+            #  assign field metadata to 'raw' field name
+            field_list = {}
 
-        print(newest)
+            for field in fields:
+                field_list[field['key'] + '_raw'] = field
 
-        #  update github with neweset quote data
-        #  update publication log, too
+            #  update knack params with list of all field names
+            KNACK_PARAMS['FIELD_NAMES'] = knack_helpers.CreateFieldLabelList(fields)
+            
+            #  get knack object data
+            data = knack_helpers.GetObjectData(obj, KNACK_PARAMS)
 
-        pdb.set_trace()
+            #  parse data
+            data = knack_helpers.ParseData(data, field_list, KNACK_PARAMS, convert_to_unix=True)
+            
+            #  prepare dates for the internet
+            data = data_helpers.ConvertUnixToMills(data)
+            
+            payload = data_helpers.WriteToCSV(data, stringify_only=True)
+
+            git_auth = github_helpers.CreateAuthTuple(secrets.GITHUB_CREDENTIALS['transportation'])
+
+            pdb.set_trace()
+
+            git_response = github_helpers.CommitFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', git_auth)
+            
+            pdb.set_trace()
         return 'youve got the newest now'
 
     except Exception as e:
