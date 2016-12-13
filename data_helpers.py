@@ -370,7 +370,7 @@ def WriteToCSV(data, **options):
     print('write data to file')
 
     if not 'in_memory' in options:
-        otions['in_memory'] = False
+        options['in_memory'] = False
 
     if not 'file_name' in options:
         options['file_name'] = '{}'.format( arrow.now().timestamp )
