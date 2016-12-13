@@ -377,6 +377,28 @@ def WriteToCSV(data, **options):
     df.to_csv(options['file_name'], index=False)
 
 
+def getWebCSV(url, **options):
+    print('get CSV from web')
+
+    import requests
+    from StringIO import StringIO
+    import csv
+
+    if not 'encoding' in options:
+        options['encoding'] = 'utf-8-sig'
+
+    req = requests.get(url)
+
+    req.encoding = options['encoding']
+
+    file = StringIO(req.text)
+
+    data = csv.DictReader(file)
+
+    return data
+
+
+
 
 
 
