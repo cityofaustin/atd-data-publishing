@@ -1,4 +1,9 @@
 import pdb
+import arrow
+import pandas
+import requests
+from StringIO import StringIO
+import csv
 
 
 
@@ -120,7 +125,7 @@ def ConvertISOToUnix(list_of_dicts):
     #  convert ISO datetimes to unix
     print('convert ISO dates to unix')
     
-    import arrow
+    
 
     for record in list_of_dicts:
         for key in record:
@@ -138,8 +143,6 @@ def ConvertUnixToISO(list_of_dicts, **options):
     #  convert timestamps to unix
     #  ignores timestamps that cannot be converted to floats
     print('convert unix dates to ISO')
-
-    import arrow
 
     if not 'out_format' in options:
         options['out_format'] = 'YYYY-MM-DDTHH:mm:ss'
@@ -365,24 +368,25 @@ def WriteToCSV(data, **options):
     #  requires pandas
     #  requires arrow
     print('write data to file')
-    
-    import pandas
-    import arrow
+
+    if not 'stringify_only' in options:
+        otions['stringify_only'] = False
 
     if not 'file_name' in options:
         options['file_name'] = '{}'.format( arrow.now().timestamp )
 
     df = pandas.DataFrame(data)
 
-    df.to_csv(options['file_name'], index=False)
+    if options['stringify_only']:
+        return df.to_csv(index=False)
+
+    else:
+        df.to_csv(options['file_name'], index=False)
+
 
 
 def GetWebCSV(url, **options):
     print('get CSV from web')
-
-    import requests
-    from StringIO import StringIO
-    import csv
 
     if not 'encoding' in options:
         options['encoding'] = 'utf-8-sig'
@@ -396,8 +400,6 @@ def GetWebCSV(url, **options):
     data = csv.DictReader(file)
 
     return data
-
-
 
 
 
