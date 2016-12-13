@@ -2,7 +2,7 @@ import pdb
 import arrow
 import pandas
 import requests
-from StringIO import StringIO
+from io import StringIO
 import csv
 
 
