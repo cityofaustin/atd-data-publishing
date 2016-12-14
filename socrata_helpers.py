@@ -54,14 +54,26 @@ def CreatePayload(detection_obj, prim_key):
 
 
 
-def CreateLocationFields(data):
+def CreateLocationFields(list_of_dicts):
     print('create location fields')
 
-    for record in data:
+    for record in list_of_dicts:
         if 'LATITUDE' in record and 'LONGITUDE' in record:
             record['LOCATION'] = '({},{})'.format(record['LATITUDE'], record['LONGITUDE'])
 
-    return data
+    return list_of_dicts
+
+
+
+def StripGeocodingField(list_of_dicts):
+    print('strip geocoding field')
+
+    for record in list_of_dicts:
+        if 'location' in record:
+            if 'needs_recoding' in record['location']:
+                del record['location']['needs_recoding']
+
+    return list_of_dicts
 
 
 

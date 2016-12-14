@@ -85,6 +85,8 @@ def main(date_time):
 
         socrata_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
         
+        socrata_data = socrata_helpers.StripGeocodingField(socrata_data)
+
         socrata_data = data_helpers.UpperCaseKeys(socrata_data)
     
         socrata_data = data_helpers.ConvertISOToUnix(socrata_data)
