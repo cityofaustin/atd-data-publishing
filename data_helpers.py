@@ -23,18 +23,16 @@ def FilterbyKeyExists(data, key):
 
 
 
-def AddMissingKeys(list_of_dicts, list_of_keys, key_value):
+def AddMissingKeys(list_of_dicts, list_of_keys, list_of_vals):
     print('add missing keys {}'.format(list_of_keys))
     #  look for keys in a list of dicts
     #  and missing keys and set to a default value
     #  case insensitive
-    for record in list_of_dicts:
+    for d in list_of_dicts:
         for key in list_of_keys:
-            for match_key in record:
-                if key.upper() == match_key.upper():
-                    continue
-            else:  
-                record[key] = key_value
+            if key not in d:
+                index = list_of_keys.index(key)
+                d[key] = list_of_vals[index]
 
     return list_of_dicts
 
@@ -321,7 +319,18 @@ def SortDictsInt(list_of_dicts, key):
     #  sort a list of dictionarys based on an integer key value
     #  http://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-values-of-the-dictionary-in-python
     return sorted(list_of_dicts, key=lambda k: int(k[key]), reverse=True) 
-    
+
+
+def GetMaxIndex(list_of_vals, val):
+    #  find the largest index of a value in a list
+    #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
+    return max([i for i, x in enumerate(list_of_vals) if x == val])
+
+
+def GetMinIndex(list_of_vals, val):
+    #  find the smallest index of a value in a list
+    #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
+    return min([i for i, x in enumerate(list_of_vals) if x == val])
 
 
 def createRankList(list_of_dicts, rank_key_name):
