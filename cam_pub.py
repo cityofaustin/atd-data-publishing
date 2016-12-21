@@ -67,8 +67,8 @@ def main(date_time):
         socrata_data = data_helpers.UpperCaseKeys(socrata_data)
 
         socrata_data = data_helpers.StringifyKeyValues(socrata_data)
-
-        socrata_data = data_helpers.ConvertISOToUnix(socrata_data)
+        
+        socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
 
         cd_results = data_helpers.DetectChanges(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES'])
 
