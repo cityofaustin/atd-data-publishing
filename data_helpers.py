@@ -118,18 +118,26 @@ def ConvertUnixToMills(list_of_dicts):
     return list_of_dicts
 
 
-def ConvertISOToUnix(list_of_dicts):
+def ConvertISOToUnix(list_of_dicts, **options):
     #  requires arrow
     #  convert ISO datetimes to unix
     print('convert ISO dates to unix')
     
+    if 'replace_tz' not in options:
+        options['replace_tz'] = False
     
+    if 'tz_info' not in options:
+        options['tz_info'] = 'US/Central'
 
     for record in list_of_dicts:
         for key in record:
             if '_DATE' in key.upper():
                 if record[key]:
                     d = arrow.get(record[key])
+                    
+                    if options['replace_tz']:
+                        d = d.replace(tzinfo=options['tz_info'])  #  timestamp is in local, so assign that info (true with KTIS) 
+
                     record[key] = str(d.timestamp)
 
     return list_of_dicts

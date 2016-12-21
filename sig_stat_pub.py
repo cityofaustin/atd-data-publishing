@@ -76,7 +76,7 @@ def main(date_time):
         if kits_data:
             new_data = data_helpers.MergeDicts(knack_data_parsed, kits_data, 'ATD_SIGNAL_ID', ['OPERATION_STATE_DATETIME', 'OPERATION_STATE', 'PLAN_ID'])
 
-            new_data = data_helpers.ConvertISOToUnix(new_data)
+            new_data = data_helpers.ConvertISOToUnix(new_data, replace_tz=True)
 
             new_data = data_helpers.StringifyKeyValues(new_data)
 
@@ -110,6 +110,8 @@ def main(date_time):
             socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
 
             socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
+            
+            pdb.set_trace()
 
             status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
         
