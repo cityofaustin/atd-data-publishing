@@ -241,6 +241,8 @@ def DetectChanges(old_data, new_data, join_key, **options):
                 delete.append(old_record)  #  delete old record if prim key not in new data
 
         for new_record in new_data:
+            change_record = False
+
             if new_record[join_key] not in old_keys:  #  new record if prim key not in old 
                 print('new record: {}'.format(new_record[join_key]))
                 new.append(new_record)
@@ -258,27 +260,31 @@ def DetectChanges(old_data, new_data, join_key, **options):
                         if key in old_record:  #  key exists in old
                             if new_record[key] != old_record[key]:  #  key/val unequal
                                 print('unequal {}: {} new :{}'.format(key, old_record[key], new_record[key]))
-                                change.append(new_record)  #  change record
-                                break
+                                print(new_record)
+                                change_record = True
+                                continue
 
                         if key not in old_record:  #  key in new data not in old data
                             print('new field: ' + key)
-                            change.append(new_record)  #  change record
-                            break
-                    else:
-                        for key in old_record:
-                            if options['keys']:  #  optionally ignore keys not specified in options
-                                if key not in options['keys']:
-                                    continue
+                            change_record = True
+                            continue
 
-                            if key not in new_record:  #  key in old data not in new data
-                                print('key in old data not in new data: {} '.format(key))
-                                new_record[key] = ''  #  must append empty key val or socrata will not modify
-                                change.append(new_record)  #  change record
-                                break
+                    for key in old_record:
+                        if options['keys']:  #  optionally ignore keys not specified in options
+                            if key not in options['keys']:
+                                continue
 
-                        else:
-                            no_change.append(new_record)  #  no change
+                        if key not in new_record:  #  key in old data not in new data
+                            print('key in old data not in new data: {} '.format(key))
+                            new_record[key] = ''  #  must append empty key val or socrata will not modify
+                            change_record = True
+                            continue
+                            
+            if change_record:
+                change.append(new_record)  #  change record
+                
+            else:
+                no_change.append(new_record)  #  no change
                         
     else:
         delete = old_data  #  if no new data then flag all old data as delete
