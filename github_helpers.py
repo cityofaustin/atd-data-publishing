@@ -42,7 +42,10 @@ def CommitFile(url, path, branch, content, message, sha, auth, **options):
     encoded_content = encoded_content.decode('utf-8')
 
     if 'existing_file' in options:
-        if encoded_content == options['existing_file']['content']:
+        
+        old_data = options['existing_file']['content'].replace('\n', '')  #  github file has line breaks in the encoding
+
+        if encoded_content == old_data:
              print('Not updating {}, content is identical'.format(path))
              return options['existing_file']
              
