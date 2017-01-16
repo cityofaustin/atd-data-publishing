@@ -111,8 +111,6 @@ def main(date_time):
 
             socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
             
-            pdb.set_trace()
-
             status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
         
         else:
