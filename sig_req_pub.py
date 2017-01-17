@@ -33,6 +33,10 @@ SERVICE_URL = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/
 SOCRATA_RESOURCE_ID = ''
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
+#  CSV OUTPUT
+CSV_DESTINATION = secrets.FME_DIRECTORY
+DATASET_NAME = 'atd_signal_requests'
+
 now = arrow.now()
 
 def main(date_time):
@@ -58,6 +62,12 @@ def main(date_time):
 
         add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
 
+        #  write to csv
+        knack_data = data_helpers.ConvertMillsToUnix(knack_data)
+        knack_data = data_helpers.ConvertUnixToISO(knack_data)
+        file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
+        data_helpers.WriteToCSV(knack_data, file_name=file_name)
+        
         return add_response
 
     except Exception as e:
