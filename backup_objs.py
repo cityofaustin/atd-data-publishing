@@ -61,7 +61,9 @@ def main(date_time):
             
             except Exception as e:
                 print(e)
-                continue
+                body = 'Data backup of failed when writing csv'            
+                email_helpers.SendEmail(secrets['ALERTS_DISTRIBUTION'], 'data backup exception', body)
+                raise e
 
             count += 1
 
