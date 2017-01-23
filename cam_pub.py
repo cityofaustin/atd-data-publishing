@@ -27,8 +27,6 @@ KNACK_PARAMS = {
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
-
-
 #  AGOL CONFIG
 SERVICE_URL = ''
 
