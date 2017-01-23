@@ -34,6 +34,10 @@ SERVICE_URL = ''
 SOCRATA_RESOURCE_ID = 'b4k4-adkb'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
+#  CSV OUTPUT
+CSV_DESTINATION = secrets.FME_DIRECTORY
+DATASET_NAME = 'atd_traffic_cameras'
+
 
 now = arrow.now()
 
@@ -93,6 +97,11 @@ def main(date_time):
         log_payload = socrata_helpers.PrepPubLog(date_time, 'cameras_update', upsert_response)
 
         pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
+
+        #  write to csv
+        knack_data = data_helpers.ConvertUnixToISO(knack_data)
+        file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
+        data_helpers.WriteToCSV(knack_data, file_name=file_name)
 
         return log_payload
 
