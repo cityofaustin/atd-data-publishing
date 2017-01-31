@@ -194,7 +194,7 @@ def ParseData(data, field_list, knack_params, **options):
         
         for key in record:  
 
-            if not record[key]:
+            if record[key] == '':
                 continue  #  ignore empty fields
 
             if key in field_list:
@@ -242,6 +242,8 @@ def ParseData(data, field_list, knack_params, **options):
 
         else:
             parsed_data.append(new_record)
+
+
 
     return parsed_data
 
