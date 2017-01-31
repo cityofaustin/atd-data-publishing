@@ -108,5 +108,3 @@ def main(date_time):
 r = main(now)
 
 print('Donezo!')
-
-
