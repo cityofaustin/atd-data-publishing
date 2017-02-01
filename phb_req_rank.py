@@ -20,7 +20,7 @@ RANK_KEY = 'PHB_EVAL_RANK'
 
 KNACK_PARAMS = {  
     'REFERENCE_OBJECTS' : [REFERENCE_OBJECT],
-    'FIELD_NAMES' : [PRIMARY_KEY, RANK_KEY, STATUS_KEY, SCORE_KEY, 'RANK_ROUND_MO', 'RANK_ROUND_YR'],
+    'FIELD_NAMES' : [PRIMARY_KEY, RANK_KEY, STATUS_KEY, SCORE_KEY, 'RANK_ROUND_MO', 'RANK_ROUND_YR', 'EXCLUDE_FROM_RANKING'],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
@@ -44,11 +44,15 @@ def main(date_time):
 
         knack_data = data_helpers.ConcatKeyVals(knack_data, CONCAT_KEYS, GROUP_KEY, '_')
         
+        knack_data_exclude = [record for record in knack_data if record['EXCLUDE_FROM_RANKING'] == True]
+
+        knack_data_include = [record for record in knack_data if record['EXCLUDE_FROM_RANKING'] == False]
+        
         #  create list of scores grouped by group key
         #  scores are converted to integers
         score_dict = {}
 
-        for row in knack_data:
+        for row in knack_data_include:
             key = row[GROUP_KEY]
             score = int( row[SCORE_KEY] )
 
@@ -65,7 +69,7 @@ def main(date_time):
         #  get score rank and append record to payload
         payload = []
 
-        for record in knack_data:
+        for record in knack_data_include:
             score = int( record[SCORE_KEY] )
             key = record[GROUP_KEY]
             rank = data_helpers.GetMinIndex(score_dict[key], score) + 1  #  add one to score index, because list indices start at 0
@@ -78,7 +82,12 @@ def main(date_time):
             else:
                 record[RANK_KEY] = rank
                 payload.append(record)
-    
+
+        #  assign null ranks to records flagged as exclude from ranking
+        for record in knack_data_exclude:
+            record[RANK_KEY] = None
+            payload.append(record)
+
         #  parse data to core fields
         payload = data_helpers.ReduceDicts(payload, [RANK_KEY, 'KNACK_ID'])
 
