@@ -194,8 +194,13 @@ def ParseData(data, field_list, knack_params, **options):
         
         for key in record:  
 
-            if record[key] == '':
-                continue  #  ignore empty fields
+            if type(record[key]) is str:
+                if record[key] == '':
+                    continue  #  ignore empty fields
+
+            if type(record[key]) is list:
+                if not record[key]:
+                    continue  #  ignore empty fields
 
             if key in field_list:
                 field_label = field_list[key]['label']
