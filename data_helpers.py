@@ -196,6 +196,12 @@ def MergeDicts(source_dicts, merge_dicts, join_key, merge_keys):
 
         for source_dict in source_dicts: 
             
+            if not join_key in merge_dict:
+                continue
+            
+            if not join_key in source_dict:
+                continue
+
             if str(merge_dict[join_key]) == str(source_dict[join_key]):
 
                 for key in merge_dict:                
