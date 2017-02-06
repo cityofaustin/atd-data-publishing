@@ -47,13 +47,8 @@ KNACK_PARAMS_REQ_LOCATIONS = {
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
 
-#  CSV OUTPUT
-CSV_DESTINATION = secrets.FME_DIRECTORY
-DATASET_NAME = 'atd_signals'
-
-
 #  SOCRATA CONFIG
-SOCRATA_RESOURCE_ID = 'en7e-ck2r'
+SOCRATA_RESOURCE_ID = 'f6qu-b7zb'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
 
@@ -111,7 +106,7 @@ def main(date_time):
         
         socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
         
-        cd_results = data_helpers.DetectChanges(socrata_data, knack_data_master, PRIMARY_KEY, keys=KNACK_PARAMS_TRAFFIC['FIELD_NAMES'])
+        cd_results = data_helpers.DetectChanges(socrata_data, knack_data_master, PRIMARY_KEY, keys=KNACK_PARAMS_TRAFFIC['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
@@ -126,7 +121,7 @@ def main(date_time):
         socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
 
         upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
-        
+                
         if 'error' in upsert_response:
             email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
             
