@@ -94,9 +94,6 @@ def main(date_time):
         #  append location info to eval data dicts
         knack_data_master = data_helpers.MergeDicts(knack_data_master, knack_data_req_loc, 'REQUEST_ID', ['LATITUDE', 'LONGITUDE'])
 
-        # file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
-        # data_helpers.WriteToCSV(knack_data_master, file_name=file_name)
-
         #  get published request data from Socrata and compare to Knack database
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
@@ -138,7 +135,6 @@ def main(date_time):
         print('Failed to process data for {}'.format(date_time))
         print(e)
         raise e
-
 
 results = main(now)
 
