@@ -1,5 +1,5 @@
 
-#  sync signal data in asset database with Socrata, ArcGIS Online
+#  sync master list of signal requests with open data portal
 
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
@@ -15,7 +15,8 @@ import data_helpers
 import secrets
 import pdb
 
-PRIMARY_KEY = 'ATD_SIGNAL_ID'
+
+PRIMARY_KEY = 'ATD_EVAL_ID'
 
 
 #  KNACK CONFIG
@@ -50,6 +51,12 @@ KNACK_PARAMS_REQ_LOCATIONS = {
 CSV_DESTINATION = secrets.FME_DIRECTORY
 DATASET_NAME = 'atd_signals'
 
+
+#  SOCRATA CONFIG
+SOCRATA_RESOURCE_ID = 'en7e-ck2r'
+SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
+
+
 now = arrow.now()
 
 def main(date_time):
@@ -78,7 +85,6 @@ def main(date_time):
         
         knack_data_traffic_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data_traffic))
         
-
         knack_data_master = knack_data_traffic_mills + knack_data_phb_mills
         
         #  get and parse location info
@@ -91,17 +97,47 @@ def main(date_time):
         knack_data_req_loc = data_helpers.StringifyKeyValues(knack_data_req_loc)
 
         #  append location info to eval data dicts
-        knack_data_master =data_helpers.MergeDicts(knack_data_master, knack_data_req_loc, 'REQUEST_ID', ['LATITUDE', 'LONGITUDE'])
+        knack_data_master = data_helpers.MergeDicts(knack_data_master, knack_data_req_loc, 'REQUEST_ID', ['LATITUDE', 'LONGITUDE'])
 
-        file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
-        data_helpers.WriteToCSV(knack_data_master, file_name=file_name)
+        # file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
+        # data_helpers.WriteToCSV(knack_data_master, file_name=file_name)
 
-        pdb.set_trace()
+        #  get published request data from Socrata and compare to Knack database
+        socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
+        socrata_data = data_helpers.UpperCaseKeys(socrata_data)
+        
+        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
+        
+        socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
+        
+        cd_results = data_helpers.DetectChanges(socrata_data, knack_data_master, PRIMARY_KEY, keys=KNACK_PARAMS_TRAFFIC['FIELD_NAMES'])
 
+        if cd_results['new'] or cd_results['change'] or cd_results['delete']:
+            socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
 
-        return "hello"
-        # return log_payload
+            socrata_payload = socrata_helpers.CreateLocationFields(socrata_payload)
+
+        else:
+            socrata_payload = []
+        
+        socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+
+        socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
+
+        upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
+        
+        if 'error' in upsert_response:
+            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+            
+        elif upsert_response['Errors']:
+            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+
+        log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_request_master_list', upsert_response)
+
+        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
+
+        return log_payload
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
