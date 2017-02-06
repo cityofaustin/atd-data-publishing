@@ -69,7 +69,7 @@ def main(date_time):
 
         socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
 
-        cd_results = data_helpers.DetectChanges(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES'])
+        cd_results = data_helpers.DetectChanges(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
