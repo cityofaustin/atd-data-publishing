@@ -85,9 +85,13 @@ def main(date_time):
 
         #  assign null ranks to records flagged as exclude from ranking
         for record in knack_data_exclude:
-            record[RANK_KEY] = None
-            payload.append(record)
 
+            if RANK_KEY in record:
+                #  updated excluded records if rank found
+                if record[RANK_KEY] != '':
+                    record[RANK_KEY] = ''
+                    payload.append(record)
+                    
         #  parse data to core fields
         payload = data_helpers.ReduceDicts(payload, [RANK_KEY, 'KNACK_ID'])
 
