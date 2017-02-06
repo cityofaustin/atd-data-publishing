@@ -195,6 +195,9 @@ def ParseData(data, field_list, knack_params, **options):
         for key in record:  
 
             if type(record[key]) is str:
+                
+                record[key] = record[key].strip()
+
                 if record[key] == '':
                     continue  #  ignore empty fields
 
@@ -211,7 +214,6 @@ def ParseData(data, field_list, knack_params, **options):
                 continue  #  ignore fields not in in-field list
 
             if field_label in field_names:  #  inclue only fields in out-field list                
-
 
                 if field_type == 'address':  #  converts location field to lat/lon  
 
@@ -247,8 +249,6 @@ def ParseData(data, field_list, knack_params, **options):
 
         else:
             parsed_data.append(new_record)
-
-
 
     return parsed_data
 
