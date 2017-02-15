@@ -50,6 +50,8 @@ def main(date_time):
         knack_data = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
 
         knack_data = data_helpers.StringifyKeyValues(knack_data)
+
+        knack_data = data_helpers.RemoveLinebreaks(knack_data, ['LOCATION_NAME']) 
         
         knack_data_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data))
 

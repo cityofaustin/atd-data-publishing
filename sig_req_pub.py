@@ -52,6 +52,8 @@ def main(date_time):
 
         knack_data = data_helpers.StringifyKeyValues(knack_data)
         
+        knack_data = data_helpers.RemoveLinebreaks(knack_data, ['LOCATION_NAME']) 
+
         knack_data_mills = data_helpers.ConvertUnixToMills(knack_data)
 
         token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
