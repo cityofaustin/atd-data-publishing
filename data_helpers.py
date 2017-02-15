@@ -97,6 +97,7 @@ def RemoveLinebreaks(list_of_dicts, list_of_keys):
     breakless = []
 
     for record in list_of_dicts:
+        for key in list_of_keys:
             if key in record:
                 if type(record[key]) is str:
                     record[key] = record[key].replace('\n', '')
