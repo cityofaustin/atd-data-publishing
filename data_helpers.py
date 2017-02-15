@@ -92,6 +92,21 @@ def StringifyKeyValues(list_of_dicts):
 
 
 
+def RemoveLinebreaks(list_of_dicts, list_of_keys):
+    print('remove linebreaks')
+    breakless = []
+
+    for record in list_of_dicts:
+            if key in record:
+                if type(record[key]) is str:
+                    record[key] = record[key].replace('\n', '')
+
+        breakless.append(record)
+
+    return breakless
+
+
+
 def ConvertMillsToUnix(list_of_dicts):
     print('convert millesecond date to unix date')
 
