@@ -45,6 +45,29 @@ from datetime import datetime
 import pytz
 
 
+def get_timestamp(local_time_string):
+    """
+    Convert time string to UTC timestamp.
+    """
+
+    # Create timezone object
+    local_tz = pytz.timezone("US/Central")
+
+    # Parse time string into naive/timezone-unaware datetime object
+    naive_dt = datetime.strptime(local_time_string, '%m/%d/%Y %I:%M:%S %p')
+
+    # Convert naive datetime object to timezone aware datetime object
+    local_dt = local_tz.localize(naive_dt)
+
+    # Convert from local timezone to utc timezone
+    utc_dt = local_dt.astimezone(pytz.utc)
+
+    # Get Unix time / posix time / epoch time
+    epoch = utc_dt.strftime('%s')
+
+    # Return epoch time
+    return(str(epoch))
+
 def random_mac_address():
     _hex_digits = [random.randint(0x00, 0xff) for i in range(5)]
     _address = ':'.join(map(lambda x: "%02x" % x, _hex_digits))
@@ -73,20 +96,23 @@ def randomize(input_dir, month_day_year, output_dir, awam_host_instance_name="Au
         reader = csv.reader(iaf_input_file)
         for row in reader:
 
-            # Replace the MAC addresses
+            # Replace the true MAC addresses with the randomly generated one
             mac = row[4]
             if mac not in newmacs:
                 newmacs[mac] = random_mac_address()
             row[4] = newmacs[mac]
 
-            # Replace the IP address with an anonymous unique row ID
-            local_tz = pytz.timezone("US/Central")
-            naive_dt = datetime.strptime(row[0], '%m/%d/%Y %I:%M:%S %p')
-            local_dt = local_tz.localize(naive_dt)
-            utc_dt = local_dt.astimezone(pytz.utc)
-            epoch = utc_dt.strftime('%s')
-            row[1] = str(epoch) + row[4]
+            # Replace time strings with Unix times
+            row[0] = get_timestamp(row[0])
+            row[2] = get_timestamp(row[2])
 
+            # Add a unique row identifier
+            row.insert(0, row[0] + row[4])
+
+            # Remove the IP address
+            del row[2]
+
+            # Add the modified row
             rows.append(row)
 
         # Write the anonymized IAF data
@@ -108,6 +134,13 @@ def randomize(input_dir, month_day_year, output_dir, awam_host_instance_name="Au
                 newmacs[mac] = random_mac_address()
             row[0] = newmacs[mac]
             rows.append(row)
+
+            # Replace time strings with Unix times
+            row[3] = get_timestamp(row[3])
+            row[4] = get_timestamp(row[4])
+
+            # Add a unique row identifier
+            row.insert(0, row[3] + row[0])
 
         # Write the anonymized ITMF data
         with open(itmf_output_path, 'wb') as itmf_output_file:
