@@ -7,9 +7,15 @@
 import os
 import csv
 from datetime import datetime
+import pytz
 import socrata_helpers
+import pdb
+
+resouce_id = 'v7zg-5jg9'
 
 fieldnames = ['origin_reader_identifier', 'destination_reader_identifier', 'origin_roadway', 'origin_cross_street', 'origin_direction', 'destination_roadway', 'destination_cross_street', 'destination_direction', 'segment_length_miles', 'timestamp', 'average_travel_time_seconds', 'average_speed_mph', 'summary_interval_minutes', 'number_samples', 'standard_deviation']
+
+rootDir = './data'
 
 def get_timestamp(local_time_string):
     """
@@ -35,7 +41,7 @@ def get_timestamp(local_time_string):
 
 
 
-def read_data(filename):
+def process_data(filename):
 
     with open(filename, 'r') as input_file:
         reader = csv.reader(input_file)
@@ -56,7 +62,9 @@ def read_data(filename):
 
 for dirpath, subdirs, files in os.walk(rootDir):
     for fname in files:
-        if 'summary' in fname:
-            data = read_data( os.path.join(in_dir, infile) )
+        if 'Austin_bt_summary_' in fname:
+            data = process_data( os.path.join(in_dir, infile) )
             
-            upload_data(data)
+            payload = [dict(zip(fieldnames, record)) for record in data]
+            print(payload)
+            pdb.set_trace()
