@@ -1,5 +1,7 @@
 # still need to zip up the rows
-# origin_reader_identifier, destination_reader_identifier, 
+
+
+# origin_reader_identifier, destination_reader_identifier, origin_roadway, origin_cross_street, origin_direction, destination_roadway, destination_cross_street, destination_direction, segment_length_in_miles, timestamp, average_travel_time_seconds, average_speed_mph, summary_interval_minutes, number_samples, standard_deviation
 # congress_slaughter,congress_wm_cannon,Congress,Slaughter,Northbound,Congress,William Cannon,Southbound,1.91,12/30/2015 12:00 AM,-1,-1,15,0,-1
 
 import os
@@ -7,7 +9,7 @@ import csv
 from datetime import datetime
 import socrata_helpers
 
-fieldnames = []
+fieldnames = ['origin_reader_identifier', 'destination_reader_identifier', 'origin_roadway', 'origin_cross_street', 'origin_direction', 'destination_roadway', 'destination_cross_street', 'destination_direction', 'segment_length_miles', 'timestamp', 'average_travel_time_seconds', 'average_speed_mph', 'summary_interval_minutes', 'number_samples', 'standard_deviation']
 
 def get_timestamp(local_time_string):
     """
