@@ -27,7 +27,7 @@ def query_all_features(url, token):
 
 def add_features(url, token, payload):
     print('add new features to ArcGIS Online feature service')
-    url = url + 'add_features'
+    url = url + 'addFeatures'
     success = 0
     fail = 0
     params = { 'f':'json','features': json.dumps(payload) ,'token':token}
@@ -44,7 +44,7 @@ def add_features(url, token, payload):
 
 def delete_features(url, token):
     print('delete all existing ArcGIS Online features')
-    url = url + 'delete_features'
+    url = url + 'deleteFeatures'
     where = 'OBJECTID>0'
     params = {'f' : 'json','where': where , 'outFields'  : '*','token' : token, 'returnGeometry':False }
     res = requests.post(url, params=params)
