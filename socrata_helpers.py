@@ -140,8 +140,3 @@ def AddHistoricalFields(list_of_dicts):
         record['operation_state_duration'] = delta.seconds
 
     return list_of_dicts
-
-
-
-
-
