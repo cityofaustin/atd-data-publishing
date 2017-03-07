@@ -66,13 +66,13 @@ def main(date_time):
             
             payload = data_helpers.write_csv(data, in_memory=True)
 
-            git_auth = github_helpers.CreateAuthTuple(secrets.GITHUB_CREDENTIALS)
+            git_auth = github_helpers.create_auth_tuple(secrets.GITHUB_CREDENTIALS)
 
-            repo_data = github_helpers.GetFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], 'gh-pages', git_auth)
+            repo_data = github_helpers.get_file(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], 'gh-pages', git_auth)
 
             GIT_PARAMS['sha'] = repo_data['sha']
 
-            git_response = github_helpers.CommitFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', GIT_PARAMS['sha'], git_auth, existing_file=repo_data)
+            git_response = github_helpers.commit_file(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', GIT_PARAMS['sha'], git_auth, existing_file=repo_data)
             
         return git_response
 
