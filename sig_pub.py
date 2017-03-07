@@ -45,35 +45,35 @@ def main(date_time):
 
     try:       
 
-        field_list = knack_helpers.GetFields(KNACK_PARAMS)
+        field_list = knack_helpers.get_fields(KNACK_PARAMS)
 
-        knack_data = knack_helpers.GetData(KNACK_PARAMS)
+        knack_data = knack_helpers.get_data(KNACK_PARAMS)
 
-        knack_data = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
+        knack_data = knack_helpers.parse_data(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
 
-        knack_data = data_helpers.StringifyKeyValues(knack_data)
+        knack_data = data_helpers.stringify_key_values(knack_data)
 
-        knack_data = data_helpers.RemoveLinebreaks(knack_data, ['LOCATION_NAME']) 
+        knack_data = data_helpers.remove_linebreaks(knack_data, ['LOCATION_NAME']) 
 
-        knack_data_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data))
+        knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))
         
-        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        token = agol_helpers.get_token(secrets.AGOL_CREDENTIALS)
 
-        agol_payload = agol_helpers.BuildPayload(knack_data_mills)
+        agol_payload = agol_helpers.build_payload(knack_data_mills)
 
-        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
+        del_response = agol_helpers.delete_features(SERVICE_URL, token)
 
-        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
+        add_response = agol_helpers.add_features(SERVICE_URL, token, agol_payload)
 
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
-        socrata_data = data_helpers.UpperCaseKeys(socrata_data)
+        socrata_data = data_helpers.upper_case_keys(socrata_data)
 
-        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
+        socrata_data = data_helpers.stringify_key_values(socrata_data)
 
-        socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
+        socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
 
-        cd_results = data_helpers.DetectChanges(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES']  + ['LATITUDE', 'LONGITUDE'])
+        cd_results = data_helpers.detect_changes(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES']  + ['LATITUDE', 'LONGITUDE'])
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
@@ -83,26 +83,26 @@ def main(date_time):
         else:
             socrata_payload = []
 
-        socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+        socrata_payload = data_helpers.lower_case_keys(socrata_payload)
 
-        socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
+        socrata_payload = data_helpers.unix_to_iso(socrata_payload)
 
         upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
 
         if 'error' in upsert_response:
-            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+            email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
             
         elif upsert_response['Errors']:
-            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+            email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
 
         log_payload = socrata_helpers.PrepPubLog(date_time, 'signals_update', upsert_response)
 
         pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
 
         #  write to csv
-        knack_data = data_helpers.ConvertUnixToISO(knack_data)
+        knack_data = data_helpers.unix_to_iso(knack_data)
         file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
-        data_helpers.WriteToCSV(knack_data, file_name=file_name)
+        data_helpers.write_csv(knack_data, file_name=file_name)
         
         return log_payload
         # return log_payload

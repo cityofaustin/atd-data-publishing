@@ -15,7 +15,7 @@ rootDir = ''
 excluded = 0
 included = 0
 
-def hasSeconds(local_time_string):
+def has_seconds(local_time_string):
     try:
         datetime.strptime(local_time_string, '%m/%d/%Y %I:%M:%S %p')
         return True

@@ -7,7 +7,7 @@ import csv
 
 
 
-def FilterbyKey(data, key, val_list):
+def filter_by_key(data, key, val_list):
     print('filter by key {}'.format(key))
     #  filter a list of dictionaries by a list of key values
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
@@ -15,7 +15,7 @@ def FilterbyKey(data, key, val_list):
 
 
 
-def FilterbyKeyExists(data, key):
+def filter_by_key_exists(data, key):
     'filter by key exists: {}'.format(key)
     #  return a list of dictionaries that have a specified key string
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
@@ -23,7 +23,7 @@ def FilterbyKeyExists(data, key):
 
 
 
-def AddMissingKeys(list_of_dicts, list_of_keys, list_of_vals):
+def add_missing_keys(list_of_dicts, list_of_keys, list_of_vals):
     print('add missing keys {}'.format(list_of_keys))
     #  look for keys in a list of dicts
     #  and missing keys and set to a default value
@@ -38,7 +38,7 @@ def AddMissingKeys(list_of_dicts, list_of_keys, list_of_vals):
 
 
 
-def GroupByKey(dataset, key):
+def group_by_key(dataset, key):
     print('group data by {}'.format(key))
 
     grouped_data = {}
@@ -51,7 +51,7 @@ def GroupByKey(dataset, key):
 
 
 
-def ListKeyValues(list_of_dicts, key):
+def list_key_values(list_of_dicts, key):
     #  generate a list of key values from a list of dictionaries
     if len(list_of_dicts) > 0:
         return [record[key] for record in list_of_dicts]
@@ -61,7 +61,7 @@ def ListKeyValues(list_of_dicts, key):
 
 
 
-def UpperCaseKeys(list_of_dicts):
+def upper_case_keys(list_of_dicts):
     upper = []
 
     for record in list_of_dicts:
@@ -71,7 +71,7 @@ def UpperCaseKeys(list_of_dicts):
 
 
 
-def LowerCaseKeys(list_of_dicts):
+def lower_case_keys(list_of_dicts):
     lower = []
 
     for record in list_of_dicts:
@@ -81,7 +81,7 @@ def LowerCaseKeys(list_of_dicts):
 
 
 
-def StringifyKeyValues(list_of_dicts):
+def stringify_key_values(list_of_dicts):
     print('stringify key values')
     stringified = []
 
@@ -92,7 +92,7 @@ def StringifyKeyValues(list_of_dicts):
 
 
 
-def RemoveLinebreaks(list_of_dicts, list_of_keys):
+def remove_linebreaks(list_of_dicts, list_of_keys):
     print('remove linebreaks')
     breakless = []
 
@@ -108,7 +108,7 @@ def RemoveLinebreaks(list_of_dicts, list_of_keys):
 
 
 
-def ConvertMillsToUnix(list_of_dicts):
+def mills_to_unix(list_of_dicts):
     print('convert millesecond date to unix date')
 
     for record in list_of_dicts:
@@ -122,7 +122,7 @@ def ConvertMillsToUnix(list_of_dicts):
 
 
 
-def ConvertUnixToMills(list_of_dicts):
+def unix_to_mills(list_of_dicts):
     print('convert unix dates to milleseconds')
 
     for record in list_of_dicts:
@@ -134,7 +134,7 @@ def ConvertUnixToMills(list_of_dicts):
     return list_of_dicts
 
 
-def ConvertISOToUnix(list_of_dicts, **options):
+def iso_to_unix(list_of_dicts, **options):
     #  requires arrow
     #  convert ISO datetimes to unix
     print('convert ISO dates to unix')
@@ -160,7 +160,7 @@ def ConvertISOToUnix(list_of_dicts, **options):
 
 
 
-def ConvertUnixToISO(list_of_dicts, **options):
+def unix_to_iso(list_of_dicts, **options):
     #  requires arrow
     #  convert timestamps to unix
     #  ignores timestamps that cannot be converted to floats
@@ -200,7 +200,7 @@ def ConvertUnixToISO(list_of_dicts, **options):
 
 
 
-def MergeDicts(source_dicts, merge_dicts, join_key, merge_keys):
+def merge_dicts(source_dicts, merge_dicts, join_key, merge_keys):
     #  insert fields from a merge dictionary to a source dictioary
     #  based on a matching key/val
     #  join field must exist in both source and merge dictionaries
@@ -233,7 +233,7 @@ def MergeDicts(source_dicts, merge_dicts, join_key, merge_keys):
 
 
 
-def DetectChanges(old_data, new_data, join_key, **options):
+def detect_changes(old_data, new_data, join_key, **options):
     #  compare two list of dicts based on a unique join_key
     #  list keys in options['keys'] to specify which keys to compare
 
@@ -250,7 +250,7 @@ def DetectChanges(old_data, new_data, join_key, **options):
 
     if new_data:        
 
-        old_keys = ListKeyValues(old_data, join_key)
+        old_keys = list_key_values(old_data, join_key)
         
         for old_record in old_data:  
             
@@ -319,7 +319,7 @@ def DetectChanges(old_data, new_data, join_key, **options):
     }
 
 
-def ConcatKeyVals(list_of_dicts, list_of_keys, new_key, join_string):
+def concat_key_values(list_of_dicts, list_of_keys, new_key, join_string):
     print('concat keys {}'.format(list_of_keys))
     for d in list_of_dicts:
         concat =[]
@@ -335,7 +335,7 @@ def ConcatKeyVals(list_of_dicts, list_of_keys, new_key, join_string):
 
 
 
-def GroupByUniqueValue(list_of_dicts, key):
+def group_by_unique_value(list_of_dicts, key):
     print('groupd by key {}'.format(key))
     grouped = {}
     
@@ -350,26 +350,26 @@ def GroupByUniqueValue(list_of_dicts, key):
 
 
 
-def SortDictsInt(list_of_dicts, key):
+def sort_dicts_int(list_of_dicts, key):
     print('sort list of dicts')
     #  sort a list of dictionarys based on an integer key value
     #  http://stackoverflow.com/questions/72899/how-do-i-sort-a-list-of-dictionaries-by-values-of-the-dictionary-in-python
     return sorted(list_of_dicts, key=lambda k: int(k[key]), reverse=True) 
 
 
-def GetMaxIndex(list_of_vals, val):
+def max_index(list_of_vals, val):
     #  find the largest index of a value in a list
     #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
     return max([i for i, x in enumerate(list_of_vals) if x == val])
 
 
-def GetMinIndex(list_of_vals, val):
+def min_index(list_of_vals, val):
     #  find the smallest index of a value in a list
     #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
     return min([i for i, x in enumerate(list_of_vals) if x == val])
 
 
-def createRankList(list_of_dicts, rank_key_name):
+def create_rank_list(list_of_dicts, rank_key_name):
     print('create rank list')
     #  create 'rank' key and assign rank based on position of dict in list
     for record in list_of_dicts:
@@ -379,7 +379,7 @@ def createRankList(list_of_dicts, rank_key_name):
 
 
 
-def ReduceDicts(list_of_dicts, list_of_keys):
+def reduce_dicts(list_of_dicts, list_of_keys):
     #  del keys from dicts in a list of dicts
     #  put the keys you want to keep in list_of_keys
     print( 'reduce dictionary to keys {}'.format(list_of_keys) )
@@ -397,7 +397,7 @@ def ReduceDicts(list_of_dicts, list_of_keys):
 
 
 
-def ReplaceDictKeys(list_of_dicts, lookup_dict):
+def replace_keys(list_of_dicts, lookup_dict):
     print('replace keys')
 
     for d in list_of_dicts:
@@ -409,7 +409,7 @@ def ReplaceDictKeys(list_of_dicts, lookup_dict):
 
 
 
-def WriteToCSV(data, **options):
+def write_csv(data, **options):
     #  requires pandas
     #  requires arrow
     print('write data to file')
@@ -430,7 +430,7 @@ def WriteToCSV(data, **options):
 
 
 
-def GetWebCSV(url, **options):
+def get_web_csv(url, **options):
     print('get CSV from web')
 
     if not 'encoding' in options:

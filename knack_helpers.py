@@ -3,7 +3,7 @@ import json
 import pdb
 
 
-def UpdateRecord(record_dict, knack_params):
+def update_record(record_dict, knack_params):
     #  record object must have 'KNACK_ID' field
     print('update knack record')
 
@@ -24,7 +24,7 @@ def UpdateRecord(record_dict, knack_params):
 
 
 
-def GetFields(knack_params):
+def get_fields(knack_params):
     print('get knack field metadata')
 
     objects_url = 'https://api.knack.com/v1/objects/'
@@ -68,7 +68,7 @@ def GetFields(knack_params):
 
 
 
-def CreateFieldLookup(field_dict, **options): 
+def create_field_lookup(field_dict, **options): 
     #  use options['parse_raw'] to handle 'raw' field names
     #  its not ideal
     if not 'parse_raw' in options:
@@ -87,7 +87,7 @@ def CreateFieldLookup(field_dict, **options):
 
 
 
-def CreateFieldLabelList(list_of_fields, **options): 
+def create_label_list(list_of_fields, **options): 
 
     field_labels = []
     
@@ -99,7 +99,7 @@ def CreateFieldLabelList(list_of_fields, **options):
 
 
 
-def GetData(knack_params):
+def get_data(knack_params):
     print('get knack data')
     
     table_url = 'https://api.knack.com/v1/pages/scene_{}/views/view_{}/records?rows_per_page=1000'.format( knack_params['SCENE'], knack_params['VIEW'])
@@ -142,7 +142,7 @@ def GetData(knack_params):
 
 
 
-def GetAllFields(knack_object, knack_params):
+def get_all_fields(knack_object, knack_params):
     #  object must have < 1000 fields
     #  return all field metadata for a given object
     print('get all knack field metadata for {}'.format(knack_object))
@@ -163,7 +163,7 @@ def GetAllFields(knack_object, knack_params):
 
 
 
-def ParseData(data, field_list, knack_params, **options):
+def parse_data(data, field_list, knack_params, **options):
     print('parse knack data')
     #  create a happy list of dicts from raw knack data
     #  data is a list of dicts from knack database
@@ -254,7 +254,7 @@ def ParseData(data, field_list, knack_params, **options):
 
 
 
-def GetObjectData(knack_object, knack_params):
+def get_object_data(knack_object, knack_params):
     print('get knack data')
     
     objects_url = 'https://api.knack.com/v1/objects/{}/records?rows_per_page=1000'.format( knack_object ) 

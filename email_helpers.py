@@ -3,7 +3,7 @@ from secrets import EMAIL
 
 
 
-def SendEmail(to, subject, body):
+def send_email(to, subject, body):
     print('Send email to {}'.format(to))
     
     EMAIL_FOOTER = '''
@@ -18,7 +18,7 @@ def SendEmail(to, subject, body):
 
 
 
-def SendStaleEmail(elapsed_time, to):
+def send_stale_email(elapsed_time, to):
     print('Send email to {}'.format(to))
 
     subject = 'DATA PROCESSING ALERT: KITS Status Data is {} mintues old'.format(str(elapsed_time))
@@ -36,7 +36,7 @@ def SendStaleEmail(elapsed_time, to):
 
 
 
-def SendSocrataAlert(to, resource, socrata_response):
+def send_socrata_alert(to, resource, socrata_response):
     print('Send email to {}'.format(to))
     
     subject = 'SOCRATA PUBLICATION FAILURE: Resource {} published with errors.'.format(resource)

@@ -59,51 +59,51 @@ def main(date_time):
 
     try:       
         #  get and parse phb eval data
-        field_list = knack_helpers.GetFields(KNACK_PARAMS_PHB)
+        field_list = knack_helpers.get_fields(KNACK_PARAMS_PHB)
 
-        knack_data_phb = knack_helpers.GetData(KNACK_PARAMS_PHB)
+        knack_data_phb = knack_helpers.get_data(KNACK_PARAMS_PHB)
 
-        knack_data_phb = knack_helpers.ParseData(knack_data_phb, field_list, KNACK_PARAMS_TRAFFIC, convert_to_unix=True)
+        knack_data_phb = knack_helpers.parse_data(knack_data_phb, field_list, KNACK_PARAMS_TRAFFIC, convert_to_unix=True)
 
-        knack_data_phb = data_helpers.StringifyKeyValues(knack_data_phb)
+        knack_data_phb = data_helpers.stringify_key_values(knack_data_phb)
         
-        knack_data_phb_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data_phb))
+        knack_data_phb_mills = data_helpers.unix_to_mills(deepcopy(knack_data_phb))
 
         #  get and parse traffic eval data
-        field_list = knack_helpers.GetFields(KNACK_PARAMS_TRAFFIC)
+        field_list = knack_helpers.get_fields(KNACK_PARAMS_TRAFFIC)
 
-        knack_data_traffic = knack_helpers.GetData(KNACK_PARAMS_TRAFFIC)
+        knack_data_traffic = knack_helpers.get_data(KNACK_PARAMS_TRAFFIC)
 
-        knack_data_traffic = knack_helpers.ParseData(knack_data_traffic, field_list, KNACK_PARAMS_TRAFFIC, convert_to_unix=True)
+        knack_data_traffic = knack_helpers.parse_data(knack_data_traffic, field_list, KNACK_PARAMS_TRAFFIC, convert_to_unix=True)
 
-        knack_data_traffic = data_helpers.StringifyKeyValues(knack_data_traffic)
+        knack_data_traffic = data_helpers.stringify_key_values(knack_data_traffic)
         
-        knack_data_traffic_mills = data_helpers.ConvertUnixToMills(deepcopy(knack_data_traffic))
+        knack_data_traffic_mills = data_helpers.unix_to_mills(deepcopy(knack_data_traffic))
         
         knack_data_master = knack_data_traffic_mills + knack_data_phb_mills
         
         #  get and parse location info
-        field_list = knack_helpers.GetFields(KNACK_PARAMS_REQ_LOCATIONS)
+        field_list = knack_helpers.get_fields(KNACK_PARAMS_REQ_LOCATIONS)
 
-        knack_data_req_loc = knack_helpers.GetData(KNACK_PARAMS_REQ_LOCATIONS)
+        knack_data_req_loc = knack_helpers.get_data(KNACK_PARAMS_REQ_LOCATIONS)
 
-        knack_data_req_loc = knack_helpers.ParseData(knack_data_req_loc, field_list, KNACK_PARAMS_REQ_LOCATIONS, convert_to_unix=True)
+        knack_data_req_loc = knack_helpers.parse_data(knack_data_req_loc, field_list, KNACK_PARAMS_REQ_LOCATIONS, convert_to_unix=True)
 
-        knack_data_req_loc = data_helpers.StringifyKeyValues(knack_data_req_loc)
+        knack_data_req_loc = data_helpers.stringify_key_values(knack_data_req_loc)
 
         #  append location info to eval data dicts
-        knack_data_master = data_helpers.MergeDicts(knack_data_master, knack_data_req_loc, 'REQUEST_ID', ['LATITUDE', 'LONGITUDE'])
+        knack_data_master = data_helpers.merge_dicts(knack_data_master, knack_data_req_loc, 'REQUEST_ID', ['LATITUDE', 'LONGITUDE'])
 
         #  get published request data from Socrata and compare to Knack database
         socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
-        socrata_data = data_helpers.UpperCaseKeys(socrata_data)
+        socrata_data = data_helpers.upper_case_keys(socrata_data)
         
-        socrata_data = data_helpers.StringifyKeyValues(socrata_data)
+        socrata_data = data_helpers.stringify_key_values(socrata_data)
         
-        socrata_data = data_helpers.ConvertISOToUnix(socrata_data, replace_tz=True)
+        socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
         
-        cd_results = data_helpers.DetectChanges(socrata_data, knack_data_master, PRIMARY_KEY, keys=KNACK_PARAMS_TRAFFIC['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
+        cd_results = data_helpers.detect_changes(socrata_data, knack_data_master, PRIMARY_KEY, keys=KNACK_PARAMS_TRAFFIC['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
@@ -113,17 +113,17 @@ def main(date_time):
         else:
             socrata_payload = []
         
-        socrata_payload = data_helpers.LowerCaseKeys(socrata_payload)
+        socrata_payload = data_helpers.lower_case_keys(socrata_payload)
 
-        socrata_payload = data_helpers.ConvertUnixToISO(socrata_payload)
+        socrata_payload = data_helpers.unix_to_iso(socrata_payload)
 
         upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
                 
         if 'error' in upsert_response:
-            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+            email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
             
         elif upsert_response['Errors']:
-            email_helpers.SendSocrataAlert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
+            email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
 
         log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_request_master_list', upsert_response)
 

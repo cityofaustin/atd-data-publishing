@@ -1,7 +1,7 @@
 import pymssql
 import arrow
 
-def GenerateStatusIdQuery(data, id_key):
+def generate_status_id_query(data, id_key):
     print('prep kits query')
     
     ids = [record[id_key] for record in data]
@@ -25,7 +25,7 @@ def GenerateStatusIdQuery(data, id_key):
 
 
 
-def GetDataAsDict(creds, query):
+def data_as_dict(creds, query):
     print('fetch kits data')
 
     conn = pymssql.connect(
@@ -44,7 +44,7 @@ def GetDataAsDict(creds, query):
 
 
 
-def CheckForStaleData(dataset, time_field, minute_tolerance):
+def check_for_stale(dataset, time_field, minute_tolerance):
     print('check for stale data')
 
     stale = False
