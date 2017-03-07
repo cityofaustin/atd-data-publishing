@@ -7,7 +7,8 @@ from secrets import SOCRATA_CREDENTIALS
 def upsert(input_dir, month_day_year, awam_host_instance_name="Austin"):
 
     # Set IAF path parameters
-    iaf_filename = "%s_bt_%s.txt" % (awam_host_instance_name, month_day_year)
+    # iaf_filename = "%s_bt_%s.txt" % (awam_host_instance_name, month_day_year)
+    iaf_filename = "%s_bt_%s.csv" % (awam_host_instance_name, month_day_year)
     iaf_input_path = os.path.join(input_dir, iaf_filename)
 
     # Upload the data
