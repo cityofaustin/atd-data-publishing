@@ -89,7 +89,7 @@ for dirpath, subdirs, files in os.walk(rootDir):
             
             payload = [dict(zip(fieldnames, record)) for record in data]
 
-            socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, payload, resouce_id)
+            socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, payload, resouce_id)
 
 
 

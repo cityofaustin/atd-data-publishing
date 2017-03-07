@@ -4,7 +4,7 @@ import json
 import pdb
 
 
-def FetchPublicData(resource):
+def get_public_data(resource):
     print('fetch public socrata data')
     
     url = 'https://data.austintexas.gov/resource/{}.json?$limit=10000'.format(resource)
@@ -19,7 +19,7 @@ def FetchPublicData(resource):
 
 
 
-def FetchPrivateData(creds, resource):
+def get_private_data(creds, resource):
     print('fetch private socrata data')
     
     url = 'https://data.austintexas.gov/resource/{}.json?$limit=10000'.format(resource)
@@ -36,7 +36,7 @@ def FetchPrivateData(creds, resource):
 
 
 
-def CreatePayload(detection_obj, prim_key):
+def create_payload(detection_obj, prim_key):
     #  readies a socrata upsert from the results of change detection
     #  see https://dev.socrata.com/publishers/upsert.html
     now = arrow.now()
@@ -54,7 +54,7 @@ def CreatePayload(detection_obj, prim_key):
 
 
 
-def CreateLocationFields(list_of_dicts):
+def create_location_fields(list_of_dicts):
     print('create location fields')
 
     for record in list_of_dicts:
@@ -65,7 +65,7 @@ def CreateLocationFields(list_of_dicts):
 
 
 
-def StripGeocodingField(list_of_dicts):
+def strip_geocoding(list_of_dicts):
     print('strip geocoding field')
 
     for record in list_of_dicts:
@@ -77,7 +77,7 @@ def StripGeocodingField(list_of_dicts):
 
 
 
-def UpsertData(creds, payload, resource):
+def upsert_data(creds, payload, resource):
     print('upsert open data ' + resource)
     
     url = 'https://data.austintexas.gov/resource/{}.json'.format(resource)
@@ -94,7 +94,7 @@ def UpsertData(creds, payload, resource):
 
 
 
-def PrepPubLog(date_time, event, socrata_response):
+def prep_pub_log(date_time, event, socrata_response):
     print('prep publication log')
 
     if 'message' not in socrata_response:
@@ -122,7 +122,7 @@ def PrepPubLog(date_time, event, socrata_response):
 
 
 
-def AddHistoricalFields(list_of_dicts):
+def add_hist_fields(list_of_dicts):
 
     for record in list_of_dicts:
         

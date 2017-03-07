@@ -63,7 +63,7 @@ def main(date_time):
 
         # add_response = agol_helpers.add_features(SERVICE_URL, token, agol_payload)
 
-        socrata_data = socrata_helpers.FetchPrivateData(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
+        socrata_data = socrata_helpers.get_private_data(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
         socrata_data = data_helpers.upper_case_keys(socrata_data)
 
@@ -74,9 +74,9 @@ def main(date_time):
         cd_results = data_helpers.detect_changes(socrata_data, knack_data, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES']  + ['LATITUDE', 'LONGITUDE'])
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
-            socrata_payload = socrata_helpers.CreatePayload(cd_results, PRIMARY_KEY)
+            socrata_payload = socrata_helpers.create_payload(cd_results, PRIMARY_KEY)
 
-            socrata_payload = socrata_helpers.CreateLocationFields(socrata_payload)
+            socrata_payload = socrata_helpers.create_location_fields(socrata_payload)
 
         else:
             socrata_payload = []
@@ -85,7 +85,7 @@ def main(date_time):
 
         socrata_payload = data_helpers.unix_to_iso(socrata_payload)
 
-        upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
+        upsert_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_RESOURCE_ID)
 
         if 'error' in upsert_response:
             email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
@@ -93,9 +93,9 @@ def main(date_time):
         elif upsert_response['Errors']:
             email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_RESOURCE_ID, upsert_response)
 
-        log_payload = socrata_helpers.PrepPubLog(date_time, 'travel_sensor_update', upsert_response)
+        log_payload = socrata_helpers.prep_pub_log(date_time, 'travel_sensor_update', upsert_response)
 
-        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
+        pub_log_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)
 
         #  write to csv
         knack_data = data_helpers.unix_to_iso(knack_data)

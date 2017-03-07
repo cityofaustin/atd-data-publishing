@@ -63,9 +63,9 @@ def main(date_time):
 
             response_obj = { 'Errors' : 1, 'message' : 'WARNING: stale data detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
 
-            stale_data_log = socrata_helpers.PrepPubLog(date_time, 'signal_status_update', response_obj)
+            stale_data_log = socrata_helpers.prep_pub_log(date_time, 'signal_status_update', response_obj)
 
-            socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, stale_data_log, SOCRATA_PUB_LOG_ID)
+            socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, stale_data_log, SOCRATA_PUB_LOG_ID)
 
             sys.exit()
 
@@ -83,9 +83,9 @@ def main(date_time):
         else:
             new_data = []
 
-        socrata_data = socrata_helpers.FetchPublicData(SOCRATA_SIGNAL_STATUS)
+        socrata_data = socrata_helpers.get_public_data(SOCRATA_SIGNAL_STATUS)
         
-        socrata_data = socrata_helpers.StripGeocodingField(socrata_data)
+        socrata_data = socrata_helpers.strip_geocoding(socrata_data)
 
         socrata_data = data_helpers.upper_case_keys(socrata_data)
     
@@ -103,24 +103,24 @@ def main(date_time):
 
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
-            socrata_payload = socrata_helpers.CreatePayload(cd_results, 'ATD_SIGNAL_ID')
+            socrata_payload = socrata_helpers.create_payload(cd_results, 'ATD_SIGNAL_ID')
 
-            socrata_payload = socrata_helpers.CreateLocationFields(socrata_payload)
+            socrata_payload = socrata_helpers.create_location_fields(socrata_payload)
 
             socrata_payload = data_helpers.lower_case_keys(socrata_payload)
 
             socrata_payload = data_helpers.unix_to_iso(socrata_payload)
             
-            status_upsert_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
+            status_upsert_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, socrata_payload, SOCRATA_SIGNAL_STATUS)
         
         else:
             status_upsert_response = { 'Errors' : 0, 'message' : 'No signal status change detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
 
 
 
-        log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_update', status_upsert_response)
+        log_payload = socrata_helpers.prep_pub_log(date_time, 'signal_status_update', status_upsert_response)
 
-        pub_log_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
+        pub_log_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, log_payload, SOCRATA_PUB_LOG_ID)       
 
         if 'error' in status_upsert_response:
             email_helpers.send_socrata_alert(secrets.ALERTS_DISTRIBUTION, SOCRATA_SIGNAL_STATUS, status_upsert_response)
@@ -134,13 +134,13 @@ def main(date_time):
 
             historical_payload = data_helpers.lower_case_keys(cd_results['delete'])
 
-            historical_payload = socrata_helpers.AddHistoricalFields(historical_payload)
+            historical_payload = socrata_helpers.add_hist_fields(historical_payload)
 
-            status_upsert_historical_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, historical_payload, SOCRATA_SIGNAL_STATUS_HISTORICAL)
+            status_upsert_historical_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, historical_payload, SOCRATA_SIGNAL_STATUS_HISTORICAL)
 
-            historical_log_payload = socrata_helpers.PrepPubLog(date_time, 'signal_status_historical_update', status_upsert_historical_response)
+            historical_log_payload = socrata_helpers.prep_pub_log(date_time, 'signal_status_historical_update', status_upsert_historical_response)
 
-            pub_log_historical_response = socrata_helpers.UpsertData(secrets.SOCRATA_CREDENTIALS, historical_log_payload, SOCRATA_PUB_LOG_ID)
+            pub_log_historical_response = socrata_helpers.upsert_data(secrets.SOCRATA_CREDENTIALS, historical_log_payload, SOCRATA_PUB_LOG_ID)
 
             
             if 'error' in status_upsert_historical_response:
