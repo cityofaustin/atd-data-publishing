@@ -17,7 +17,7 @@ import pdb
 PRIMARY_KEY = 'ATD_EVAL_ID'
  
 KNACK_PARAMS = {  
-    'REFERENCE_OBJECTS' : ['object_11', 'object_53','object_56','object_12','object_21','object_14','object_13','object_26','object_27','object_29','object_36','object_63','object_31','object_35','object_37','object_41','object_42','object_43', 'object_45', 'object_58'],
+    'REFERENCE_OBJECTS' : ['object_11', 'object_53','object_56','object_12','object_21','object_14','object_13','object_26','object_27','object_29','object_36','object_63','object_31','object_35','object_37','object_41','object_42','object_43', 'object_45', 'object_58', 'object_82', 'object_81', 'object_78'],
     'APPLICATION_ID' : secrets.KNACK_CREDENTIALS['APP_ID'],
     'API_KEY' : secrets.KNACK_CREDENTIALS['API_KEY']
 }
