@@ -63,7 +63,7 @@ def main(date_time):
 
         knack_data_phb = knack_helpers.get_data(KNACK_PARAMS_PHB)
 
-        knack_data_phb = knack_helpers.parse_data(knack_data_phb, field_list, KNACK_PARAMS_TRAFFIC, convert_to_unix=True)
+        knack_data_phb = knack_helpers.parse_data(knack_data_phb, field_list, KNACK_PARAMS_PHB, convert_to_unix=True)
 
         knack_data_phb = data_helpers.stringify_key_values(knack_data_phb)
         
