@@ -52,23 +52,21 @@ def main(date_time):
         knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))
 
         # get published request data from Socrata and compare to Knack database
-        # socrata_data = socrata_helpers.get_private_data(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
+        socrata_data = socrata_helpers.get_private_data(secrets.SOCRATA_CREDENTIALS, SOCRATA_RESOURCE_ID)
 
-        # socrata_data = data_helpers.upper_case_keys(socrata_data)
+        socrata_data = data_helpers.upper_case_keys(socrata_data)
         
-        # socrata_data = data_helpers.stringify_key_values(socrata_data)
+        socrata_data = data_helpers.stringify_key_values(socrata_data)
         
-        # socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
+        socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
         
-        socrata_payload = knack_data_mills
-        
-        # cd_results = data_helpers.detect_changes(socrata_data, knack_data_mills, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
+        cd_results = data_helpers.detect_changes(socrata_data, knack_data_mills, PRIMARY_KEY, keys=KNACK_PARAMS['FIELD_NAMES'] + ['LATITUDE', 'LONGITUDE'])
 
-        # if cd_results['new'] or cd_results['change'] or cd_results['delete']:
-        #     socrata_payload = socrata_helpers.create_payload(cd_results, PRIMARY_KEY)
+        if cd_results['new'] or cd_results['change'] or cd_results['delete']:
+            socrata_payload = socrata_helpers.create_payload(cd_results, PRIMARY_KEY)
         
-        # else:
-        #     socrata_payload = []
+        else:
+            socrata_payload = []
 
         socrata_payload = data_helpers.lower_case_keys(socrata_payload)
 
