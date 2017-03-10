@@ -4,7 +4,7 @@ import arrow
 import pdb
 
 
-def GetToken(creds):
+def get_token(creds):
     print("Generate token")
     url = 'https://austin.maps.arcgis.com/sharing/rest/generateToken'
     params = {'username' : creds['user'],'password' : creds['password'], 'referer' : 'http://www.arcgis.com','f' : 'pjson' }
@@ -15,7 +15,7 @@ def GetToken(creds):
 
 
 
-def QueryAllFeatures(url, token):
+def query_all_features(url, token):
     url = url + 'query'
     where = 'OBJECTID>0'
     params = {'f' : 'json','where': where , 'outFields'  : '*','token' : token, 'returnGeometry':False }
@@ -25,7 +25,7 @@ def QueryAllFeatures(url, token):
 
 
 
-def AddFeatures(url, token, payload):
+def add_features(url, token, payload):
     print('add new features to ArcGIS Online feature service')
     url = url + 'addFeatures'
     success = 0
@@ -42,7 +42,7 @@ def AddFeatures(url, token, payload):
 
 
 
-def DeleteFeatures(url, token):
+def delete_features(url, token):
     print('delete all existing ArcGIS Online features')
     url = url + 'deleteFeatures'
     where = 'OBJECTID>0'
@@ -65,7 +65,7 @@ def DeleteFeatures(url, token):
 
 
 
-def BuildPayload(data):
+def build_payload(data):
     #  assemble an ArcREST feature object dictionary
     #  spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
     #  records without 'LATITUDE' field are ignored
@@ -98,7 +98,7 @@ def BuildPayload(data):
 
 
 
-def ParseAttributes(query_results):
+def parse_attributes(query_results):
     print('parse feature attributes')
     results = []
 
@@ -106,16 +106,3 @@ def ParseAttributes(query_results):
         results.append(record['attributes'])
 
     return results
-
-
-
-
-
-
-
-
-
-
-
-
-

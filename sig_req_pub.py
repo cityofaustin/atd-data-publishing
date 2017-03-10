@@ -44,31 +44,31 @@ def main(date_time):
 
     try:       
 
-        field_list = knack_helpers.GetFields(KNACK_PARAMS)
+        field_list = knack_helpers.get_fields(KNACK_PARAMS)
 
-        knack_data = knack_helpers.GetData(KNACK_PARAMS)
+        knack_data = knack_helpers.get_data(KNACK_PARAMS)
 
-        knack_data = knack_helpers.ParseData(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
+        knack_data = knack_helpers.parse_data(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
 
-        knack_data = data_helpers.StringifyKeyValues(knack_data)
+        knack_data = data_helpers.stringify_key_values(knack_data)
         
-        knack_data = data_helpers.RemoveLinebreaks(knack_data, ['LOCATION_NAME']) 
+        knack_data = data_helpers.remove_linebreaks(knack_data, ['LOCATION_NAME']) 
 
-        knack_data_mills = data_helpers.ConvertUnixToMills(knack_data)
+        knack_data_mills = data_helpers.unix_to_mills(knack_data)
 
-        token = agol_helpers.GetToken(secrets.AGOL_CREDENTIALS)
+        token = agol_helpers.get_token(secrets.AGOL_CREDENTIALS)
 
-        agol_payload = agol_helpers.BuildPayload(knack_data_mills)
+        agol_payload = agol_helpers.build_payload(knack_data_mills)
 
-        del_response = agol_helpers.DeleteFeatures(SERVICE_URL, token)
+        del_response = agol_helpers.delete_features(SERVICE_URL, token)
 
-        add_response = agol_helpers.AddFeatures(SERVICE_URL, token, agol_payload)
+        add_response = agol_helpers.add_features(SERVICE_URL, token, agol_payload)
 
         #  write to csv
-        knack_data = data_helpers.ConvertMillsToUnix(knack_data)
-        knack_data = data_helpers.ConvertUnixToISO(knack_data)
+        knack_data = data_helpers.mills_to_unix(knack_data)
+        knack_data = data_helpers.unix_to_iso(knack_data)
         file_name = '{}/{}.csv'.format(CSV_DESTINATION, DATASET_NAME)
-        data_helpers.WriteToCSV(knack_data, file_name=file_name)
+        data_helpers.write_csv(knack_data, file_name=file_name)
         
         return add_response
 

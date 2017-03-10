@@ -30,19 +30,19 @@ now = arrow.now()
 def main(date_time):
 
     try:       
-        field_dict = knack_helpers.GetFields( KNACK_PARAMS )
+        field_dict = knack_helpers.get_fields( KNACK_PARAMS )
 
-        field_lookup = knack_helpers.CreateFieldLookup(field_dict, parse_raw=True)
+        field_lookup = knack_helpers.create_field_lookup(field_dict, parse_raw=True)
 
-        knack_data = knack_helpers.GetObjectData( REFERENCE_OBJECT, KNACK_PARAMS )
+        knack_data = knack_helpers.get_object_data( REFERENCE_OBJECT, KNACK_PARAMS )
 
-        knack_data = knack_helpers.ParseData(knack_data, field_dict, KNACK_PARAMS, include_ids=True)
+        knack_data = knack_helpers.parse_data(knack_data, field_dict, KNACK_PARAMS, include_ids=True)
 
-        knack_data = data_helpers.FilterbyKey(knack_data, STATUS_KEY, ['NEW', 'IN PROGRESS', 'COMPLETED'])
+        knack_data = data_helpers.filter_by_key(knack_data, STATUS_KEY, ['NEW', 'IN PROGRESS', 'COMPLETED'])
 
-        knack_data = data_helpers.AddMissingKeys(knack_data, [SCORE_KEY], ['0'])
+        knack_data = data_helpers.add_missing_keys(knack_data, [SCORE_KEY], ['0'])
 
-        knack_data = data_helpers.ConcatKeyVals(knack_data, CONCAT_KEYS, GROUP_KEY, '_')
+        knack_data = data_helpers.concat_key_values(knack_data, CONCAT_KEYS, GROUP_KEY, '_')
         
         knack_data_exclude = [record for record in knack_data if record['EXCLUDE_FROM_RANKING'] == True]
 
@@ -72,7 +72,7 @@ def main(date_time):
         for record in knack_data_include:
             score = int( record[SCORE_KEY] )
             key = record[GROUP_KEY]
-            rank = data_helpers.GetMinIndex(score_dict[key], score) + 1  #  add one to score index, because list indices start at 0
+            rank = data_helpers.min_index(score_dict[key], score) + 1  #  add one to score index, because list indices start at 0
             
             if RANK_KEY in record:
                 if record[RANK_KEY] != rank:
@@ -93,10 +93,10 @@ def main(date_time):
                     payload.append(record)
                     
         #  parse data to core fields
-        payload = data_helpers.ReduceDicts(payload, [RANK_KEY, 'KNACK_ID'])
+        payload = data_helpers.reduce_dicts(payload, [RANK_KEY, 'KNACK_ID'])
 
         #  replace data keys with knack field names
-        payload = data_helpers.ReplaceDictKeys(payload, field_lookup)
+        payload = data_helpers.replace_keys(payload, field_lookup)
 
         update_response = []
 
@@ -106,7 +106,7 @@ def main(date_time):
             count += 1
             print( 'updating record {} of {}'.format( count, len(payload) ) )
             
-            response_json = knack_helpers.UpdateRecord(record, KNACK_PARAMS)
+            response_json = knack_helpers.update_record(record, KNACK_PARAMS)
 
             update_response.append(response_json)
 

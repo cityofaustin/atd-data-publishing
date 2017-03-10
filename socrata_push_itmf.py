@@ -2,7 +2,7 @@
 
 import os
 import sys
-from socrata_helpers import UpsertData
+from socrata_helpers import upsert_data
 import csv
 from secrets import SOCRATA_CREDENTIALS
 
@@ -24,7 +24,8 @@ def upsert(input_dir, month_day_year, awam_host_instance_name="Austin"):
         # Skip header row
         reader.next()
         data = [dict(zip(fieldnames, record)) for record in reader]
-        UpsertData(SOCRATA_CREDENTIALS, data, "x44q-icha")
+        upsert_data(SOCRATA_CREDENTIALS, data, "x44q-icha")
+
 
 if __name__ == '__main__':
     input_dir = sys.argv[1]

@@ -1,6 +1,6 @@
 import os
 import sys
-from socrata_helpers import UpsertData
+from socrata_helpers import upsert_data
 import csv
 from secrets import SOCRATA_CREDENTIALS
 
@@ -16,7 +16,7 @@ def upsert(input_dir, month_day_year, awam_host_instance_name="Austin"):
         reader = csv.reader(iaf_input_file)
         fieldnames = ['record_id','host_read_time','field_device_read_time','reader_identifier','device_address']
         data = [dict(zip(fieldnames, record)) for record in reader]
-        UpsertData(SOCRATA_CREDENTIALS, data, "qnpj-zrb9")
+        upsert_data(SOCRATA_CREDENTIALS, data, "qnpj-zrb9")
 
 if __name__ == '__main__':
     input_dir = sys.argv[1]

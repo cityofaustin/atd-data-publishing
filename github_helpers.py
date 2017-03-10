@@ -4,18 +4,18 @@ import base64
 import pdb
 
 
-def CreateAuthTuple(credentials_dict):
+def create_auth_tuple(credentials_dict):
     return ( credentials_dict['user'], credentials_dict['token'] )
  
 
 
-def Url_For_Path(repo_url, path):
+def url_for_path(repo_url, path):
     return '{}/{}'.format(repo_url, path.strip('/'))
 
 
 
-def GetFile(repo_url, path, branch, auth):
-    url = Url_For_Path(repo_url, path)
+def get_file(repo_url, path, branch, auth):
+    url = url_for_path(repo_url, path)
     
     params = {
         'ref': branch,
@@ -32,10 +32,10 @@ def GetFile(repo_url, path, branch, auth):
 
 
 
-def CommitFile(url, path, branch, content, message, sha, auth, **options):
+def commit_file(url, path, branch, content, message, sha, auth, **options):
     print('commit file to github')
 
-    url = Url_For_Path(url, path)
+    url = url_for_path(url, path)
 
     #  http://stackoverflow.com/questions/37225035/serialize-in-json-a-base64-encoded-data
     encoded_content = base64.b64encode( content.getvalue().encode('utf-8') )

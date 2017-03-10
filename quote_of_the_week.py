@@ -44,7 +44,7 @@ def main(date_time):
         for obj in KNACK_PARAMS['REFERENCE_OBJECTS']:
             
             #  get field metadata
-            fields = knack_helpers.GetAllFields(obj, KNACK_PARAMS)
+            fields = knack_helpers.get_all_fields(obj, KNACK_PARAMS)
             
             #  assign field metadata to 'raw' field name
             field_list = {}
@@ -53,26 +53,26 @@ def main(date_time):
                 field_list[field['key'] + '_raw'] = field
 
             #  update knack params with list of all field names
-            KNACK_PARAMS['FIELD_NAMES'] = knack_helpers.CreateFieldLabelList(fields)
+            KNACK_PARAMS['FIELD_NAMES'] = knack_helpers.create_label_list(fields)
             
             #  get knack object data
-            data = knack_helpers.GetObjectData(obj, KNACK_PARAMS)
+            data = knack_helpers.get_object_data(obj, KNACK_PARAMS)
 
             #  parse data
-            data = knack_helpers.ParseData(data, field_list, KNACK_PARAMS, convert_to_unix=True)
+            data = knack_helpers.parse_data(data, field_list, KNACK_PARAMS, convert_to_unix=True)
             
             #  prepare dates for the internet
-            data = data_helpers.ConvertUnixToMills(data)
+            data = data_helpers.unix_to_mills(data)
             
-            payload = data_helpers.WriteToCSV(data, in_memory=True)
+            payload = data_helpers.write_csv(data, in_memory=True)
 
-            git_auth = github_helpers.CreateAuthTuple(secrets.GITHUB_CREDENTIALS)
+            git_auth = github_helpers.create_auth_tuple(secrets.GITHUB_CREDENTIALS)
 
-            repo_data = github_helpers.GetFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], 'gh-pages', git_auth)
+            repo_data = github_helpers.get_file(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], 'gh-pages', git_auth)
 
             GIT_PARAMS['sha'] = repo_data['sha']
 
-            git_response = github_helpers.CommitFile(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', GIT_PARAMS['sha'], git_auth, existing_file=repo_data)
+            git_response = github_helpers.commit_file(GIT_PARAMS['REPO_URL'], GIT_PARAMS['PATH'], GIT_PARAMS['BRANCH'], payload, 'update_quote_of_week', GIT_PARAMS['sha'], git_auth, existing_file=repo_data)
             
         return git_response
 
