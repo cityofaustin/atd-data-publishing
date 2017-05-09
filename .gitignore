@@ -1,0 +1,16 @@
+.env
+*.pyc
+.DS_Store
+__pycache__
+*.zip
+dist
+secrets.py
+schtask.txt
+intersection-database
+mapDrive.bat
+bcycle_1.py
+to_test.py
+tp.py
+script_status.py
+log
+*.log
