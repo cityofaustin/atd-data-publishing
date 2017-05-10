@@ -74,7 +74,7 @@ def main(date_time):
         socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
         
         cd_results = data_helpers.detect_changes(socrata_data, knack_data_master, primary_key, keys=params_sync_signals['field_names'] + ['LATITUDE', 'LONGITUDE'])
-
+        
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             logging.info( 'socrata change detection results: {}'.format(cd_results) )
             socrata_payload = socrata_helpers.create_payload(cd_results, primary_key)
