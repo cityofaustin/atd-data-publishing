@@ -14,13 +14,26 @@ config = {
 
     'cameras' : {
         'primary_key' : 'ATD_CAMERA_ID',
-        'objects' : ['object_11', 'object_53'],
+        'objects' : ['object_53', 'object_11'],
         'scene' : '144',
         'view' : '395',
         'service_url' : '',
         'include_ids' : True,
         'socrata_resource_id' : 'b4k4-adkb',
-        'pub_log_id' : 'n5kp-f8k4'
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : 'CAMERA_IP'
+    },
+
+    'travel_sensors' : {
+        'primary_key' : 'ATD_SENSOR_ID', 
+        'objects' : ['object_56', 'object_11'],
+        'scene' : '188',
+        'view' : '540',
+        'include_ids' : True,
+        'service_url' : '',
+        'socrata_resource_id' : '6yd9-yz29',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : 'SENSOR_IP'
     },
 
     'signal_requests' : {
@@ -46,6 +59,17 @@ config = {
         'repo_url' : 'https://api.github.com/repositories/55646931/contents',
         'branch' : 'gh-pages',
         'git_path' : 'components/data/quote_of_the_week.csv'
+    },
+
+    'signal_retiming' : {
+        'primary_key' : 'ATD_RETIMING_ID',
+        'objects' : ['object_42', 'object_45'],
+        'scene' : 375,
+        'view' : 1063,
+        'service_url' : None,
+        'socrata_resource_id' : 'g8w2-8uap',
+        'include_ids' : False,
+        'pub_log_id' : 'n5kp-f8k4'
     }
 }
 

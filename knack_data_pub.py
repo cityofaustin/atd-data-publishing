@@ -36,7 +36,7 @@ def main(date_time):
 
         if not knack_view:
             knack_data = knack_helpers.get_object_data(knack_objects[0], knack_creds)
-
+            
         knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True, include_ids=include_ids, id_outfield='SOURCE_DB_ID')
         field_names = data_helpers.unique_keys(knack_data)
 
@@ -111,7 +111,7 @@ def main(date_time):
             sha = repo_data['sha']
             git_response = github_helpers.commit_file(repo_url, git_path, branch, payload, 'update_quote_of_week', sha, git_auth, existing_file=repo_data)
             
-        
+        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return "done"
         # return log_payload
 
@@ -151,7 +151,8 @@ if __name__ == '__main__':
     logfile = './log/{}_{}.log'.format(dataset, now_s)
     logging.basicConfig(filename=logfile, level=logging.INFO)
     logging.info( 'args: {}'.format( str(args) ) )
-
+    logging.info('START AT {}'.format(str(now)))
+    
     #  set global variables from config data
     primary_key = config[dataset]['primary_key']    
     knack_view = config[dataset]['view'] 

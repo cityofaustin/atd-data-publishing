@@ -20,6 +20,7 @@ now_s = now.format('YYYY_MM_DD')
 
 logfile = './log/{}_{}.log'.format('update_sec_signals', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 update_field = 'field_1329'  # SECONDARY_SIGNALS field
 objects = ['object_12']
@@ -144,6 +145,7 @@ def main(date_time):
         raise e
 
 results = main(now)
+logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
 

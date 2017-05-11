@@ -22,9 +22,11 @@ now_s = now.format('YYYY_MM_DD')
 #  init logging with one logfile per dataset per day
 logfile = './log/sync_corridors_{}.log'.format(now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
-primary_key = 'ATD_SYNC_SIGNAL_ID'
+logging.info('START AT {}'.format(str(now)))
 
 #  KNACK CONFIG
+primary_key = 'ATD_SYNC_SIGNAL_ID'
+
 knack_creds = secrets.KNACK_CREDENTIALS
 
 params_sync_signals = {  
@@ -107,5 +109,7 @@ def main(date_time):
         raise e
 
 results = main(now)
+
+logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)

@@ -19,6 +19,7 @@ now_s = now.format('YYYY_MM_DD')
 #  init logging 
 logfile = '{}_{}.log'.format('log/street_seg_updater', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 #  config
 primay_key = 'SEGMENT_ID_NUMBER'
@@ -98,6 +99,7 @@ def main(date_time):
 
 
 results = main(now)
+logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
 

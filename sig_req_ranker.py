@@ -18,6 +18,7 @@ now_s = now.format('YYYY_MM_DD')
 
 logfile = './log/sig_req_ranker_{}.log'.format(now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 primary_key = 'ATD_EVAL_ID'
 status_key = 'EVAL_STATUS'
@@ -147,5 +148,7 @@ if __name__ == '__main__':
     objects = eval_types[eval_type]
     
     results = main(now)
+    
+    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
     print(results)

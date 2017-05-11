@@ -17,6 +17,7 @@ now_s = now.format('YYYY_MM_DD')
 
 logfile = '{}_{}.log'.format('log/backup_objs', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 objects = ['object_11', 'object_53','object_56','object_12','object_21','object_14','object_13','object_26','object_27','object_29','object_36','object_63','object_31', 'object_70', 'object_35','object_37','object_41','object_42','object_43', 'object_45', 'object_58', 'object_82', 'object_81', 'object_78', 'object_84', 'object_85', 'object_89', 'object_91']
 

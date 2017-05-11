@@ -19,6 +19,7 @@ now_s = now.format('YYYY_MM_DD')
 
 logfile = './log/sig_pm_copier_{}.log'.format(now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 #  KNACK CONFIG
 knack_creds = secrets.KNACK_CREDENTIALS
@@ -144,6 +145,7 @@ def main(date_time):
             logging.info(response_json)
             update_response.append(response_json)
 
+        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return "done"
         
 

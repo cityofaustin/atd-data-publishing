@@ -9,9 +9,7 @@ import pandas
 import requests
 
 
-
 logger = logging.getLogger(__name__)
-
 
 
 def filter_by_key(data, key, val_list):
@@ -21,13 +19,11 @@ def filter_by_key(data, key, val_list):
     return [d for d in data if d[key] in val_list]  
 
 
-
 def filter_by_key_exists(data, key):
     'filter by key exists: {}'.format(key)
     #  return a list of dictionaries that have a specified key string
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in data if key in d ]  
-
 
 
 def add_missing_keys(list_of_dicts, list_of_keys, list_of_vals):
@@ -44,7 +40,6 @@ def add_missing_keys(list_of_dicts, list_of_keys, list_of_vals):
     return list_of_dicts
 
 
-
 def group_by_key(dataset, key):
     print('group data by {}'.format(key))
 
@@ -57,11 +52,9 @@ def group_by_key(dataset, key):
     return grouped_data
 
 
-
 def unique_keys(list_of_dicts):
     keys = [key for record in list_of_dicts for key in record]
     return list( set(keys) )
-
 
 
 def list_key_values(list_of_dicts, key):
@@ -73,7 +66,6 @@ def list_key_values(list_of_dicts, key):
         return []
 
 
-
 def upper_case_keys(list_of_dicts):
     upper = []
 
@@ -81,7 +73,6 @@ def upper_case_keys(list_of_dicts):
         upper.append(dict((k.upper(), v) for k,v in record.items()))
     
     return upper
-
 
 
 def lower_case_keys(list_of_dicts):
@@ -93,7 +84,6 @@ def lower_case_keys(list_of_dicts):
     return lower
 
 
-
 def stringify_key_values(list_of_dicts):
     print('stringify key values')
     stringified = []
@@ -102,7 +92,6 @@ def stringify_key_values(list_of_dicts):
         stringified.append(dict((k, str(v).strip()) for k,v in record.items()))
 
     return stringified
-
 
 
 def remove_linebreaks(list_of_dicts, list_of_keys):
@@ -120,7 +109,6 @@ def remove_linebreaks(list_of_dicts, list_of_keys):
     return breakless
 
 
-
 def mills_to_unix(list_of_dicts):
     print('convert millesecond date to unix date')
 
@@ -131,7 +119,6 @@ def mills_to_unix(list_of_dicts):
                 record[key] = int( (milliseconds) / 1000 )
 
     return list_of_dicts
-
 
 
 
@@ -170,7 +157,6 @@ def iso_to_unix(list_of_dicts, **options):
                     record[key] = str(d.timestamp)
 
     return list_of_dicts
-
 
 
 def unix_to_iso(list_of_dicts, **options):
@@ -212,7 +198,6 @@ def unix_to_iso(list_of_dicts, **options):
     return list_of_dicts
 
 
-
 def merge_dicts(source_dicts, merge_dicts, join_key, merge_keys):
     #  insert fields from a merge dictionary to a source dictioary
     #  based on a matching key/val
@@ -243,7 +228,6 @@ def merge_dicts(source_dicts, merge_dicts, join_key, merge_keys):
                 continue
 
     return merged
-
 
 
 def detect_changes(old_data, new_data, join_key, **options):
@@ -351,7 +335,6 @@ def concat_key_values(list_of_dicts, list_of_keys, new_key, join_string):
     return list_of_dicts
 
 
-
 def group_by_unique_value(list_of_dicts, key):
     print('groupd by key {}'.format(key))
     grouped = {}
@@ -363,7 +346,6 @@ def group_by_unique_value(list_of_dicts, key):
         grouped[record[key]].append(record)
 
     return grouped
-
 
 
 def sort_dicts_int(list_of_dicts, key):
@@ -378,12 +360,10 @@ def max_index(list_of_vals, val):
     #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
     return max([i for i, x in enumerate(list_of_vals) if x == val])
 
-
 def min_index(list_of_vals, val):
     #  find the smallest index of a value in a list
     #  http://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
     return min([i for i, x in enumerate(list_of_vals) if x == val])
-
 
 def create_rank_list(list_of_dicts, rank_key_name):
     print('create rank list')
@@ -394,13 +374,11 @@ def create_rank_list(list_of_dicts, rank_key_name):
     return list_of_dicts
 
 
-
 def reduce_dicts(list_of_dicts, list_of_keys):
     #  del keys from dicts in a list of dicts
     #  put the keys you want to keep in list_of_keys
     print( 'reduce dictionaries to keys {}'.format(list_of_keys) )
     return [{ key: old_dict[key] for key in list_of_keys if key in old_dict} for old_dict in list_of_dicts]
-
 
 
 def replace_keys(list_of_dicts, lookup_dict, **options):
@@ -432,7 +410,6 @@ def replace_keys(list_of_dicts, lookup_dict, **options):
     return new_list_of_dicts
 
 
-
 def write_csv(data, **options):
     #  requires pandas
     #  requires arrow
@@ -453,7 +430,6 @@ def write_csv(data, **options):
         df.to_csv(options['file_name'], index=False)
 
 
-
 def get_web_csv(url, **options):
     print('get CSV from web')
 
@@ -466,7 +442,6 @@ def get_web_csv(url, **options):
     data = csv.DictReader(file)
 
     return data
-
 
 
 def get_img(path, camera):

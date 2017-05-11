@@ -21,6 +21,7 @@ now_s = now.format('YYYY_MM_DD')
 #  init logging 
 logfile = '{}_{}.log'.format('log/location_updater', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(now)))
 
 #  config
 knack_creds = secrets.KNACK_CREDENTIALS
@@ -110,6 +111,7 @@ def main(date_time):
         if (len(unmatched_locations) > 0):
             email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Location Point/Poly Match Failure', str(unmatched_locations))
 
+        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return update_response
 
     except Exception as e:
