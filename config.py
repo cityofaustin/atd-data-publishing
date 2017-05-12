@@ -3,13 +3,14 @@
 config = {
     'signals' : {
         'primary_key' : 'SIGNAL_ID',
-        'objects' : ['object_11', 'object_12'],
+        'objects' : ['object_12', 'object_11'],
         'scene' : '73',
         'view' : '197',
         'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/TRANSPORTATION_signals2/FeatureServer/0/',
         'include_ids' : True,
         'socrata_resource_id' : 'p53x-x73x',
-        'pub_log_id' : 'n5kp-f8k4'
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : 'CONTROLLER_IP'
     },
 
     'cameras' : {

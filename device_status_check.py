@@ -58,30 +58,25 @@ def main():
     ip_data = data[0]
     field_lookup = data[1]
 
-    payload = []
-
     for ip in ip_data:
-        state_previous = ip['IP_COMM_STATUS']
-        state_new = ping_ip( ip[ip_field] )
 
-        if state_previous != state_new:
-            ip['IP_COMM_STATUS'] = state_new
-            ip['COMM_STATUS_DATETIME_UTC'] = arrow.now().timestamp
-            payload.append(ip)
+        if ip_field in ip:
+            state_previous = ip['IP_COMM_STATUS']
+            state_new = ping_ip( ip[ip_field] )
 
-    if payload:
-        payload = data_helpers.unix_to_mills(payload)
-        payload = data_helpers.replace_keys(payload, field_lookup, delete_unmatched=True)
-        
-        for record in payload:
-            logging.debug(record)
-            response_json = knack_helpers.update_record(record, knack_objects[0], 'KNACK_ID', knack_creds)
-            logging.debug(response_json)
-    
-    else:
-        logging.info('No changes to upload')
-        return 'No changes to upload'
+            if state_previous != state_new:
+                record = []
 
+                ip['IP_COMM_STATUS'] = state_new
+                ip['COMM_STATUS_DATETIME_UTC'] = arrow.now().timestamp
+                
+                record = [ip]
+                record = data_helpers.unix_to_mills(record)
+                record = data_helpers.replace_keys(record, field_lookup, delete_unmatched=True)
+                logging.debug(record)
+                response_json = knack_helpers.update_record(record[0], knack_objects[0], 'KNACK_ID', knack_creds)
+                logging.debug(response_json)
+  
     return "done"
 
 
