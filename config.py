@@ -18,7 +18,7 @@ config = {
         'objects' : ['object_53', 'object_11'],
         'scene' : '144',
         'view' : '395',
-        'service_url' : '',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/TRANSPORTATION_traffic_cameras/FeatureServer/0/',
         'include_ids' : True,
         'socrata_resource_id' : 'b4k4-adkb',
         'pub_log_id' : 'n5kp-f8k4',
@@ -38,16 +38,15 @@ config = {
     },
 
     'signal_requests' : {
-        'primary_key' : 'REQUEST_ID', 
+        'primary_key' : 'ATD_EVAL_ID', 
         'objects' : ['object_11', 'object_13'],
         'scene' : '75',
         'view' : '200',
         'include_ids' : True,
-        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/TRANSPORTATION_signal_requests/FeatureServer/0/',
-        'socrata_resource_id' : '',
+        'service_url' : None, #  needs to be rebuilt with ranking fields, etc
+        'socrata_resource_id' : 'f6qu-b7zb',
         'pub_log_id' : 'n5kp-f8k4'
     },
-
     'quote_of_the_week' : {
         'primary_key' : None,
         'objects' : ['object_67'],
