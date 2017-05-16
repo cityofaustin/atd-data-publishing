@@ -14,7 +14,7 @@ config = {
     },
 
     'cameras' : {
-        'primary_key' : 'ATD_CAMERA_ID',
+        'primary_key' : 'CAMERA_ID',
         'objects' : ['object_53', 'object_11'],
         'scene' : '144',
         'view' : '395',

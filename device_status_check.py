@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+import json
 import pdb
 import arrow
 import knack_helpers
@@ -17,13 +18,15 @@ def get_ips():
     print("getting ip addresses")
     field_dict = knack_helpers.get_fields(knack_objects, knack_creds)
     knack_data = knack_helpers.get_data(knack_scene, knack_view, knack_creds)
-    knack_data = knack_helpers.parse_data(knack_data, field_dict, convert_to_unix=True, include_ids=include_ids, id_outfield='KNACK_ID')
-    knack_data = data_helpers.reduce_dicts(knack_data, out_fields)
-    
+    return (knack_data, field_dict)
+
+
+def parseIps(data, field_dict, outfields):
+    parsed_data = knack_helpers.parse_data(data, field_dict, convert_to_unix=True, include_ids=include_ids, id_outfield='KNACK_ID')
+    parsed_data = data_helpers.reduce_dicts(parsed_data, outfields)
     field_lookup = knack_helpers.create_field_lookup(field_dict, parse_raw=True)
     field_lookup['KNACK_ID'] = 'KNACK_ID'
-
-    return (knack_data, field_lookup)
+    return (parsed_data, field_lookup)
 
 
 def ping_ip(ip):
@@ -40,24 +43,25 @@ def ping_ip(ip):
         return "ONLINE"
 
 
-def update_record():
-    print("update device status and date in knack")
-
-
-def cli_args():
-    parser = argparse.ArgumentParser(prog='device_status+check.py', description='Ping network devices to verify connenectivity.')
-    parser.add_argument('device_type', action="store", type=str, help='Type of device to ping. \'travel_sensor\' or \'cctv\'.')
-    args = parser.parse_args()
-    return(args)
-
-
 def main():
     
-    data = get_ips()
+    knack_data = get_ips()
+    records = knack_data[0]
+    field_dict = knack_data[1]
 
-    ip_data = data[0]
-    field_lookup = data[1]
+    if out_json:
+        parsed_data = parseIps(records, field_dict, out_fields_json)
+        pdb.set_trace()
+        json_data = parsed_data[0]
+        field_lookup = parsed_data[1]
 
+        out_dir = secrets.IP_JSON_DESTINATION
+        filename = 'log/data.json'
+        with open(filename, 'w') as of:
+            json.dump(json_data, of)
+
+    parsed_data = parseIps(records,field_dict, out_fields_upload)
+    
     for ip in ip_data:
 
         if ip_field in ip:
@@ -80,12 +84,20 @@ def main():
     return "done"
 
 
+def cli_args():
+    parser = argparse.ArgumentParser(prog='device_status+check.py', description='Ping network devices to verify connenectivity.')
+    parser.add_argument('device_type', action="store", type=str, help='Type of device to ping. \'travel_sensor\' or \'cctv\'.')
+    parser.add_argument('-json', action='store_true', default=False, help='Write device data to JSON.')
+    args = parser.parse_args()
+    return(args)
+
+
 if __name__ == '__main__':
     
     #  parse command-line arguments
     args = cli_args()
     device_type = args.device_type
-
+    out_json = args.json
     now = arrow.now()
     now_s = now.format('YYYY_MM_DD')
     
@@ -100,10 +112,20 @@ if __name__ == '__main__':
     knack_objects = config[device_type]['objects']
     ip_field = config[device_type]['ip_field']
     include_ids = config[device_type]['include_ids']
+    primary_key = config[device_type]['primary_key']
     knack_creds = secrets.KNACK_CREDENTIALS
-    out_fields = ['KNACK_ID', ip_field, 'IP_COMM_STATUS', 'COMM_STATUS_DATETIME_UTC']
+    out_fields_upload = ['KNACK_ID', ip_field, 'IP_COMM_STATUS', 'COMM_STATUS_DATETIME_UTC']
+    out_fields_json = ['KNACK_ID', ip_field, 'IP_COMM_STATUS', 'COMM_STATUS_DATETIME_UTC', primary_key]
 
     results = main()
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
+
+
+
+
+
+
+
+
