@@ -58,13 +58,17 @@ def main():
         out_dir = secrets.IP_JSON_DESTINATION
         filename = 'log/data.json'
         with open(filename, 'w') as of:
-            json.dump(json_data, of)
+        json.dump(json_data, of)
 
     parsed_data = parseIps(records,field_dict, out_fields_upload)
-    
+
     for ip in ip_data:
 
         if ip_field in ip:
+            
+            if not 'IP_COMM_STATUS' in ip:
+                ip['IP_COMM_STATUS'] = 'OFFLINE'
+            
             state_previous = ip['IP_COMM_STATUS']
             state_new = ping_ip( ip[ip_field] )
 
@@ -83,7 +87,7 @@ def main():
   
     return "done"
 
-
+    
 def cli_args():
     parser = argparse.ArgumentParser(prog='device_status+check.py', description='Ping network devices to verify connenectivity.')
     parser.add_argument('device_type', action="store", type=str, help='Type of device to ping. \'travel_sensor\' or \'cctv\'.')
@@ -121,11 +125,3 @@ if __name__ == '__main__':
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
-
-
-
-
-
-
-
-
