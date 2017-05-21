@@ -11,6 +11,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 import argparse
+import os
 from copy import deepcopy
 import logging
 import arrow
@@ -23,7 +24,6 @@ import data_helpers
 import github_helpers
 import secrets
 from config import config
-
 
 def main(date_time):
     print('starting stuff now')
@@ -150,8 +150,10 @@ if __name__ == '__main__':
     
     #  init logging 
     #  with one logfile per dataset per day
-    logfile = './log/{}_{}.log'.format(dataset, now_s)
-    logging.basicConfig(filename=logfile, level=logging.INFO)
+    cur_dir = os.path.dirname(__file__)
+    logfile = 'log/{}_{}.log'.format(dataset, now_s)
+    log_path = os.path.join(cur_dir, logfile)
+    logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.info( 'args: {}'.format( str(args) ) )
     logging.info('START AT {}'.format(str(now)))
     
