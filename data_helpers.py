@@ -5,7 +5,7 @@ from io import StringIO
 import csv
 
 import arrow
-import pandas
+# import pandas
 import requests
 
 
@@ -410,24 +410,24 @@ def replace_keys(list_of_dicts, lookup_dict, **options):
     return new_list_of_dicts
 
 
-def write_csv(data, **options):
-    #  requires pandas
-    #  requires arrow
-    print('write data to file')
+# def write_csv(data, **options):
+#     #  requires pandas
+#     #  requires arrow
+#     print('write data to file')
 
-    if not 'in_memory' in options:
-        options['in_memory'] = False
+#     if not 'in_memory' in options:
+#         options['in_memory'] = False
 
-    if not 'file_name' in options:
-        options['file_name'] = '{}'.format( arrow.now().timestamp )
+#     if not 'file_name' in options:
+#         options['file_name'] = '{}'.format( arrow.now().timestamp )
 
-    df = pandas.DataFrame(data)
+#     df = pandas.DataFrame(data)
 
-    if options['in_memory']:
-        return StringIO ( df.to_csv(index=False) )
+#     if options['in_memory']:
+#         return StringIO ( df.to_csv(index=False) )
 
-    else:
-        df.to_csv(options['file_name'], index=False)
+#     else:
+#         df.to_csv(options['file_name'], index=False)
 
 
 def get_web_csv(url, **options):
