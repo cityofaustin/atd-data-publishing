@@ -51,18 +51,18 @@ def main():
 
     if out_json:
         parsed_data = parseIps(records, field_dict, out_fields_json)
-        pdb.set_trace()
         json_data = parsed_data[0]
-        field_lookup = parsed_data[1]
 
         out_dir = secrets.IP_JSON_DESTINATION
-        filename = 'log/data.json'
+        filename = '{}/device_data.json'.format(out_dir)
         with open(filename, 'w') as of:
-        json.dump(json_data, of)
+            json.dump(json_data, of)
 
     parsed_data = parseIps(records,field_dict, out_fields_upload)
+    
+    field_lookup = parsed_data[1]
 
-    for ip in ip_data:
+    for ip in parsed_data[0]:
 
         if ip_field in ip:
             
@@ -87,7 +87,7 @@ def main():
   
     return "done"
 
-    
+
 def cli_args():
     parser = argparse.ArgumentParser(prog='device_status+check.py', description='Ping network devices to verify connenectivity.')
     parser.add_argument('device_type', action="store", type=str, help='Type of device to ping. \'travel_sensor\' or \'cctv\'.')

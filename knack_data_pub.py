@@ -44,7 +44,7 @@ def main(date_time):
         knack_data = data_helpers.stringify_key_values(knack_data)
 
         knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
-
+    
         if agol_pub:
             knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))            
             token = agol_helpers.get_token(agol_creds)
