@@ -2,13 +2,15 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-import arrow
+import os
 import sys
+import pdb
+import arrow
 import kits_helpers
 import knack_helpers
 import data_helpers
 import secrets
-import pdb
+
 
 
 query = "SELECT * FROM KITSDB.KITS.CAMERA"
@@ -20,7 +22,7 @@ def main(date_time):
     kits_data = kits_helpers.data_as_dict(kits_creds, query)
 
 
-
+    pdb.set_trace()
 
 if __name__ == '__main__':
     
