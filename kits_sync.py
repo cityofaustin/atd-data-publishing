@@ -5,15 +5,61 @@ if __name__ == '__main__' and __package__ is None:
 import os
 import sys
 import pdb
+import argparse
+import logging
 import arrow
+from config import config
 import kits_helpers
 import knack_helpers
 import data_helpers
 import secrets
 
 
+fieldmap = {
+# kits_field : data_tracker_field
+"CAMNUMBER" : {
+    "knack_id" : "CAMERA_ID",
+    "type" : int,
+    "detect_changes" : True
+},
+"CAMNAME" : {
+    "knack_id" : "LOCATION_NAME",
+    "type" : str,
+    "detect_changes" : True
+},
+    "CAMCOMMENT" : {
+    "knack_id" : "",
+    "type" : str,
+    "detect_changes" : True
+},
+    "LATITUDE" : {
+    "knack_id" : "LATITUDE",
+    "type" : float,
+    "detect_changes" : True
+},
+    "LONGITUDE" : {
+    "knack_id" : "LONGITUDE",
+    "type" : float,
+    "detect_changes" : True
+},
+    "VIDEO_IP" : {
+    "knack_id" : "",
+    "type" : str,
+    "detect_changes" : True
+}
+}
+
 
 query = "SELECT * FROM KITSDB.KITS.CAMERA"
+
+def convert_data(data, fieldmap):
+    new_data = []
+
+    for record in data:
+        new_record = [{ fieldname : fieldmap[fieldname]['type'](record[fieldname]) } for fieldname in record.keys() if fieldname in fieldmap and record[fieldname]]
+        new_data.append(new_record)
+        
+    return new_data
 
 
 def main(date_time):
@@ -21,26 +67,52 @@ def main(date_time):
 
     kits_data = kits_helpers.data_as_dict(kits_creds, query)
 
+    # field_data = knack_helpers.get_fields(knack_objects, knack_creds)
+    # knack_data = knack_helpers.get_data(knack_scene, knack_view, knack_creds)
+    # knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True)
+    # field_names = data_helpers.unique_keys(knack_data)
+    # knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
+
+    kits_data_conv = convert_data(kits_data, fieldmap)
+    # kits_map = [{x : fieldmap[x]['knack_id']} for x in fieldmap.keys()]
+    # [{x : fieldmap[x]['knack_id']} for x in fieldmap.keys() if fieldmap[x]['detect_changes']]
+
+
 
     pdb.set_trace()
 
+
+def cli_args():
+    parser = argparse.ArgumentParser(prog='knack_data_pub.py', description='Publish Knack data to Socrata and ArcGIS Online')
+    parser.add_argument('dataset', action="store", type=str, help='Name of the dataset that will be published.')
+    args = parser.parse_args()
+    return(args)
+
 if __name__ == '__main__':
-    
+    args = cli_args()
+    dataset = args.dataset
+
     now = arrow.now()
     now_s = now.format('YYYY_MM_DD')
-    
+
     #  init logging 
     #  with one logfile per dataset per day
     cur_dir = os.path.dirname(__file__)
-    logfile = 'log/{}_{}.log'.format('kits_camera_sync', now_s)
+    logfile = 'log/kits_sync{}_{}.log'.format(dataset, now_s)
     log_path = os.path.join(cur_dir, logfile)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.info('START AT {}'.format(str(now)))
-
+      
+    primary_key = config[dataset]['primary_key']    
+    knack_view = config[dataset]['view'] 
+    knack_scene = config[dataset]['scene']
+    knack_objects = config[dataset]['objects']
+    	
+    knack_creds = secrets.KNACK_CREDENTIALS
     kits_creds = secrets.KITS_CREDENTIALS
 
-    maint(now)
-    
+    main(now)
+
 #  get KITS data
 #  get KNACK data
 #  detect changes
@@ -48,4 +120,4 @@ if __name__ == '__main__':
 #  missing from KITS
 #  delete from KITS (eek!)
 #  log results
-#  email when camera is created?
+#  email when camera is created?    
