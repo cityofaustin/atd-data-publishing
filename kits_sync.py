@@ -16,37 +16,42 @@ import secrets
 
 
 fieldmap = {
-# kits_field : data_tracker_field
-"CAMNUMBER" : {
-    "knack_id" : "CAMERA_ID",
-    "type" : int,
-    "detect_changes" : True
-},
-"CAMNAME" : {
-    "knack_id" : "LOCATION_NAME",
-    "type" : str,
-    "detect_changes" : True
-},
-    "CAMCOMMENT" : {
-    "knack_id" : "",
-    "type" : str,
-    "detect_changes" : True
-},
-    "LATITUDE" : {
-    "knack_id" : "LATITUDE",
-    "type" : float,
-    "detect_changes" : True
-},
-    "LONGITUDE" : {
-    "knack_id" : "LONGITUDE",
-    "type" : float,
-    "detect_changes" : True
-},
-    "VIDEO_IP" : {
-    "knack_id" : "",
-    "type" : str,
-    "detect_changes" : True
-}
+    # kits_field : data_tracker_field
+    "CAMNUMBER" : {
+        "knack_id" : "CAMERA_ID",
+        "type" : int,
+        "detect_changes" : True
+    },
+    "CAMNAME" : {
+        "knack_id" : "LOCATION_NAME",
+        "type" : str,
+        "detect_changes" : True
+    },
+        "CAMCOMMENT" : {
+        "knack_id" : None,
+        "type" : str,
+        "detect_changes" : True
+    },
+        "LATITUDE" : {
+        "knack_id" : "LATITUDE",
+        "type" : float,
+        "detect_changes" : False
+    },
+        "LONGITUDE" : {
+        "knack_id" : "LONGITUDE",
+        "type" : float,
+        "detect_changes" : False
+    },
+        "VIDEOIP" : {
+        "knack_id" : "CAMERA_IP",
+        "type" : str,
+        "detect_changes" : True
+    },
+        "CAMID" : {
+            "knack_id" : None,
+            "type" : str,
+            "detect_changes" : False
+    }
 }
 
 
@@ -56,7 +61,7 @@ def convert_data(data, fieldmap):
     new_data = []
 
     for record in data:
-        new_record = [{ fieldname : fieldmap[fieldname]['type'](record[fieldname]) } for fieldname in record.keys() if fieldname in fieldmap and record[fieldname]]
+        new_record = { fieldname : fieldmap[fieldname]['type'](record[fieldname]) for fieldname in record.keys() if fieldname in fieldmap and record[fieldname] }
         new_data.append(new_record)
         
     return new_data
@@ -67,18 +72,20 @@ def main(date_time):
 
     kits_data = kits_helpers.data_as_dict(kits_creds, query)
 
-    # field_data = knack_helpers.get_fields(knack_objects, knack_creds)
-    # knack_data = knack_helpers.get_data(knack_scene, knack_view, knack_creds)
-    # knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True)
-    # field_names = data_helpers.unique_keys(knack_data)
-    # knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
+    field_data = knack_helpers.get_fields(knack_objects, knack_creds)
+    knack_data = knack_helpers.get_data(knack_scene, knack_view, knack_creds)
+    knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True)
+    field_names = data_helpers.unique_keys(knack_data)
+    knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
 
     kits_data_conv = convert_data(kits_data, fieldmap)
-    # kits_map = [{x : fieldmap[x]['knack_id']} for x in fieldmap.keys()]
-    # [{x : fieldmap[x]['knack_id']} for x in fieldmap.keys() if fieldmap[x]['detect_changes']]
+    fieldmap_knack_kits = {fieldmap[x]['knack_id'] : x for x in fieldmap.keys() if fieldmap[x]['knack_id'] != None}
 
+    knack_data_repl = data_helpers.replace_keys(knack_data, fieldmap_knack_kits, delete_unmatched=True)
+    compare_keys = [key for key in fieldmap.keys() if fieldmap[key]['detect_changes'] ]
 
-
+    pdb.set_trace()
+    bob = data_helpers.detect_changes(kits_data_conv, knack_data_repl, 'CAMNUMBER', keys=compare_keys)
     pdb.set_trace()
 
 
@@ -110,6 +117,7 @@ if __name__ == '__main__':
     	
     knack_creds = secrets.KNACK_CREDENTIALS
     kits_creds = secrets.KITS_CREDENTIALS
+
 
     main(now)
 
