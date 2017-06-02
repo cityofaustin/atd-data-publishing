@@ -58,6 +58,18 @@ fieldmap = {
     }
 }
 
+# webenabled:  1
+# camtype (VID or CCTV?), default 0 (CCTV)
+# TECHNOLOGY: 8 is Pelco HD, 6 is Axis
+# CAPTURE: set to 1 (PTZ)
+# CAMNAME: detect_changes true
+
+# CAMCOMMENT: 'Update via Data Tracker on [currdate]'
+# ROUTE: null
+# AGENCY: 0
+# IPADDRESS: null
+# VIDEOPORT: 0
+
 
 query = "SELECT * FROM KITSDB.KITS.CAMERA"
 
@@ -124,12 +136,3 @@ if __name__ == '__main__':
 
 
     main(now)
-
-#  get KITS data
-#  get KNACK data
-#  detect changes
-#  new in KITS
-#  missing from KITS
-#  delete from KITS (eek!)
-#  log results
-#  email when camera is created?    

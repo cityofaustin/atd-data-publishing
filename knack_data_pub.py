@@ -36,15 +36,16 @@ def main(date_time):
 
         if not knack_view:
             knack_data = knack_helpers.get_object_data(knack_objects[0], knack_creds)
+        
             
         knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True, include_ids=include_ids, id_outfield='SOURCE_DB_ID')
         field_names = data_helpers.unique_keys(knack_data)
-
+        
         #  stringify values for later comparison against socrata JSON
         knack_data = data_helpers.stringify_key_values(knack_data)
-
+        pdb.set_trace()
         knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
-    
+        pdb.set_trace()
         if agol_pub:
             knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))            
             token = agol_helpers.get_token(agol_creds)
@@ -65,6 +66,8 @@ def main(date_time):
             
             else:
                 logging.info('no arcgis online features add')
+
+        pdb.set_trace()
 
         if socrata_pub:
             socrata_data = socrata_helpers.get_private_data(socrata_creds, socrata_resource_id)

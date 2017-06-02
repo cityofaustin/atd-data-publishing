@@ -12,7 +12,6 @@ config = {
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'CONTROLLER_IP'
     },
-
     'cameras' : {
         'primary_key' : 'CAMERA_ID',
         'objects' : ['object_53', 'object_11'],
@@ -35,18 +34,7 @@ config = {
         'socrata_resource_id' : '6yd9-yz29',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'SENSOR_IP'
-    },
-
-    'signal_requests' : {
-        'primary_key' : 'ATD_EVAL_ID', 
-        'objects' : ['object_11', 'object_13'],
-        'scene' : '75',
-        'view' : '200',
-        'include_ids' : True,
-        'service_url' : None, #  needs to be rebuilt with ranking fields, etc
-        'socrata_resource_id' : 'f6qu-b7zb',
-        'pub_log_id' : 'n5kp-f8k4'
-    },
+    }s
     'quote_of_the_week' : {
         'primary_key' : None,
         'objects' : ['object_67'],
