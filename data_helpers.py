@@ -15,6 +15,14 @@ logger = logging.getLogger(__name__)
 def filter_by_key(data, key, val_list):
     print('filter by key {}'.format(key))
     #  filter a list of dictionaries by a list of key values
+    #  assumes input dicts contain relevant keys
+    #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
+    return [d for d in data if d[key] in val_list]  
+
+
+def filter_by_key(data, key, val_list):
+    print('filter by key {}'.format(key))
+    #  filter a list of dictionaries by a list of key values
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in data if d[key] in val_list]  
 

@@ -1,5 +1,9 @@
+import logging
+import pdb
 import pymssql
 import arrow
+
+logger = logging.getLogger(__name__)
 
 def generate_status_id_query(data, id_key):
     print('prep kits query')
@@ -70,3 +74,27 @@ def check_for_stale(dataset, time_field, minute_tolerance):
 
     return {'stale': stale, 'delta_minutes' : int(delta_minutes) }
 
+
+
+
+
+def insert_multi_table(creds, query_array):
+    print('multi-table insert in kits')
+    
+    conn = pymssql.connect(
+        server=creds['server'],
+        user=creds['user'],
+        password=creds['password'],
+        database=creds['database']
+    )
+    
+    cursor = conn.cursor()
+    
+    for query in query_array:
+        print(query)
+        cursor.execute(query)
+
+    conn.commit()
+    conn.close()
+
+    return 'done'

@@ -23,7 +23,6 @@ config = {
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'CAMERA_IP'
     },
-
     'travel_sensors' : {
         'primary_key' : 'ATD_SENSOR_ID', 
         'objects' : ['object_56', 'object_11'],
@@ -34,7 +33,7 @@ config = {
         'socrata_resource_id' : '6yd9-yz29',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'SENSOR_IP'
-    }s
+    },
     'quote_of_the_week' : {
         'primary_key' : None,
         'objects' : ['object_67'],
