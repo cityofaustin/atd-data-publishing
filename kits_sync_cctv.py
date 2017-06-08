@@ -15,6 +15,8 @@ import data_helpers
 import email_helpers
 import secrets
 
+log_directory = secrets.LOG_DIRECTORY
+
 kits_table_geom = "KITSDB.KITS.CameraSpatialData"
 kits_table_camera = "KITSDB.KITS.CAMERA"
 kits_table_web = "KITSDB.KITS.WEBCONFIG_MAIN"
@@ -329,7 +331,7 @@ if __name__ == '__main__':
     #  init logging 
     #  with one logfile per dataset per day
     cur_dir = os.path.dirname(__file__)
-    logfile = 'log/kits_sync_cctv_{}.log'.format(now_s)
+    logfile = '{}/kits_sync_cctv_{}.log'.format(log_directory, now_s)
     log_path = os.path.join(cur_dir, logfile)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.info('START AT {}'.format(arrow.now().format()))

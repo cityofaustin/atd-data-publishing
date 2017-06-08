@@ -15,7 +15,7 @@ import secrets
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
-logfile = '{}_{}.log'.format('log/backup_objs', now_s)
+logfile = '{}/{}_{}.log'.format(log_directory,'backup_objs', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 
@@ -23,6 +23,8 @@ objects = ['object_11', 'object_53','object_56','object_12','object_21','object_
 
 backup_directory = secrets.BACKUP_DIRECTORY
 knack_credentials = secrets.KNACK_CREDENTIALS
+log_directory = secrets.LOG_DIRECTORY
+
 field_names = []
 
 

@@ -152,9 +152,11 @@ if __name__ == '__main__':
     now_s = now.format('YYYY_MM_DD')
     
     #  init logging 
+    log_directory = secrets.LOG_DIRECTORY
+
     #  with one logfile per dataset per day
     cur_dir = os.path.dirname(__file__)
-    logfile = 'log/{}_{}.log'.format(dataset, now_s)
+    logfile = '{}/{}_{}.log'.format(log_directory, dataset, now_s)
     log_path = os.path.join(cur_dir, logfile)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.info( 'args: {}'.format( str(args) ) )
