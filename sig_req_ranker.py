@@ -13,10 +13,12 @@ import data_helpers
 import email_helpers
 import secrets
 
+log_directory = secrets.LOG_DIRECTORY
+
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
-logfile = './log/sig_req_ranker_{}.log'.format(now_s)
+logfile = '{}/sig_req_ranker_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 

@@ -16,12 +16,13 @@ import email_helpers
 import data_helpers
 import secrets
 
+log_directory = secrets.LOG_DIRECTORY
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
 #  init logging with one logfile per dataset per day
-logfile = './log/sig_req_rank_pub_{}.log'.format(now_s)
+logfile = '{}/sig_req_rank_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 

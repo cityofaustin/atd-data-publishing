@@ -13,11 +13,13 @@ import email_helpers
 import data_helpers
 import secrets
 
+log_directory = secrets.LOG_DIRECTORY
+
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
 #  init logging 
-logfile = '{}_{}.log'.format('log/street_seg_updater', now_s)
+logfile = '{}/street_seg_updater_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 
