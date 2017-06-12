@@ -17,13 +17,13 @@ def generate_status_id_query(data, id_key):
             , e.DATETIME as OPERATION_STATE_DATETIME
             , e.STATUS as OPERATION_STATE
             , e.PLANID as PLAN_ID
-            , i.ASSETNUM as ATD_SIGNAL_ID
+            , i.ASSETNUM as {}
             FROM [KITS].[INTERSECTION] i
             LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
             ON i.[INTID] = e.[INTID]
             WHERE i.ASSETNUM IN {} AND e.DATETIME IS NOT NULL
             ORDER BY e.DATETIME DESC
-    '''.format(where_ids)
+    '''.format(id_key, where_ids)
     
     return query
 

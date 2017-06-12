@@ -2,8 +2,10 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-import arrow
+
 import sys
+import logging
+import arrow
 import kits_helpers
 import knack_helpers
 import socrata_helpers
@@ -25,11 +27,12 @@ KNACK_PARAMS = {
 }
 
 #  SOCRATA CONFIG
+SOCRATA_SIGNALS = 'xwqn-2f78'
 SOCRATA_SIGNAL_STATUS = '5zpr-dehc'
 SOCRATA_SIGNAL_STATUS_HISTORICAL = 'x62n-vjpq'
 SOCRATA_PUB_LOG_ID = 'n5kp-f8k4'
 
-FLASH_STATUSES = ['1', '2']
+FLASH_STATUSES = ['1', '2', '3']
 
 then = arrow.now()
 
@@ -38,25 +41,14 @@ def main(date_time):
     print('starting stuff now')
 
     try:      
-        field_list = knack_helpers.get_fields(KNACK_PARAMS)
+        signal_data = socrata_helpers.get_public_data(SOCRATA_SIGNALS)
+        signal_data = data_helpers.upper_case_keys(signal_data)
 
-        knack_data = knack_helpers.get_data(KNACK_PARAMS)
-
-        knack_data_parsed = knack_helpers.parse_data(knack_data, field_list, KNACK_PARAMS, require_locations=True, convert_to_unix=True)
-
-      
-
-        kits_query = kits_helpers.generate_status_id_query(knack_data_parsed, 'SIGNAL_ID')
-        
+        kits_query = kits_helpers.generate_status_id_query(signal_data, 'SIGNAL_ID')
         kits_data = kits_helpers.data_as_dict(secrets.KITS_CREDENTIALS, kits_query)
-
         kits_data = data_helpers.stringify_key_values(kits_data)
-
         
-
         stale = kits_helpers.check_for_stale(kits_data, 'OPERATION_STATE_DATETIME', 15)
-
-
 
         if stale['stale']:
             email_helpers.send_stale_email(stale['delta_minutes'], secrets.ALERTS_DISTRIBUTION)
@@ -70,13 +62,10 @@ def main(date_time):
             sys.exit()
 
 
-
         kits_data = data_helpers.filter_by_key(kits_data, 'OPERATION_STATE', FLASH_STATUSES)  #  filter by flash statuses
-
+        
         if kits_data:
-            new_data = data_helpers.merge_dicts(knack_data_parsed, kits_data, 'SIGNAL_ID', ['OPERATION_STATE_DATETIME', 'OPERATION_STATE', 'PLAN_ID'])
-
-            new_data = data_helpers.iso_to_unix(new_data, replace_tz=True)
+            new_data = data_helpers.merge_dicts(signal_data, kits_data, 'SIGNAL_ID', ['OPERATION_STATE_DATETIME', 'OPERATION_STATE', 'PLAN_ID'])
 
             new_data = data_helpers.stringify_key_values(new_data)
 
@@ -96,11 +85,8 @@ def main(date_time):
         cd_results = data_helpers.detect_changes(socrata_data, new_data, 'SIGNAL_ID', keys=['OPERATION_STATE'])
 
 
-
-
         for thing in cd_results:
             print('{} : {}'.format(thing, len(cd_results[thing])))
-
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             socrata_payload = socrata_helpers.create_payload(cd_results, 'SIGNAL_ID')
@@ -115,8 +101,6 @@ def main(date_time):
         
         else:
             status_upsert_response = { 'Errors' : 0, 'message' : 'No signal status change detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
-
-
 
         log_payload = socrata_helpers.prep_pub_log(date_time, 'signal_status_update', status_upsert_response)
 
