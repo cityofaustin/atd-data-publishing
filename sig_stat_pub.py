@@ -15,17 +15,6 @@ import secrets
 
 import pdb
 
-#  KNACK CONFIG
-KNACK_PARAMS = {  
-    'objects' : ['object_11', 'object_12'],
-    'scene' : '112',
-    'VIEW' : '289',
-    'FIELD_NAMES' : ['SIGNAL_ID','CROSS_ST','LOCATION_NAME','PRIMARY_ST', 'GEOCODE'],
-    'OUT_FIELDS' : ['SIGNAL_ID','CROSS_ST','LOCATION_NAME','PRIMARY_ST', 'LATITUDE', 'LONGITUDE'],
-    'app_id' : secrets.KNACK_CREDENTIALS['app_id'],
-    'api_key' : secrets.KNACK_CREDENTIALS['api_key']
-}
-
 #  SOCRATA CONFIG
 SOCRATA_SIGNALS = 'xwqn-2f78'
 SOCRATA_SIGNAL_STATUS = '5zpr-dehc'
@@ -36,6 +25,12 @@ FLASH_STATUSES = ['1', '2', '3']
 
 then = arrow.now()
 
+now_s = then.format('YYYY_MM_DD')
+
+log_directory = secrets.LOG_DIRECTORY
+logfile = '{}/sig_stat_pub_{}.log'.format(log_directory, now_s)
+logging.basicConfig(filename=logfile, level=logging.INFO)
+logging.info('START AT {}'.format(str(then)))
     
 def main(date_time):
     print('starting stuff now')
@@ -84,11 +79,12 @@ def main(date_time):
 
         cd_results = data_helpers.detect_changes(socrata_data, new_data, 'SIGNAL_ID', keys=['OPERATION_STATE'])
 
-
-        for thing in cd_results:
-            print('{} : {}'.format(thing, len(cd_results[thing])))
+        for change_type in cd_results.keys():
+            if len(cd_results[change_type]) > 0:
+                logging.info('{}: {}'.format( change_type, len(cd_results[change_type]) ))
 
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
+
             socrata_payload = socrata_helpers.create_payload(cd_results, 'SIGNAL_ID')
 
             socrata_payload = socrata_helpers.create_location_fields(socrata_payload)
@@ -150,8 +146,7 @@ def main(date_time):
         raise e
  
 
-
 results = main(then)
 
 print(results['res'])
-print('Elapsed time: {}'.format(str(arrow.now() - then)))
+logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
