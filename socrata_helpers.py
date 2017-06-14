@@ -131,6 +131,7 @@ def add_hist_fields(list_of_dicts):
 
         if 'processed_datetime' in record:
             processed_datetime = arrow.get(record['processed_datetime'])
+            processed_datetime = processed_datetime.replace(tzinfo = 'US/Central')  # teach a naive date about the world
         
         else:
             continue
