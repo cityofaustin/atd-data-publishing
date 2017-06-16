@@ -43,9 +43,8 @@ def main(date_time):
         
         #  stringify values for later comparison against socrata JSON
         knack_data = data_helpers.stringify_key_values(knack_data)
-        
         knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
-        
+
         if agol_pub:
             knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))            
             token = agol_helpers.get_token(agol_creds)
@@ -104,9 +103,9 @@ def main(date_time):
             file_name = '{}/{}.csv'.format(csv_dest, dataset)
             data_helpers.write_csv(knack_data, file_name=file_name)
 
+
         if github_pub:
             print('commit to github')
-
             git_data = data_helpers.unix_to_mills(deepcopy(knack_data))
             payload = data_helpers.write_csv(git_data, in_memory=True)
             git_auth = github_helpers.create_auth_tuple(github_creds)

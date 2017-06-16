@@ -35,7 +35,7 @@ config = {
         'ip_field' : 'SENSOR_IP'
     },
     'quote_of_the_week' : {
-        'primary_key' : None,
+        'primary_key' : 'quote_date',
         'objects' : ['object_67'],
         'scene' : None,
         'view' : None,
