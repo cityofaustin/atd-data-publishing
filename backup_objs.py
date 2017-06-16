@@ -15,6 +15,7 @@ import secrets
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
+log_directory = secrets.LOG_DIRECTORY
 logfile = '{}/{}_{}.log'.format(log_directory,'backup_objs', now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
