@@ -21,7 +21,6 @@ def get_token(creds):
     return token
 
 
-
 def query_all_features(url, token):
     url = url + 'query'
     where = 'OBJECTID>0'
@@ -30,6 +29,12 @@ def query_all_features(url, token):
     res = res.json()
     return res
 
+
+def query_layer(url, params):
+    url = url + 'query'
+    res = requests.post(url, params=params)
+    res = res.json()
+    return res
 
 
 def add_features(url, token, payload):
@@ -176,7 +181,7 @@ def parse_response(res_msg, req_type):
     success = 0
     fail = 0
 
-    for record in res_msg[ '{}Results'.format(req_type) ]:
+    for record in res_msg[ '{} Results'.format(req_type) ]:
         if 'success' in record:
             success += 1
         else:
