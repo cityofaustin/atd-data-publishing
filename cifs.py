@@ -6,8 +6,7 @@ import agol_helpers
 from secrets import AGOL_CREDENTIALS as creds
 '''
 TODO:
-- create incidents
-- are AGOL datetime naive?
+- upload to socrata
 '''
 log_directory = '.'
 
@@ -18,7 +17,6 @@ now_mills = now.timestamp * 1000
 logfile = '{}/cifs_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(now.format()))
-
 
 service_url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/ATD_road_closures_incidents/FeatureServer/0/'
 
@@ -82,8 +80,10 @@ fieldmap = {
     }
 }
 
+incidents = [] 
+
 def convertToIso(mills):
-    return arrow.get(mills/1000).format()
+    return arrow.get(mills/1000).format("YYYY-MM-DDTHH:mm:ssZZ") #  iso-8601
 
 
 def mapfields(feature, fieldmap):
@@ -112,23 +112,31 @@ def buildPolyline(feature):
                 print(coord)
                 polyline.append(coord)
 
-    return polyline
+    return ' '.join(str(coord) for coord in polyline)
 
 
 def main():
-
+    #  get closure data
     query_params['token'] = agol_helpers.get_token(creds)
     data = agol_helpers.query_layer(service_url, query_params)
-
+    
+    logging.info(str(len( data['features'] )))
+    
+    #  map closure data to CIFS
     for feature in data['features']:
         incident = mapfields(feature['attributes'], fieldmap)
         incident['polyline'] = buildPolyline(feature)
-        #  now add "missing" fields and nest fields as needed
-        pdb.set_trace()
-        
-
-
-    pdb.set_trace()
+        location = { 
+            'street' : incident.pop('street'),
+            'polyline' : incident.pop('polyline')
+        }
+        incident['location'] = location
+        #  now add 'missing' fields and nest fields as needed
+        incidents.append(incident)
+    
+    #  write to json
+    with open('traffic-incidents.json', 'w') as outfile:
+        json.dump(incidents, outfile)
 
 main()
 
@@ -136,17 +144,3 @@ main()
 
 # def build_incident(feature, fieldmap):
     
-    
-#     "incident": {
-#       "-id": "",
-#       "creationtime": "",
-#       "updatetime": "",
-#       "type": "",
-#       "description": "",
-#       "location": {
-#         "street": "",
-#         "polyline": "" }
-#       "starttime": "",
-#       "endtime": "",
-#     }
-#  
