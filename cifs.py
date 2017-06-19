@@ -5,9 +5,15 @@ import csv
 import arrow
 import agol_helpers
 import socrata_helpers
-from secrets import SOCRATA_CREDENTIALS as socrata_creds
-from secrets import AGOL_CREDENTIALS as agol_creds
-from secrets import LOG_DIRECTORY as log_directory
+import email_helpers
+import secrets
+
+
+
+socrata_creds = secrets.SOCRATA_CREDENTIALS
+agol_creds = secrets.AGOL_CREDENTIALS
+log_directory = secrets.LOG_DIRECTORY
+
 '''
 TODO:
 - geocoding
@@ -146,51 +152,43 @@ def convertToCsv(incidents):
 
 
 def main():
-    #  get closure data
-    agol_config['query_params']['token'] = agol_helpers.get_token(agol_creds)
-    data = agol_helpers.query_layer(agol_config['service_url'], agol_config['query_params'])
-    
-    logging.info(str(len( data['features'] )))
-    
-    #  map closure data to CIFS
-    for feature in data['features']:
-        incident = mapfields(feature['attributes'], fieldmap)
-        incident['polyline'] = buildPolyline(feature)
-        location = { 
-            'street' : incident.pop('street'),
-            'polyline' : incident.pop('polyline')
-        }
-
-        incident['location'] = location
+    try:
+        #  get closure data
+        agol_config['query_params']['token'] = agol_helpers.get_token(agol_creds)
+        data = agol_helpers.query_layer(agol_config['service_url'], agol_config['query_params'])
         
-        incident['source'] = {
-            'reference': reference_id,
-            'name' : reference_name
-        }
+        logging.info(str(len( data['features'] )))
+        
+        #  map closure data to CIFS
+        for feature in data['features']:
+            incident = mapfields(feature['attributes'], fieldmap)
+            incident['polyline'] = buildPolyline(feature)
+            location = { 
+                'street' : incident.pop('street'),
+                'polyline' : incident.pop('polyline')
+            }
 
-        incidents.append(incident)
-    
-    
-    #  write to socrata json feed
-    file_string = json.dumps(incidents)
-    upload_response = socrata_helpers.replace_non_data_file(socrata_creds, socrata_resource_id_json, 'traffic-incidents.json', file_string)
+            incident['location'] = location
+            
+            incident['source'] = {
+                'reference': reference_id,
+                'name' : reference_name
+            }
 
-    # #  write to json
-    # with open('traffic-incidents.json', 'w') as outfile:
-    #     json.dump(incidents, outfile)
+            incidents.append(incident)
+        
+        #  write to socrata json feed
+        file_string = json.dumps(incidents)
+        upload_response = socrata_helpers.replace_non_data_file(socrata_creds, socrata_resource_id_json, 'traffic-incidents.json', file_string)
 
-    #  write to csv
-    csv_data = convertToCsv(incidents)
-    
-    # with open('traffic-incidents.csv', 'w') as outfile:
-    #     fieldnames = csv_data[1]
-    #     writer = csv.DictWriter(outfile, fieldnames=fieldnames, lineterminator="\n")
-    #     writer.writeheader()
-    #     writer.writerows([ row for row in csv_data[0] ])
+        csv_data = convertToCsv(incidents)
+        
+        #  write to socrata csv
+        replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, csv_data[0])
 
-    #  write to socrata csv
-    replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, csv_data[0])
-
+    except Exception as e:
+        logging.error('Failed to process data: {}'.format(str(e)))
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'CIFS Publication Failure', str(e))
 
 main()
 
