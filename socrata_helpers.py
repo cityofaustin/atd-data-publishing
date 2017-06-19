@@ -93,6 +93,44 @@ def upsert_data(creds, payload, resource):
     return res.json()
 
 
+def replace_data(creds, resource, payload):
+    print('replace resource ' + resource)
+
+    url = 'https://data.austintexas.gov/resource/{}.json'.format(resource)
+    
+    try:
+        auth = (creds['user'], creds['password'])
+        json_data = json.dumps(payload)
+        res = requests.put(url, data=json_data, auth=auth)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+    
+    return res.json()
+
+
+
+def replace_non_data_file(creds, resource, filename, file, timeout=10):
+    print('replace non data file')
+    # see here https://github.com/xmun0x/sodapy
+
+    auth = (creds['user'], creds['password'])
+
+    uri = 'https://data.austintexas.gov/api/views/{}.txt'.format(resource)
+
+    files = {'file': (filename, file)}
+
+    params = {'id': resource, 'method': 'replaceBlob'}
+
+    try:
+        res = requests.post(uri, files=files, auth=auth, params=params, timeout=timeout)
+
+    except requests.exceptions.HTTPError as e:
+        raise e
+
+    return res.json()
+
+
 
 def prep_pub_log(date_time, event, socrata_response):
     print('prep publication log')
@@ -141,3 +179,4 @@ def add_hist_fields(list_of_dicts):
         record['operation_state_duration'] = delta.seconds
 
     return list_of_dicts
+
