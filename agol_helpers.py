@@ -1,14 +1,11 @@
 import json
 import pdb
 import logging
-
 import arrow
 import requests
 
 
-
 logger = logging.getLogger(__name__)
-
 
 
 def get_token(creds):
@@ -181,7 +178,7 @@ def parse_response(res_msg, req_type):
     success = 0
     fail = 0
 
-    for record in res_msg[ '{} Results'.format(req_type) ]:
+    for record in res_msg[ '{}Results'.format(req_type) ]:
         if 'success' in record:
             success += 1
         else:
