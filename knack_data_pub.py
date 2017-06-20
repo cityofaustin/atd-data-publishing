@@ -122,6 +122,7 @@ def main(date_time):
         error_text = traceback.format_exc()
         email_subject = "Knack Data Pub Failure: {}".format(dataset)
         email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, email_subject, error_text)
+        logging.error(error_text)
         print(e)
         raise e
 
