@@ -14,8 +14,9 @@ import argparse
 import os
 from copy import deepcopy
 import logging
-import arrow
+import traceback
 import pdb
+import arrow
 import agol_helpers
 import knack_helpers
 import socrata_helpers
@@ -73,7 +74,6 @@ def main(date_time):
             socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
 
             cd_results = data_helpers.detect_changes(socrata_data, knack_data, config[dataset]['primary_key'], keys=field_names)
-            logging.info( 'socrata change detection results: {}'.format(cd_results) )
 
             if cd_results['new'] or cd_results['change'] or cd_results['delete']:
                 socrata_payload = socrata_helpers.create_payload(cd_results, config[dataset]['primary_key'])
@@ -119,6 +119,9 @@ def main(date_time):
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
+        error_text = traceback.format_exc()
+        email_subject = "Knack Data Pub Failure: {}".format(dataset)
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, email_subject, error_text)
         print(e)
         raise e
 
