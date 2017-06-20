@@ -30,7 +30,7 @@ objects = ['object_11']
 scene = '425'
 view = '1201'
 
-outfields = ['JURISDICTION_LABEL', 'area', 'COUNCIL_DISTRICT', 'GEOCODE', 'LATITUDE', 'LONGITUDE', 'UPDATE_PROCESSED']
+outfields = ['JURISDICTION_LABEL', 'SIGNAL_ENG_AREA', 'COUNCIL_DISTRICT', 'GEOCODE', 'LATITUDE', 'LONGITUDE', 'UPDATE_PROCESSED']
 
 layers = [
     {
@@ -45,11 +45,10 @@ layers = [
     },
     {
         'service_name' : 'ATD_signal_engineer_areas',
-        'outfields' : ['area'],
+        'outfields' : ['SIGNAL_ENG_AREA'],
         'layer_id' : 0
     }
 ]
-
 
 
 def main(date_time):
@@ -61,7 +60,7 @@ def main(date_time):
 
         field_lookup = knack_helpers.create_field_lookup(field_dict, parse_raw=True)
         
-        field_lookup = data_helpers.reduce_dicts([field_lookup], outfields)[0]  #  note send field_lookup to reduce_dicts as a list
+        field_lookup = data_helpers.reduce_dicts([field_lookup], outfields)[0]  #  send field_lookup to reduce_dicts as a list
         
         field_lookup['KNACK_ID'] = 'KNACK_ID'  #  append to field lookup to avoid dropping when keys are replaced with db fieldnames
 
@@ -118,7 +117,7 @@ def main(date_time):
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
-        #  email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Location Update Failure', str(e))
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Location Update Failure', str(e))
         raise e
 
 
