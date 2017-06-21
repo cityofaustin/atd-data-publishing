@@ -3,7 +3,6 @@
 Transform traffic count files so that they can be
 inserted into ArcSDE database
 '''
-
 import os
 import csv
 import pdb
@@ -22,10 +21,7 @@ logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 
-root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR 
-
-
-# outdir = fme_source_files_dest
+root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
 
 directions = ['NB', 'EB', 'WB', 'SB']
