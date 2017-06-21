@@ -81,7 +81,8 @@ def splitRowsByDirection(rows):
 
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
-    return arrow.get(dt, 'M/D/YYYY h:mm A ZZZ').format()
+    dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
+    return dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
 
 
 def appendKeyVal(rows, key, val):
