@@ -23,7 +23,7 @@ logging.info('START AT {}'.format(str(now)))
 
 root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
-
+row_id_name = 'ROW_ID'
 directions = ['NB', 'EB', 'WB', 'SB']
 
 fieldmap = {
@@ -145,7 +145,7 @@ def main():
                     del(row['Time'])
 
                 data['combined'] = mapFields(data['combined'], fieldmap)
-                data['combined'] = createRowIDs(data['combined'], 'CLASS_ID', ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
+                data['combined'] = createRowIDs(data['combined'], row_id_name, ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
 
                 fieldnames = [key for key in data['combined'][0].keys()]
 
