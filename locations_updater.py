@@ -5,9 +5,7 @@ if __name__ == '__main__' and __package__ is None:
 
 import logging
 import pdb
-
 import arrow
-
 import knack_helpers
 import agol_helpers
 import email_helpers
