@@ -1,11 +1,6 @@
-
 '''
 Transform traffic count files so that they can be
 inserted into ArcSDE database
-
-TODO:
-- logging
-- move processed files to 'processed' folder
 
 '''
 import os
@@ -13,6 +8,8 @@ import csv
 import pdb
 import hashlib
 import logging
+import traceback
+import email_helpers
 import arrow
 import secrets
 
@@ -24,25 +21,13 @@ logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 
+root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
+out_dir = secrets.TRAFFIC_COUNT_OUTPUT_VOL_DIR
+row_id_name = 'ROW_ID'
 
-# root_dir = secrets.TIMEMARK_DIRECTORY 
-root_dir = 'G:\\Verdi\\Traffic Counts\\TimeMarkGIS'
-
-# out_dir = secrets.FME_DIRECTORY
-out_dir = 'H:\\ATD_BSA'
-
-# processed_dir = root_dir + '/processed'
-processed_dir = 'H:\\ATD_BSA'
-
-
-vol_file_match_str = 'VOL.CSV'
-# outdir = fme_source_files_dest
-outdir = 'H:\\ATD_BSA\\del'
-
-fieldnames = ['COUNT_DATETIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', 'COUNT_ID', 'SITE_CODE']
+fieldnames = ['COUNT_DATETIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', row_id_name, 'SITE_CODE']
 directions = ['NB', 'EB', 'WB', 'SB']
 
-# os.makedirs(path, exist_ok=True)
 def getFile(path):
     print(path)
     with open(path, 'r') as in_file:
@@ -93,6 +78,7 @@ def splitRowsByDirection(rows):
 
     return new_rows
 
+
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     return arrow.get(dt, 'M/D/YYYY h:mm A ZZZ').format()
@@ -104,43 +90,67 @@ def appendKeyVal(rows, key, val):
     return rows
 
 
-def createRowIDs(rows, hash_fields):
+def createRowIDs(rows, hash_field_name, hash_fields):
     hasher = hashlib.sha1()
     for row in rows:
         in_str = ''.join([row[q] for q in hash_fields])
         hasher.update(in_str.encode('utf-8'))
-        row['COUNT_ID'] = hasher.hexdigest()
+        row[hash_field_name] = hasher.hexdigest()
 
     return rows
 
+def main():
+    count = 0
 
-for root, dirs, files in os.walk(root_dir):
-    for name in files:
-        if 'VOL.CSV' in name.upper() and 'PROCESSED' not in root.upper():
-            vol_file = os.path.join(root, name)
-            move_file = os.path.join(root, 'processed', name)
+    for root, dirs, files in os.walk(root_dir):
+        for name in files:
+            if 'VOL.CSV' in name.upper() and 'PROCESSED' not in root.upper():
+                vol_file = os.path.join(root, name)
+                move_file = os.path.join(root, 'processed', name)
 
-            file_data = getFile(vol_file)
-            
-            rows = file_data[0]
-            data_file = file_data[2]
-            site_code = file_data[3]
-            
-            rows = splitRowsByDirection(rows)
-            rows = appendKeyVal(rows, 'DATA_FILE', data_file)
-            rows = appendKeyVal(rows, 'SITE_CODE', site_code)
-            rows = createRowIDs(rows, ['COUNT_DATETIME', 'DATA_FILE', 'COUNT_CHANNEL'])
-            # https://stackoverflow.com/questions/34771268/md5-hashing-a-csv-with-python
-            out_path = os.path.join(outdir, name)
-            
-            with open(out_path, 'w', newline='\n') as outfile:
-                writer = csv.DictWriter(outfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(rows)
+                file_data = getFile(vol_file)
+                
+                rows = file_data[0]
+                data_file = file_data[2]
+                site_code = file_data[3]
+                
+                rows = splitRowsByDirection(rows)
+                rows = appendKeyVal(rows, 'DATA_FILE', data_file)
+                rows = appendKeyVal(rows, 'SITE_CODE', site_code)
+                rows = createRowIDs(rows, row_id_name, ['COUNT_DATETIME', 'DATA_FILE', 'COUNT_CHANNEL'])
+                # https://stackoverflow.com/questions/34771268/md5-hashing-a-csv-with-python
+                out_path = os.path.join(out_dir, 'fme_' + name)
+                
+                #  write to file
+                with open(out_path, 'w', newline='\n') as outfile:
+                    writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(rows)
 
-            #  os.rename(vol_file, move_file)
-            pdb.set_trace()
-            print(out_path)
-            #  move processed file to processed dir
-        else:
-            continue
+
+                #  move processed file to processed dir
+                move_dir = os.path.join(root, 'processed')
+                
+                if not os.path.exists(move_dir):
+                    os.makedirs(move_dir)
+
+                move_file = os.path.join(move_dir, name)
+                os.rename(vol_file, move_file)
+
+                count += 1
+
+            else:
+                continue
+
+    logging.info('{} files processed'.format(count))
+
+try:
+    main()
+
+except Exception as e:
+        error_text = traceback.format_exc()
+        print(error_text)
+        logging.error(error_text)
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Volume Process Failure', error_text)
+
+logging.info('END AT: {}'.format(arrow.now().format()))
