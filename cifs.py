@@ -1,14 +1,13 @@
-import pdb
 import logging
+import traceback
 import json
 import csv
+import pdb
 import arrow
 import agol_helpers
 import socrata_helpers
 import email_helpers
 import secrets
-
-
 
 socrata_creds = secrets.SOCRATA_CREDENTIALS
 agol_creds = secrets.AGOL_CREDENTIALS
@@ -17,6 +16,8 @@ log_directory = secrets.LOG_DIRECTORY
 '''
 TODO:
 - geocoding
+- actually just upsert on the tabular file>>it will contain historical closures
+- replace json with empty file when there are no closures?
 '''
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
@@ -33,7 +34,7 @@ agol_config = {
     'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/ATD_road_closures_incidents/FeatureServer/0/',
     'query_params' : {
         'f' : 'json',
-        'where' : 'EVENT_START_DATETIME IS NOT NULL AND EVENT_END_DATETIME IS NOT NULL',
+        # 'where' : 'EVENT_START_DATETIME IS NOT NULL AND EVENT_END_DATETIME IS NOT NULL',
         'time' : now_mills,
         'outFields' : '*',
         'returnGeometry' : True
@@ -126,9 +127,8 @@ def buildPolyline(feature):
     return ' '.join(str(coord) for coord in polyline)
 
 
-def convertToCsv(incidents):
+def convertToTabular(incidents):
     rows = []
-    fieldnames = []
 
     for feature in incidents:
         row = {}
@@ -136,19 +136,14 @@ def convertToCsv(incidents):
             if field == '-id':
                 feature['id'] = feature.pop(field)
                 field = 'id'
-
             if type(feature[field]) == dict:
                 for subfield in feature[field].keys():
-                    if subfield not in fieldnames:
-                        fieldnames.append(subfield)
                     row[subfield] = feature[field][subfield]
-            
             else:
-                if field not in fieldnames:
-                    fieldnames.append(field)
                 row[field] = feature[field]
         rows.append(row)
-    return (rows, fieldnames)
+
+    return rows
 
 
 def main():
@@ -157,42 +152,46 @@ def main():
         agol_config['query_params']['token'] = agol_helpers.get_token(agol_creds)
         data = agol_helpers.query_layer(agol_config['service_url'], agol_config['query_params'])
         
-        logging.info(str(len( data['features'] )))
-        
-        #  map closure data to CIFS
-        for feature in data['features']:
-            incident = mapfields(feature['attributes'], fieldmap)
-            incident['polyline'] = buildPolyline(feature)
-            location = { 
-                'street' : incident.pop('street'),
-                'polyline' : incident.pop('polyline')
-            }
+        if 'features' in data:
+            print(data)
+            #  translate closure data to CIF spec
+            for feature in data['features']:
+                incident = mapfields(feature['attributes'], fieldmap)
+                incident['polyline'] = buildPolyline(feature)
+                location = { 
+                    'street' : incident.pop('street'),
+                    'polyline' : incident.pop('polyline')
+                }
 
-            incident['location'] = location
-            
-            incident['source'] = {
-                'reference': reference_id,
-                'name' : reference_name
-            }
+                incident['location'] = location
+                
+                incident['source'] = {
+                    'reference': reference_id,
+                    'name' : reference_name
+                }
 
-            incidents.append(incident)
-        
+                incidents.append(incident)
+
+        else:
+            # no current closures
+            incidents = []
+
         #  write to socrata json feed
         file_string = json.dumps(incidents)
         upload_response = socrata_helpers.replace_non_data_file(socrata_creds, socrata_resource_id_json, 'traffic-incidents.json', file_string)
-
-        csv_data = convertToCsv(incidents)
         
-        #  write to socrata csv
-        replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, csv_data[0])
+        #  write to socrata tabular dataset
+        tabular_data = convertToTabular(incidents)
+        replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, tabular_data)
 
     except Exception as e:
-        logging.error('Failed to process data: {}'.format(str(e)))
-        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'CIFS Publication Failure', str(e))
+        error_text = traceback.format_exc()
+        logging.error(error_text)
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'CIFS Publication Failure', error_text)
 
 main()
 
-logging.info(arrow.now().format())
+logging.info( 'END AT: {}'.format( arrow.now().format() ))
 
 
 # def build_incident(feature, fieldmap):
