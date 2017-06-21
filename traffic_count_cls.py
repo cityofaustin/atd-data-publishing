@@ -2,17 +2,15 @@
 '''
 Transform traffic count files so that they can be
 inserted into ArcSDE database
-
-TODO:
-- logging
-- move processed files to 'processed' folder
-
 '''
+
 import os
 import csv
 import pdb
 import hashlib
 import logging
+import traceback
+import email_helpers
 import arrow
 import secrets
 
@@ -24,19 +22,11 @@ logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(now)))
 
-
-# root_dir = secrets.TIMEMARK_DIRECTORY 
-root_dir = 'G:\\Verdi\\Traffic Counts\\TimeMarkGIS'
-
-# out_dir = secrets.FME_DIRECTORY
-
-# processed_dir = root_dir + '/processed'
-processed_dir = 'H:\\ATD_BSA'
+root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR 
 
 
 # outdir = fme_source_files_dest
-outdir = 'H:\\ATD_BSA\\del'
-
+out_dir = secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
 
 directions = ['NB', 'EB', 'WB', 'SB']
 
@@ -96,7 +86,6 @@ def getFile(path):
     return data
 
 
-
 def appendKeyVal(rows, key, val):
     for row in rows:
         row[key] = val
@@ -121,7 +110,6 @@ def mapFields(rows, fieldmap):
     return mapped
 
 
-
 def createRowIDs(rows, hash_field_name, hash_fields):
     hasher = hashlib.sha1()
     for row in rows:
@@ -130,53 +118,71 @@ def createRowIDs(rows, hash_field_name, hash_fields):
         row[hash_field_name] = hasher.hexdigest()
     return rows
 
+def main():
+    count = 0
 
-for root, dirs, files in os.walk(root_dir):
-    for name in files:
-        if 'CLS.CSV' in name.upper() and 'PROCESSED' not in root.upper():
-            cls_file = os.path.join(root, name)
-            # move_file = os.path.join(root, 'processed', name)
+    for root, dirs, files in os.walk(root_dir):
+        for name in files:
+            if 'CLS.CSV' in name.upper() and 'PROCESSED' not in root.upper():
 
-            data = getFile(cls_file)
-            data_file = data['data_file']
-            site_code = data['site_code']
-            data['combined'] = []
-            for d in directions:
-                print(d)
-                if d in data:
-                    reader =  csv.DictReader(data[d])
-                    rows = [row for row in reader]
-                    data[d] = rows
-                    data[d] = appendKeyVal(data[d], 'DATA_FILE', data_file)
-                    data[d] = appendKeyVal(data[d], 'SITE_CODE', site_code)
-                    data[d] = appendKeyVal(data[d], 'CLASS_CHANNEL', d)
-                    data['combined'] = data[d] + data['combined']
-            
-            for row in data['combined']:
-                date = row['Date']
-                time = row['Time']
-                row['CLASS_DATETIME'] = parseDateTime(date, time)
-                del(row['Date'])
-                del(row['Time'])
+                cls_file = os.path.join(root, name)
 
-            data['combined'] = mapFields(data['combined'], fieldmap)
-            data['combined'] = createRowIDs(data['combined'], 'CLASS_ID', ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
+                data = getFile(cls_file)
+                data_file = data['data_file']
+                site_code = data['site_code']
+                data['combined'] = []
+                for d in directions:
+                    if d in data:
+                        reader =  csv.DictReader(data[d])
+                        rows = [row for row in reader]
+                        data[d] = rows
+                        data[d] = appendKeyVal(data[d], 'DATA_FILE', data_file)
+                        data[d] = appendKeyVal(data[d], 'SITE_CODE', site_code)
+                        data[d] = appendKeyVal(data[d], 'CLASS_CHANNEL', d)
+                        data['combined'] = data[d] + data['combined']
+                
+                for row in data['combined']:
+                    date = row['Date']
+                    time = row['Time']
+                    row['CLASS_DATETIME'] = parseDateTime(date, time)
+                    del(row['Date'])
+                    del(row['Time'])
 
-            fieldnames = [key for key in data['combined'][0].keys()]
+                data['combined'] = mapFields(data['combined'], fieldmap)
+                data['combined'] = createRowIDs(data['combined'], 'CLASS_ID', ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
 
-            out_path = os.path.join(outdir, name)
-            #  write to file
-            #  move original file
-            with open(out_path, 'w', newline='\n') as outfile:
-                writer = csv.DictWriter(outfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(data['combined'])
+                fieldnames = [key for key in data['combined'][0].keys()]
 
-            # print(out_path)
-            #  move processed file to processed dir
-        else:
-            continue
+                out_path = os.path.join(out_dir, 'fme_' + name)
+                
+                #  write to file
+                with open(out_path, 'w', newline='\n') as outfile:
+                    writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(data['combined'])
 
+                #  move processed file to processed dir
+                move_dir = os.path.join(root, 'processed')
+                
+                if not os.path.exists(move_dir):
+                    os.makedirs(move_dir)
 
+                move_file = os.path.join(move_dir, name)
+                os.rename(cls_file, move_file)
 
+                count += 1
 
+            else:
+                continue
+
+    logging.info('{} files processed'.format(count))
+
+try:
+    main()
+
+except Exception as e:
+        error_text = traceback.format_exc()
+        logging.error(error_text)
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Classification Process Failure', error_text)
+
+logging.info('END AT: {}'.format(arrow.now().format()))
