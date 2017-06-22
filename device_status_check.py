@@ -54,11 +54,11 @@ def main():
         json_data = parsed_data[0]
 
         out_dir = secrets.IP_JSON_DESTINATION
-        filename = '{}/device_data.json'.format(out_dir)
+        filename = '{}/device_data_{}.json'.format(out_dir, device_type)
         with open(filename, 'w') as of:
             json.dump(json_data, of)
 
-    parsed_data = parseIps(records,field_dict, out_fields_upload)
+    parsed_data = parseIps(records, field_dict, out_fields_upload)
     
     field_lookup = parsed_data[1]
 
@@ -89,7 +89,7 @@ def main():
 
 
 def cli_args():
-    parser = argparse.ArgumentParser(prog='device_status+check.py', description='Ping network devices to verify connenectivity.')
+    parser = argparse.ArgumentParser(prog='device_status_check.py', description='Ping network devices to verify connenectivity.')
     parser.add_argument('device_type', action="store", type=str, help='Type of device to ping. \'travel_sensor\' or \'cctv\'.')
     parser.add_argument('-json', action='store_true', default=False, help='Write device data to JSON.')
     args = parser.parse_args()
@@ -106,7 +106,8 @@ if __name__ == '__main__':
     now_s = now.format('YYYY_MM_DD')
     
     #  init logging with one logfile per dataset per day
-    logfile = './log/device_status_check_{}_{}.log'.format(device_type, now_s)
+    log_directory = secrets.LOG_DIRECTORY
+    logfile = '{}/device_status_check_{}_{}.log'.format(log_directory, device_type, now_s)
     logging.basicConfig(filename=logfile, level=logging.INFO)
     logging.info( 'args: {}'.format( str(args) ) )
     logging.info('START AT {}'.format(str(now)))
