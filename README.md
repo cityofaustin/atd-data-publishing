@@ -1,29 +1,47 @@
-# transportation-data-publishing
+# Transportation Data Publishing
 
 This repo houses ETL scripts for Austin Transportation's open data projects. They're written in Python. 
 
-Check out [sig_pub.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/sig_pub.py) to see the scripts be happy together.
+## Quick Start
 
-#### ArcGIS Online Helpers (agol_helpers.py)
-Query, add, and delete features from an ArcGIS Online Feature Service
+Install dependencies. 
 
-#### Data Helpers (data_helpers.py)
-Handy bits of code for common ETL tasks, mostly borrowed from Stack Overflow snippets.
+- A
+- B
+- C
 
-#### Socrata Helpers (knack_helpers.py)
-Use the Socrata Open Data API to publish #opendata. 
+Check out [knack_data_pub.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/knack_data-pub.py) to see the scripts be happy together.
 
-#### Knack Helpers (knack_helpers.py)
-Scripts for accessing the [Knack API](http://knack.freshdesk.com/support/solutions/articles/5000444173-working-with-the-api).
+## Environments
 
-#### Email Helpers (email_helpers.py)
-Helpers for sending emails with [yagmail](https://github.com/kootenpv/yagmail)
+### Production
 
-#### KITS Helpers (kits_helpers.py)
-Scripts for accessing the KITS SQL database which supports Austin Transportation's Advanced Traffic Management System (ATMS).
+We have a production environment, it's here:
+- **URL:** [prod.com]() 
+- **GitHub:** `master`
+- **Deployment:** Notes about deployment such as CI
 
-#### Fake Secrets (fake_secrets.py)
-Reference file for setting up secrets.py
+### Test
 
-#### GitHub Helpers (github_helpers.py)
-Helpers for commiting to GitHub with programmaticaly. Code borrowed from @luqmaan and @openaustin's [Construction Permits](https://github.com/open-austin/construction-permits) project.
+Heres the test environment:
+- **URL:** [test.com]() 
+- **GitHub:** `test`
+- **Description:** This branch maintains a close database sync with `Production` and is used for customer testing and confirmation of changes ahead of a merge into `master`.
+
+### Dev
+
+There's no dev environment yet :(
+)
+- **URL:** [dev.com]() 
+- **GitHub:** `dev`
+- **Description:** This is a testing server for work-in-progress. The server does not have the same level of database permissions as `test` and `production`.
+
+### Local
+
+- **URL:** [http://localhost/]() 
+- **GitHub:** `mt-bonnell`
+- **Description:** Notes about working locally. VPN required? Cache clearing? SASS updating?
+
+## Contributing
+
+Do dee do
