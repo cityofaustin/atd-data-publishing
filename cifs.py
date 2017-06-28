@@ -35,7 +35,7 @@ agol_config = {
     'query_params' : {
         'f' : 'json',
         # 'where' : 'EVENT_START_DATETIME IS NOT NULL AND EVENT_END_DATETIME IS NOT NULL',
-        'time' : now_mills,
+        # 'time' : now_mills,      per ESRI time query is defective on hosted featre layers
         'outFields' : '*',
         'returnGeometry' : True
     }   
@@ -133,10 +133,10 @@ def convertToTabular(incidents):
     for feature in incidents:
         row = {}
         for field in feature.keys():
-            if field == '-id':
+            if field == '-id':  #  '-id' if used for CIFS per Waze JSON example
                 feature['id'] = feature.pop(field)
                 field = 'id'
-            if type(feature[field]) == dict:
+            if type(feature[field]) == dict:  #  flatten nested json fields
                 for subfield in feature[field].keys():
                     row[subfield] = feature[field][subfield]
             else:
@@ -152,9 +152,9 @@ def main():
         agol_config['query_params']['token'] = agol_helpers.get_token(agol_creds)
         data = agol_helpers.query_layer(agol_config['service_url'], agol_config['query_params'])
         
+        #  translate closure data to CIF spec
         if 'features' in data:
             print(data)
-            #  translate closure data to CIF spec
             for feature in data['features']:
                 incident = mapfields(feature['attributes'], fieldmap)
                 incident['polyline'] = buildPolyline(feature)
