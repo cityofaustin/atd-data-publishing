@@ -178,7 +178,8 @@ def main():
         
         #  write to socrata tabular dataset
         tabular_data = convertToTabular(incidents)
-        replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, tabular_data)
+        #  replace_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id_csv, tabular_data)
+        upsert_response = socrata_helpers.upsert_data(socrata_creds, tabular_data, socrata_resource_id_csv)
 
     except Exception as e:
         error_text = traceback.format_exc()
