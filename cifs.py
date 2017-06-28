@@ -2,6 +2,7 @@ import logging
 import traceback
 import json
 import csv
+import io
 import pdb
 import arrow
 import agol_helpers
@@ -21,6 +22,7 @@ TODO:
 '''
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
+now_esri_query = now.format('YYYY-MM-DD HH:mm:ss')
 now_mills = now.timestamp * 1000
 
 logfile = '{}/cifs_{}.log'.format(log_directory, now_s)
@@ -34,7 +36,7 @@ agol_config = {
     'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/ATD_road_closures_incidents/FeatureServer/0/',
     'query_params' : {
         'f' : 'json',
-        # 'where' : 'EVENT_START_DATETIME IS NOT NULL AND EVENT_END_DATETIME IS NOT NULL',
+        'where' : 'EVENT_START_DATETIME < \'{}\' AND \'{}\' < EVENT_END_DATETIME'.format(now_esri_query, now_esri_query),
         # 'time' : now_mills,      per ESRI time query is defective on hosted featre layers
         'outFields' : '*',
         'returnGeometry' : True
@@ -93,11 +95,8 @@ fieldmap = {
     }
 }
 
-incidents = [] 
-
-
 def convertToIso(mills):
-    return arrow.get(mills/1000).to('US/Central').format("YYYY-MM-DDTHH:mm:ssZZ") #  iso-8601
+    return arrow.get(mills/1000).to('US/Central').format('YYYY-MM-DDTHH:mm:ssZZ') #  iso-8601
 
 
 def mapfields(feature, fieldmap):
@@ -147,6 +146,8 @@ def convertToTabular(incidents):
 
 
 def main():
+    incidents = [] 
+
     try:
         #  get closure data
         agol_config['query_params']['token'] = agol_helpers.get_token(agol_creds)
@@ -169,15 +170,10 @@ def main():
                     'reference': reference_id,
                     'name' : reference_name
                 }
-
                 incidents.append(incident)
 
-        else:
-            # no current closures
-            incidents = []
-
         #  write to socrata json feed
-        file_string = json.dumps(incidents)
+        file_string = io.StringIO(json.dumps(incidents))
         upload_response = socrata_helpers.replace_non_data_file(socrata_creds, socrata_resource_id_json, 'traffic-incidents.json', file_string)
         
         #  write to socrata tabular dataset

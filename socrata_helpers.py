@@ -121,7 +121,7 @@ def replace_non_data_file(creds, resource, filename, file, timeout=10):
     files = {'file': (filename, file)}
 
     params = {'id': resource, 'method': 'replaceBlob'}
-
+    
     try:
         res = requests.post(uri, files=files, auth=auth, params=params, timeout=timeout)
 
