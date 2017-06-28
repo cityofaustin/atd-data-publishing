@@ -98,7 +98,6 @@ def moveFiles(source_dir, dest_dir):
         os.makedirs(dest_dir)
 
     for root, dirs, files in os.walk(source_dir):
-        #  collect all records from all files that will be processed
         for name in files:
             old_file = os.path.join(root, name)
             new_file = os.path.join(dest_dir, name)
