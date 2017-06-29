@@ -91,7 +91,20 @@ def appendKeyVal(rows, key, val):
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
-    return dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    local = dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    year = dt.format('YYYY')
+    month = dt.format('M')
+    day = dt.format('DD')
+    weekday = dt.weekday()
+    time = dt.format('HH:mm')
+    return {
+        'DATETIME' : local,
+        'YEAR' : year,
+        'MONTH' : month,
+        'DAY_OF_MONTH' : day,
+        'DAY_OF_WEEK' : weekday,
+        'TIME' : time
+    }
 
 
 def mapFields(rows, fieldmap):
@@ -141,12 +154,16 @@ def main():
                 for row in data['combined']:
                     date = row['Date']
                     time = row['Time']
-                    row['CLASS_DATETIME'] = parseDateTime(date, time)
+                    date_data = parseDateTime(date, time)
+                    
+                    for date_field in date_data.keys():
+                        row[date_field] = date_data[date_field]
+
                     del(row['Date'])
                     del(row['Time'])
 
                 data['combined'] = mapFields(data['combined'], fieldmap)
-                data['combined'] = createRowIDs(data['combined'], row_id_name, ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
+                data['combined'] = createRowIDs(data['combined'], row_id_name, ['DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
 
                 fieldnames = [key for key in data['combined'][0].keys()]
 
