@@ -1,7 +1,6 @@
 '''
 Transform traffic count files so that they can be
 inserted into ArcSDE database
-
 '''
 import os
 import csv
@@ -9,9 +8,9 @@ import pdb
 import hashlib
 import logging
 import traceback
-import email_helpers
 import arrow
 import secrets
+import email_helpers
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
@@ -19,13 +18,13 @@ now_s = now.format('YYYY_MM_DD')
 log_directory = secrets.LOG_DIRECTORY
 logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
+logging.info('START VOL AT {}'.format(str(now)))
 
 root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = secrets.TRAFFIC_COUNT_OUTPUT_VOL_DIR
 row_id_name = 'ROW_ID'
 
-fieldnames = ['COUNT_DATETIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', row_id_name, 'SITE_CODE']
+fieldnames = ['DATETIME', 'YEAR', 'MONTH', 'DAY_OF_MONTH', 'DAY_OF_WEEK', 'TIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', row_id_name, 'SITE_CODE']
 directions = ['NB', 'EB', 'WB', 'SB']
 
 def getFile(path):
@@ -33,10 +32,10 @@ def getFile(path):
     with open(path, 'r') as in_file:
         for i, line in enumerate(in_file):
             if i == 0:
-                data_file = line.split(',')[1].strip('\'')
+                data_file = line.split(',')[1].replace('\'', '').strip()
 
-            if i == 1: 
-                site_code = line.split(',')[1].strip('\'')
+            if i == 1:
+                site_code = line.split(',')[1].replace('\'', '').strip()
 
             if 'Date,Time' in line:
                 reader = csv.DictReader([line] + in_file.readlines())
@@ -55,7 +54,7 @@ def splitRowsByDirection(rows):
         date = row['Date']
         time = row['Time']
 
-        datetime = parseDateTime(date, time)
+        date_data = parseDateTime(date, time)
         
         if 'Total' in row.keys():  #  only files with bi-directional data will have a total
             total = row['Total']
@@ -66,7 +65,10 @@ def splitRowsByDirection(rows):
             if d in row.keys():
                 new_row = {}
                 new_row['CHANNEL'] = d
-                new_row['COUNT_DATETIME'] = datetime
+
+                for date_field in date_data.keys():
+                    new_row[date_field] = date_data[date_field]
+
                 new_row['COUNT_CHANNEL'] = row[d]
 
                 if (total):
@@ -82,7 +84,20 @@ def splitRowsByDirection(rows):
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
-    return dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    local = dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    year = dt.format('YYYY')
+    month = dt.format('M')
+    day = dt.format('DD')
+    weekday = dt.weekday()
+    time = dt.format('HH:mm')
+    return {
+        'DATETIME' : local,
+        'YEAR' : year,
+        'MONTH' : month,
+        'DAY_OF_MONTH' : day,
+        'DAY_OF_WEEK' : weekday,
+        'TIME' : time
+    }
 
 
 def appendKeyVal(rows, key, val):
@@ -118,7 +133,7 @@ def main():
                 rows = splitRowsByDirection(rows)
                 rows = appendKeyVal(rows, 'DATA_FILE', data_file)
                 rows = appendKeyVal(rows, 'SITE_CODE', site_code)
-                rows = createRowIDs(rows, row_id_name, ['COUNT_DATETIME', 'DATA_FILE', 'COUNT_CHANNEL'])
+                rows = createRowIDs(rows, row_id_name, ['DATETIME', 'DATA_FILE', 'COUNT_CHANNEL'])
                 # https://stackoverflow.com/questions/34771268/md5-hashing-a-csv-with-python
                 out_path = os.path.join(out_dir, 'fme_' + name)
                 
@@ -149,9 +164,9 @@ try:
     main()
 
 except Exception as e:
-        error_text = traceback.format_exc()
-        print(error_text)
-        logging.error(error_text)
-        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Volume Process Failure', error_text)
+    error_text = traceback.format_exc()
+    print(error_text)
+    logging.error(error_text)
+    email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Volume Process Failure', error_text)
 
 logging.info('END AT: {}'.format(arrow.now().format()))

@@ -9,9 +9,9 @@ import pdb
 import hashlib
 import logging
 import traceback
-import email_helpers
 import arrow
 import secrets
+import email_helpers
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
@@ -19,7 +19,7 @@ now_s = now.format('YYYY_MM_DD')
 log_directory = secrets.LOG_DIRECTORY
 logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
+logging.info('START CLS AT {}'.format(str(now)))
 
 root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
@@ -57,14 +57,14 @@ def getFile(path):
                 continue
 
             if i == 0:
-                data['data_file'] = line.split(',')[1].replace('\'', '').strip('\n')
+                data['data_file'] = line.split(',')[1].replace('\'', '').strip('\n').strip()
 
             if i == 1: 
-                data['site_code'] = line.split(',')[1].replace('\'', '').strip('\n')
+                data['site_code'] = line.split(',')[1].replace('\'', '').strip('\n').strip()
 
             if 'CHANNEL' in line.upper():   
                 append_lines = False
-                current_channel = line.split(',')[1].replace('\'', '').strip('\n')
+                current_channel = line.split(',')[1].replace('\'', '').strip('\n').strip()
                 data[current_channel] = []
 
             if 'Date,Time' in line:
@@ -91,7 +91,20 @@ def appendKeyVal(rows, key, val):
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
-    return dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    local = dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    year = dt.format('YYYY')
+    month = dt.format('M')
+    day = dt.format('DD')
+    weekday = dt.weekday()
+    time = dt.format('HH:mm')
+    return {
+        'DATETIME' : local,
+        'YEAR' : year,
+        'MONTH' : month,
+        'DAY_OF_MONTH' : day,
+        'DAY_OF_WEEK' : weekday,
+        'TIME' : time
+    }
 
 
 def mapFields(rows, fieldmap):
@@ -141,12 +154,16 @@ def main():
                 for row in data['combined']:
                     date = row['Date']
                     time = row['Time']
-                    row['CLASS_DATETIME'] = parseDateTime(date, time)
+                    date_data = parseDateTime(date, time)
+                    
+                    for date_field in date_data.keys():
+                        row[date_field] = date_data[date_field]
+
                     del(row['Date'])
                     del(row['Time'])
 
                 data['combined'] = mapFields(data['combined'], fieldmap)
-                data['combined'] = createRowIDs(data['combined'], row_id_name, ['CLASS_DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
+                data['combined'] = createRowIDs(data['combined'], row_id_name, ['DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
 
                 fieldnames = [key for key in data['combined'][0].keys()]
 
