@@ -2,12 +2,6 @@
 load processed traffic study files into single master csv
 it might seem dumb that we're loading these into a csv
 but it's the only open-source DB available to us at present
-
-
-todo:
-logging
-email alerts
-deploy on server
 '''
 import os
 import sys
@@ -19,7 +13,7 @@ import logging
 import traceback
 import arrow
 import secrets
-
+import email_helpers
 
 config = {
     'VOLUME' : {
@@ -52,6 +46,7 @@ def getNewRecords(source_dir, match_key):
         #  collect all records from all files that will be processed
         for name in files:
             file = os.path.join(root, name)
+            print(file)
             with open(file, 'r') as infile:
                 reader = csv.DictReader(infile)
                 for row in reader:
@@ -90,6 +85,8 @@ def writeData(filename, fieldnames, data, primary_key):
             counter += 1
             row[primary_key] = counter
             writer.writerow(row)
+
+    logging.info('{} records processed'.format(counter))
     return True
 
 
@@ -119,13 +116,14 @@ def main(primary_key, match_key, source_dir, output_dir, outfile, archive_file):
 
     fieldnames = list(records_new[0].keys())  #  create fieldname list from first record in records_new
     fieldnames.append(primary_key)  #  add primary key field which does not exist in new records
-    
+    records_retain = []
+
     if os.path.isfile(outfile):
         #  copy existing output to archive
         copyfile(outfile, archive_file)
-        records_maintain = retainRecords(archive_file, match_key, records_ids)  #  determine which existing records will be retained
+        records_retain = retainRecords(archive_file, match_key, records_ids)  #  determine which existing records will be retained
 
-    records_new = records_new + records_maintain
+    records_new = records_new + records_retain
     results = writeData(outfile, fieldnames, records_new, primary_key)
 
     if results:
@@ -141,6 +139,12 @@ if __name__ == '__main__':
     
     args = cli_args()
     dataset = args.dataset.upper()
+
+    log_directory = secrets.LOG_DIRECTORY
+    logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
+    logging.basicConfig(filename=logfile, level=logging.INFO)
+    logging.info('START {} LOADER AT {}'.format(dataset, str(now)))
+
     source_dir = config[dataset]['source_dir']
     primary_key = config[dataset]['primary_key']
     match_key = 'ROW_ID'
@@ -149,4 +153,13 @@ if __name__ == '__main__':
     outfile = os.path.join(output_dir, outfile_name)
     archive_name = '{}_{}.csv'.format(dataset, now_s)
     archive_file = os.path.join(output_dir, 'archive', archive_name)
-    results = main(primary_key, match_key, source_dir, output_dir, outfile, archive_file)
+
+    try:
+        results = main(primary_key, match_key, source_dir, output_dir, outfile, archive_file)
+
+    except Exception as e:
+        error_text = traceback.format_exc()
+        logging.error(error_text)
+        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Loader Process Failure', error_text)
+
+    logging.info('END AT: {}'.format(arrow.now().format()))
