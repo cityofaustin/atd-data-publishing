@@ -1,7 +1,6 @@
 '''
 Transform traffic count files so that they can be
 inserted into ArcSDE database
-
 '''
 import os
 import csv
