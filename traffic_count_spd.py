@@ -8,9 +8,10 @@ import pdb
 import hashlib
 import logging
 import traceback
-import email_helpers
 import arrow
 import secrets
+import email_helpers
+
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
@@ -18,7 +19,7 @@ now_s = now.format('YYYY_MM_DD')
 log_directory = secrets.LOG_DIRECTORY
 logfile = '{}/traffic_count_pub_{}.log'.format(log_directory, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
+logging.info('START SPD AT {}'.format(str(now)))
 
 root_dir = secrets.TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = secrets.TRAFFIC_COUNT_OUTPUT_SPD_DIR
@@ -171,8 +172,8 @@ try:
     main()
 
 except Exception as e:
-        error_text = traceback.format_exc()
-        logging.error(error_text)
-        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Classification Process Failure', error_text)
+    error_text = traceback.format_exc()
+    logging.error(error_text)
+    email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, 'Traffic Count Classification Process Failure', error_text)
 
 logging.info('END AT: {}'.format(arrow.now().format()))
