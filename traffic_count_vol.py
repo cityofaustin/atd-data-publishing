@@ -33,10 +33,10 @@ def getFile(path):
     with open(path, 'r') as in_file:
         for i, line in enumerate(in_file):
             if i == 0:
-                data_file = line.split(',')[1].strip('\'')
+                data_file = line.split(',')[1].strip('\'').strip()
 
             if i == 1: 
-                site_code = line.split(',')[1].strip('\'')
+                site_code = line.split(',')[1].strip('\'').strip()
 
             if 'Date,Time' in line:
                 reader = csv.DictReader([line] + in_file.readlines())

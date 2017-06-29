@@ -57,14 +57,14 @@ def getFile(path):
                 continue
 
             if i == 0:
-                data['data_file'] = line.split(',')[1].replace('\'', '').strip('\n')
+                data['data_file'] = line.split(',')[1].replace('\'', '').strip('\n').strip()
 
             if i == 1: 
-                data['site_code'] = line.split(',')[1].replace('\'', '').strip('\n')
+                data['site_code'] = line.split(',')[1].replace('\'', '').strip('\n').strip()
 
             if 'CHANNEL' in line.upper():   
                 append_lines = False
-                current_channel = line.split(',')[1].replace('\'', '').strip('\n')
+                current_channel = line.split(',')[1].replace('\'', '').strip('\n').strip()
                 data[current_channel] = []
 
             if 'Date,Time' in line:
