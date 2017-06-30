@@ -84,7 +84,7 @@ def splitRowsByDirection(rows):
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
-    local = dt.to('utc').format('YYYY-MM-DD HH:mm:SS')
+    local = dt.isoformat()
     year = dt.format('YYYY')
     month = dt.format('M')
     day = dt.format('DD')
