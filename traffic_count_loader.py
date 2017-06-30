@@ -19,7 +19,8 @@ import socrata_helpers
 config = {
     'VOLUME' : {
         'primary_key' :'TRAFFIC_STUDY_COUNT_ID',
-        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_VOL_DIR
+        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_VOL_DIR,
+        'socrata_resource_id' : 'jasf-x4rx'
     },
     'SPEED' : {
         'primary_key' :'TRAFFIC_STUDY_SPEED_ID',
@@ -28,7 +29,8 @@ config = {
     },
     'CLASSIFICATION' : {
         'primary_key' :'TRAFFIC_STUDY_CLASS_ID',
-        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
+        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR,
+        'socrata_resource_id' : '2hke-by7g'
     }
 }
 
