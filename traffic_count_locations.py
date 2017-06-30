@@ -53,6 +53,7 @@ def main():
 
             features.append(add_feature)
     
+    features = socrata_helpers.create_location_fields(features)
     upsert_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id, features)
     return 'Done'
 
