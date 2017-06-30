@@ -14,6 +14,7 @@ import traceback
 import arrow
 import secrets
 import email_helpers
+import socrata_helpers
 
 config = {
     'VOLUME' : {
@@ -22,14 +23,14 @@ config = {
     },
     'SPEED' : {
         'primary_key' :'TRAFFIC_STUDY_SPEED_ID',
-        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_SPD_DIR
+        'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_SPD_DIR,
+        'socrata_resource_id' : 'et93-wr2y'
     },
     'CLASSIFICATION' : {
         'primary_key' :'TRAFFIC_STUDY_CLASS_ID',
         'source_dir' : secrets.TRAFFIC_COUNT_OUTPUT_CLASS_DIR
     }
 }
-
 
 def cli_args():
     parser = argparse.ArgumentParser(prog='traffic_study_loader.py', description='Load traffic study data into master tabular datasets')
@@ -129,6 +130,9 @@ def main(primary_key, match_key, source_dir, output_dir, outfile, archive_file):
     if results:
         move_files = moveFiles( source_dir, os.path.join(source_dir, 'PROCESSED') )
 
+    if records_new:
+        upsert_response = socrata_helpers.replace_data(socrata_creds, socrata_resource_id, records_new)
+        
     return move_files
 
 
@@ -153,6 +157,9 @@ if __name__ == '__main__':
     outfile = os.path.join(output_dir, outfile_name)
     archive_name = '{}_{}.csv'.format(dataset, now_s)
     archive_file = os.path.join(output_dir, 'archive', archive_name)
+
+    socrata_creds = secrets.SOCRATA_CREDENTIALS
+    socrata_resource_id = config[dataset]['socrata_resource_id']
 
     try:
         results = main(primary_key, match_key, source_dir, output_dir, outfile, archive_file)
