@@ -86,14 +86,14 @@ def appendKeyVal(rows, key, val):
 def parseDateTime(d, t):
     dt = '{} {} {}'.format(d, t, 'US/Central')
     dt = arrow.get(dt, 'M/D/YYYY h:mm A ZZZ')
-    local = dt.isoformat()
-    year = dt.format('YYYY')
-    month = dt.format('M')
-    day = dt.format('DD')
-    weekday = dt.weekday()
-    time = dt.format('HH:mm')
+    utc = dt.to('utc').isoformat()
+    year = dt.to('utc').format('YYYY')
+    month = dt.to('utc').format('M')
+    day = dt.to('utc').format('DD')
+    weekday = dt.to('utc').weekday()
+    time = dt.to('utc').format('HH:mm')
     return {
-        'DATETIME' : local,
+        'DATETIME' : utc,
         'YEAR' : year,
         'MONTH' : month,
         'DAY_OF_MONTH' : day,
