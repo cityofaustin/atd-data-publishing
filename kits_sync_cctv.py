@@ -152,8 +152,7 @@ def setDefaults(list_of_dicts, fieldmap):
 
 def createCAMCOMMENT(list_of_dicts):
     for row in list_of_dicts:
-        row['CAMCOMMENT'] = row['CAMNAME'][:50]
-        row['CAMNAME'] = row['CAMNAME'][:30]
+        row['CAMCOMMENT'] = 'Updated via API on {}'.format(now.format());
     return list_of_dicts
 
 
