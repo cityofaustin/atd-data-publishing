@@ -73,11 +73,6 @@ def getFile(path):
             if append_lines:
                 data[current_channel].append(line)
 
-
-        # else:
-        #     print('can\'t process data file')
-        #     raise Exception
-        #     pdb.set_trace()
     return data
 
 
@@ -151,6 +146,12 @@ def main():
                         data['combined'] = data[d] + data['combined']
                 
                 for row in data['combined']:
+
+                    #  check for empty rows
+                    if not date.strip():
+                        data['combined'].remove(row)
+                        continue
+
                     date = row['Date']
                     time = row['Time']
                     date_data = parseDateTime(date, time)

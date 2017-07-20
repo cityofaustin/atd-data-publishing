@@ -149,6 +149,11 @@ def main():
                 for row in data['combined']:
                     date = row['Date']
                     time = row['Time']
+                    
+                    if not date.strip():
+                        data['combined'].remove(row)
+                        continue
+
                     date_data = parseDateTime(date, time)
                     for date_field in date_data.keys():
                         row[date_field] = date_data[date_field]
