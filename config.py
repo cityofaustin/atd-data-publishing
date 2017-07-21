@@ -57,6 +57,23 @@ config = {
         'socrata_resource_id' : 'g8w2-8uap',
         'include_ids' : False,
         'pub_log_id' : 'n5kp-f8k4'
+    },
+    'detectors' : {
+        'primary_key' : 'DETECTOR_ID',
+        'objects' : ['object_98', 'object_12'],
+        'scene' : 468,
+        'view' : 1333,
+        'service_url' : None,
+        'socrata_resource_id' : 'qpuw-8eeb',
+        'include_ids' : True,
+        'pub_log_id' : 'n5kp-f8k4',
+        'fetch_locations' : True,
+        'ip_field' : 'DETECTOR_IP'
+    },
+    'locations' : {  
+        'objects' : ['object_11'],
+        'scene' : 175,
+        'view' : 923
     }
 }
 

@@ -59,11 +59,9 @@ def main(date_time):
         knack_data = data_helpers.stringify_key_values(knack_data)
         knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
 
-
         if fetch_locations:
             locations = getLocations(config['locations']['objects'], config['locations']['scene'], config['locations']['view'], knack_creds)
-        
-        knack_data_merged = data_helpers.merge_dicts(knack_data, locations, 'ATD_LOCATION_ID', ['LATITUDE', 'LONGITUDE'])
+            knack_data = data_helpers.merge_dicts(knack_data, locations, 'ATD_LOCATION_ID', ['LATITUDE', 'LONGITUDE'])
 
         if agol_pub:
             knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))            
@@ -92,8 +90,8 @@ def main(date_time):
             socrata_data = data_helpers.stringify_key_values(socrata_data)
             socrata_data = data_helpers.iso_to_unix(socrata_data, replace_tz=True)
 
-            cd_results = data_helpers.detect_changes(socrata_data, knack_data, config[dataset]['primary_key'], keys=field_names)
-
+            cd_results = data_helpers.detect_changes(socrata_data, knack_data, config[dataset]['primary_key'], keys=field_names, addLatLonKeys=True)
+            
             if cd_results['new'] or cd_results['change'] or cd_results['delete']:
                 socrata_payload = socrata_helpers.create_payload(cd_results, config[dataset]['primary_key'])
                 socrata_payload = socrata_helpers.create_location_fields(socrata_payload)
@@ -196,7 +194,11 @@ if __name__ == '__main__':
     socrata_resource_id = config[dataset]['socrata_resource_id']
     pub_log_id = config[dataset]['pub_log_id']
     include_ids = config[dataset]['include_ids']
-    fetch_locations = config[dataset]['fetch_locations']
+    
+    if 'fetch_locations' in config[dataset]:
+        fetch_locations = config[dataset]['fetch_locations']
+    else:
+        fetch_locations = False
 
     if 'repo_url' in config[dataset]:
         repo_url = config[dataset]['repo_url']
