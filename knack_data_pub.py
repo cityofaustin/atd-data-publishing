@@ -26,6 +26,20 @@ import github_helpers
 import secrets
 from config import config
 
+
+def getLocations(objects, scene, view, creds):
+    print('get locations')
+    field_dict = knack_helpers.get_fields(objects, creds)
+    locations = knack_helpers.get_object_data(objects[0], creds)
+    locations = knack_helpers.parse_data(locations, field_dict, convert_to_unix=True)
+    locations = data_helpers.stringify_key_values(locations)
+    return locations
+
+
+def mergeLocations():
+    print('merge locations')
+
+
 def main(date_time):
     print('starting stuff now')
 
@@ -38,13 +52,18 @@ def main(date_time):
         if not knack_view:
             knack_data = knack_helpers.get_object_data(knack_objects[0], knack_creds)
         
-            
         knack_data = knack_helpers.parse_data(knack_data, field_data, convert_to_unix=True, include_ids=include_ids, id_outfield='SOURCE_DB_ID')
         field_names = data_helpers.unique_keys(knack_data)
         
         #  stringify values for later comparison against socrata JSON
         knack_data = data_helpers.stringify_key_values(knack_data)
         knack_data = data_helpers.filter_by_key_exists(knack_data, primary_key)
+
+
+        if fetch_locations:
+            locations = getLocations(config['locations']['objects'], config['locations']['scene'], config['locations']['view'], knack_creds)
+        
+        knack_data_merged = data_helpers.merge_dicts(knack_data, locations, 'ATD_LOCATION_ID', ['LATITUDE', 'LONGITUDE'])
 
         if agol_pub:
             knack_data_mills = data_helpers.unix_to_mills(deepcopy(knack_data))            
@@ -99,9 +118,14 @@ def main(date_time):
             logging.info(pub_log_response)
 
         if write_csv:
+            if 'csv_separator' in config[dataset]:
+                sep = config[dataset]['csv_separator']
+            else:
+                sep = ','
+
             knack_data = data_helpers.unix_to_iso(knack_data)
             file_name = '{}/{}.csv'.format(csv_dest, dataset)
-            data_helpers.write_csv(knack_data, file_name=file_name)
+            data_helpers.write_csv(knack_data, file_name=file_name, sep=sep)
 
 
         if github_pub:
@@ -172,6 +196,7 @@ if __name__ == '__main__':
     socrata_resource_id = config[dataset]['socrata_resource_id']
     pub_log_id = config[dataset]['pub_log_id']
     include_ids = config[dataset]['include_ids']
+    fetch_locations = config[dataset]['fetch_locations']
 
     if 'repo_url' in config[dataset]:
         repo_url = config[dataset]['repo_url']

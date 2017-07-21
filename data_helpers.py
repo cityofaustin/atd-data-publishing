@@ -429,13 +429,16 @@ def write_csv(data, **options):
     if not 'file_name' in options:
         options['file_name'] = '{}'.format( arrow.now().timestamp )
 
+    if not 'sep' in options:
+        options['sep'] = ','
+
     df = pandas.DataFrame(data)
 
     if options['in_memory']:
-        return StringIO ( df.to_csv(index=False) )
+        return StringIO ( df.to_csv(index=False, sep=options['sep']) )
 
     else:
-        df.to_csv(options['file_name'], index=False)
+        df.to_csv(options['file_name'], index=False, sep=options['sep'])
 
 
 def get_web_csv(url, **options):
