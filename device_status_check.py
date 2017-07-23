@@ -1,3 +1,7 @@
+'''
+ping field device and update ip comm status in Knack database
+command ex: device_status_check.py travel_sensors
+'''
 import os
 import argparse
 import logging
@@ -9,10 +13,6 @@ import data_helpers
 import secrets
 from config import config
 
-'''
-ping field device and update ip comm status in Knack database
-command ex: device_status_check.py travel_sensors
-'''
 
 def get_ips():
     print("getting ip addresses")
