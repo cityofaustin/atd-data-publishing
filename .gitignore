@@ -4,7 +4,6 @@
 __pycache__
 *.zip
 dist
-secrets.py
 schtask.txt
 intersection-database
 mapDrive.bat
@@ -13,5 +12,5 @@ to_test.py
 tp.py
 script_status.md
 log
-shell_scripts
 *.log
+secrets.py
