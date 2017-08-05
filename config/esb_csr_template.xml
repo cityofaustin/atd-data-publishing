@@ -1,0 +1,19 @@
+<submitKnack>
+  <header>
+    <emi>{EMI_ID}</emi> <!-- blank -->
+    <timestamp>{PUBLICATION_DATETIME}</timestamp>   <!-- time of publication in unix milliseconds -->
+    <source>KNACK</source> <!--  constant -->
+    <target>CSR</target> <!-- constant -->
+    <data_type>CSR</data_type>  <!-- constant --> 
+    <event>UPDATE</event> <!-- constant -->
+  </header>
+  <data>
+    <csr>
+       <id>{id}</id>
+       <sr_number>{SR_NUMBER}</sr_number>
+       <issue_status_code>{ISSUE_STATUS_CODE}</issue_status_code>
+       <last_activity_details>{LAST_ACTIVITY_DETAILS}</last_activity_details><!--   concatenation of activity type and details -->
+       <last_activity_date>{LAST_ACTIVITY_DATE}</last_activity_date>
+    </csr>
+  </data>
+</submitKnack>
