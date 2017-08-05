@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ../data+tracker
+cd ../data_tracker
 source activate datapub1
 python backup.py
 source deactivate
