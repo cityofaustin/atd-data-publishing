@@ -1,0 +1,55 @@
+TODO
+- data inventory
+
+HISTORY
+- replace keys::
+    - removed delete unmatched option
+    - use reduce dict instead for that
+- knack.update_record expects a string, no longer a list
+- knack.update_record expects app_id and api_key
+- change all datefields in all datesets to datetime
+- change all lat/lon fields in all datasets to location_latitude
+- verify that 'location' field exists in all datasets
+- update all dashboards with location_ x
+- get agol_fields from dataset! and do change detection!
+- location names have leading spaces (data tracker issue)
+- now specifiy date fields AND get date fields with: date_fields = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
+- manually set id_outfield to KNACK_ID or update datasets
+- emailutil.send_email(ALERTS_DISTRIBUTION, 'Location Update Failure', str(e), EMAIL['user'], EMAIL['password'])
+
+Script                  Status                      Note
+------------------------------------------------------------------------------------------------
+atd_visitor_log         DEPLOYED                   New. Removed GIT
+backup_objs             DEPLOYED
+bcycle_kiosk_pub        DEPLOYED
+bcycle_trip_pub         DEPLOYED
+cifs                    HOLD                        No deploy until revise for consume Waze feed    
+device_status_check     READY TO DEPLOY             No deploy until firewall issue is resolved
+kits_sync_push          DEPLOYED           
+knack_data_pub          DEPLOYED                     Retest all with AGOL (since you made tweaks)
+- Signals               DEPLOYED
+- Travel Sensors        DEPLOYED
+- Cameras               DEPLOYED
+- Detectors             DEPLOYED
+- Quote of the Week     DEPLOYED
+- Signal Retiming       DEPLOYED
+- Timed Corridors       DEPLOYED
+locations_updater       DEPLOYED
+sig_pm_copier           DEPLOYED
+sig_req_rank_pub        DEPLOYED
+sig_req_ranker          DEPLOYED                   Some logic could be replaced with knack field rules 
+sig_stat_pub            DEPLOYED
+street_seg_updater      DEPLOYED
+sync_corridor           REMOVED                     Replaced with knack data pub ;)
+secondary_signals       DEPLOYED
+
+traffic_counts          FAILING
+
+
+
+
+
+
+
+
+
