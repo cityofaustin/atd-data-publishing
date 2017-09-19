@@ -42,6 +42,56 @@ cfg = {
             'lon' : 'LOCATION_longitude'
         }
     },
+    'dms' : {
+        'primary_key' : 'DMS_ID',
+        'ref_obj' : ['object_109', 'object_11'],
+        'obj' : None,
+        'scene' : 'scene_569',
+        'view' : 'view_1564',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/dynamic_message_signs/FeatureServer/0/',
+        'include_ids' : True,
+        'socrata_resource_id' : '4r2j-b4rx',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : 'DMS_IP',
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
+    },
+    'hazard_flashers' : {
+        'primary_key' : 'ATD_FLASHER_ID',
+        'ref_obj' : ['object_110', 'object_11'],
+        'obj' : None,
+        'scene' : 'scene_568',
+        'view' : 'view_1563',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/hazard_flashers/FeatureServer/0/',
+        'include_ids' : True,
+        'socrata_resource_id' : 'wczq-5cer',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : None,
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
+    },
+    'cabinets' : {
+        'primary_key' : 'CABINET_ID',
+        'ref_obj' : ['object_118', 'object_12'],
+        'obj' : None,
+        'scene' : 'scene_571',
+        'view' : 'view_1567',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/cabinet_assets/FeatureServer/0/',
+        'include_ids' : True,
+        'fetch_locations' : True,
+        'socrata_resource_id' : 'x23u-shve',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : None,
+        'location_join_field' : 'SIGNAL_ID',
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
+    },
     'travel_sensors' : {
         'primary_key' : 'ATD_SENSOR_ID', 
         'ref_obj' : ['object_56', 'object_11'],
