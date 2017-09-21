@@ -7,7 +7,6 @@ import shutil
 import pdb
 
 import arrow
-import pandas
 import requests
 
 
@@ -421,22 +420,7 @@ def replace_keys(dicts, lookup_dict):
         new_dicts.append(new_d)
 
     return new_dicts
-
-
-def write_csv(data, in_memory=False, sep=',', **options):
-    print('Write data to file')
-
-    if not 'file_name' in options:
-        options['file_name'] = '{}'.format( arrow.now().timestamp )
-
-    df = pandas.DataFrame(data)
-
-    if in_memory:
-        return StringIO ( df.to_csv(index=False, sep=sep) )
-
-    else:
-        df.to_csv(options['file_name'], index=False, sep=sep)
-
+    
 
 def get_web_csv(url, encoding='utf-8-sig'):
     req = requests.get(url)

@@ -11,11 +11,12 @@ from util import datautil
 from util import emailutil
 from util import socratautil
 
-socrata_signals = 'xwqn-2f78'
-socrata_signal_status = '5zpr-dehc'
-socrata_signal_status_historical = 'x62n-vjpq'
-socrata_pub_log_id = 'n5kp-f8k4'
+socr_sig_res_id = 'xwqn-2f78'
+socr_sig_stat_res_id = '5zpr-dehc'
+sig_stat_hist = 'x62n-vjpq'
+socr_pub_log_res_id = 'n5kp-f8k4'
 flash_statuses = ['1', '2', '3']
+socr_hist_fields = ['signal_id', 'operation_state_duration', 'operation_state', 'record_retired_datetime', 'record_id', 'location_name', 'processed_datetime', 'operation_state_datetime']
 
 then = arrow.now()
 now_s = then.format('YYYY_MM_DD')
@@ -24,16 +25,20 @@ logfile = '{}/sig_stat_pub_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(then)))
     
+
 def main(date_time):
     print('starting stuff now')
 
-    try:      
+    try:
+
+        # get current traffic signal data from Socrata      
         socr = socratautil.Soda(
-            socrata_signals,
+            socr_sig_res_id,
             user=SOCRATA_CREDENTIALS['user'],
             password=SOCRATA_CREDENTIALS['password']
         )
         
+        #  signal metadata and transform for KITS query
         socr.get_metadata()
         signal_data = datautil.upper_case_keys(socr.data)
         
@@ -48,9 +53,13 @@ def main(date_time):
         )
         
         kits_data = datautil.replaceTimezone(kits_data)
-        
+
         kits_data = datautil.stringify_key_values(kits_data)
         
+
+        #  verify the KITS data is current
+        #  sometimes the signal status service goes down
+        #  in which case contact ATMS support
         stale = kitsutil.check_for_stale(
             kits_data,
             'OPERATION_STATE_DATETIME',15
@@ -81,17 +90,19 @@ def main(date_time):
             socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
                 stale_data_log,
-                socrata_pub_log_id
+                socr_pub_log_res_id
             )
 
             sys.exit()
 
+        #  filter KITS data for statuses of concern
         kits_data = datautil.filter_by_val(
             kits_data,
             'OPERATION_STATE',
             flash_statuses
         )
-        
+
+        #  append kits data to signal data
         if kits_data:
             new_data = datautil.merge_dicts(
                 signal_data,
@@ -104,37 +115,47 @@ def main(date_time):
 
         else:
             new_data = []
+        
 
-
+        #  get current signal status dataset and metadata from socrata
         sig_status = socratautil.Soda(
-            socrata_signal_status,
+            socr_sig_stat_res_id,
             user=SOCRATA_CREDENTIALS['user'],
             password=SOCRATA_CREDENTIALS['password']
         )
         
         sig_status.get_metadata()
-        fieldnames = sig_status.fieldnames
+        
+        #  add special socrata deleted field
+        #  required for sending delete requests to socrata
+        fieldnames = sig_status.fieldnames + ['deleted']
+
+        #  transform signal status socrata data for comparison 
+        #  with "new" data from kits
         sig_status_data = datautil.reduce_to_keys(sig_status.data, fieldnames)
         date_fields = sig_status.date_fields
         sig_status_data = socratautil.strip_geocoding(sig_status_data)
         sig_status_data = datautil.upper_case_keys(sig_status_data)
         sig_status_data = datautil.stringify_key_values(sig_status_data)
 
+        #  identify signals whose status (OPERATION_STATE) has changed
         cd_results = datautil.detect_changes(
             sig_status_data,
             new_data,
             'SIGNAL_ID',
-            #  note that only a change in operation state
+            #  only a change in operation state
             #  triggers an update to socrata dataset
             keys=['OPERATION_STATE']  
         )
 
         for change_type in cd_results.keys():
+            #  log signals whose status has changed
             if len(cd_results[change_type]) > 0:
                 logging.info(
                     '{}: {}'.format(change_type, len(cd_results[change_type]))
                 )
-
+    
+            
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             
             socrata_payload = socratautil.create_payload(
@@ -149,15 +170,20 @@ def main(date_time):
             socrata_payload = datautil.lower_case_keys(
                 socrata_payload
             )
+
+            socrata_payload = datautil.reduce_to_keys(
+                socrata_payload,
+                fieldnames
+            )
             
-            status_upsert_response = socratautil.upsert_data(
+            upsert_res = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
                 socrata_payload,
-                socrata_signal_status
+                socr_sig_stat_res_id
             )
         
         else:
-            status_upsert_response = {
+            upsert_res = {
                 'Errors' : 0,
                 'message' : 'No signal status change detected',
                 'Rows Updated' : 0,
@@ -168,93 +194,93 @@ def main(date_time):
         log_payload = socratautil.prep_pub_log(
             date_time,
             'signal_status_update',
-            status_upsert_response
+            upsert_res
         )
 
-        pub_log_response = socratautil.upsert_data(
+        pub_log_res = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
             log_payload,
-            socrata_pub_log_id
+            socr_pub_log_res_id
         )
 
-        
-
-        if 'error' in status_upsert_response:
+        if 'error' in upsert_res:
             logging.info('socrata error')
             logging.info(socrata_payload)
             emailutil.send_socrata_alert(
                 ALERTS_DISTRIBUTION,
-                socrata_signal_status,
-                status_upsert_response,
+                socr_sig_stat_res_id,
+                upsert_res,
                 EMAIL['user'],
                 EMAIL['password']
             )
             
-        elif status_upsert_response['Errors']:
+        elif upsert_res['Errors']:
             ('socrata Errors')
             logging.info(socrata_payload)
             emailutil.send_socrata_alert(
                 ALERTS_DISTRIBUTION,
-                socrata_signal_status,
-                status_upsert_response,
+                socr_sig_stat_res_id,
+                upsert_res,
                 EMAIL['user'],
                 EMAIL['password']
             )
 
         if cd_results['delete']:
-            historical_payload = datautil.lower_case_keys(
+            hist_payload = datautil.lower_case_keys(
                 cd_results['delete']
             )
 
-            historical_payload = socratautil.add_hist_fields(historical_payload)
+            hist_payload = socratautil.add_hist_fields(hist_payload)
 
-            status_upsert_historical_response = socratautil.upsert_data(
+            hist_payload = datautil.reduce_to_keys(hist_payload, socr_hist_fields)
+
+            upsert_hist_res = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
-                historical_payload,
-                socrata_signal_status_historical
+                hist_payload,
+                sig_stat_hist
             )
 
-            historical_log_payload = socratautil.prep_pub_log(
+            hist_log_payload = socratautil.prep_pub_log(
                 date_time,
                 'signal_status_historical_update',
-                status_upsert_historical_response
+                upsert_hist_res
             )
 
-            pub_log_historical_response = socratautil.upsert_data(
+            pub_log_hist_res = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
-                historical_log_payload,
-                socrata_pub_log_id
+                hist_log_payload,
+                socr_pub_log_res_id
             )
 
-            if 'error' in status_upsert_historical_response:
+            if 'error' in upsert_hist_res:
                 loggig.info('socrata error historical dataset')
                 logging.info(socrata_payload)
                 emailutil.send_socrata_alert(
                     ALERTS_DISTRIBUTION,
-                    socrata_signal_status_historical,
-                    status_upsert_historical_response,
+                    sig_stat_hist,
+                    upsert_hist_res,
                     EMAIL['user'],
                     EMAIL['password']
                 )
                 
-            elif status_upsert_historical_response['Errors']:
+            elif upsert_hist_res['Errors']:
                 logging.info('socrata error historical dataset')
                 logging.info(socrata_payload)
                 emailutil.send_socrata_alert(
                     ALERTS_DISTRIBUTION,
-                    socrata_signal_status,
-                    status_upsert_historical_response,
+                    sig_stat_hist,
+                    upsert_hist_res,
                     EMAIL['user'],
                     EMAIL['password']
                 )
 
         else:
             print('no new historical status data to upload')
-            status_upsert_historical_response = None
+            upsert_hist_res = None
 
         return {
-            'res': status_upsert_response,
-            'res_historical': status_upsert_historical_response,
+            'res': upsert_res,
+            'res_historical': upsert_hist_res,
         }
     
     except Exception as e:
