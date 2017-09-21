@@ -155,6 +155,8 @@ def strip_geocoding(dicts):
         if 'location' in record:
             if 'needs_recoding' in record['location']:
                 del record['location']['needs_recoding']
+            if 'human_address' in record['location']:
+                del record['location']['human_address']
 
     return dicts
 
