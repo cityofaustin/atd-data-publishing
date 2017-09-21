@@ -16,6 +16,7 @@ socrata_signal_status = '5zpr-dehc'
 socrata_signal_status_historical = 'x62n-vjpq'
 socrata_pub_log_id = 'n5kp-f8k4'
 flash_statuses = ['1', '2', '3']
+socrata_historical_fields = ['signal_id', 'operation_state_duration', 'operation_state', 'record_retired_datetime', 'record_id', 'location_name', 'processed_datetime', 'operation_state_datetime']
 
 then = arrow.now()
 now_s = then.format('YYYY_MM_DD')
@@ -104,8 +105,7 @@ def main(date_time):
 
         else:
             new_data = []
-
-
+        
         sig_status = socratautil.Soda(
             socrata_signal_status,
             user=SOCRATA_CREDENTIALS['user'],
@@ -124,7 +124,7 @@ def main(date_time):
             sig_status_data,
             new_data,
             'SIGNAL_ID',
-            #  note that only a change in operation state
+            #  only a change in operation state
             #  triggers an update to socrata dataset
             keys=['OPERATION_STATE']  
         )
@@ -134,7 +134,8 @@ def main(date_time):
                 logging.info(
                     '{}: {}'.format(change_type, len(cd_results[change_type]))
                 )
-
+    
+            
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             
             socrata_payload = socratautil.create_payload(
@@ -149,6 +150,8 @@ def main(date_time):
             socrata_payload = datautil.lower_case_keys(
                 socrata_payload
             )
+
+            socrata_payload = datautil.reduce_to_keys(socrata_payload, fieldnames)
             
             status_upsert_response = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
@@ -178,7 +181,6 @@ def main(date_time):
         )
 
         
-
         if 'error' in status_upsert_response:
             logging.info('socrata error')
             logging.info(socrata_payload)
@@ -207,6 +209,8 @@ def main(date_time):
             )
 
             historical_payload = socratautil.add_hist_fields(historical_payload)
+
+            historical_payload = datautil.reduce_to_keys(historical_payload, socrata_historical_fields)
 
             status_upsert_historical_response = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
@@ -242,7 +246,7 @@ def main(date_time):
                 logging.info(socrata_payload)
                 emailutil.send_socrata_alert(
                     ALERTS_DISTRIBUTION,
-                    socrata_signal_status,
+                    socrata_signal_status_historical,
                     status_upsert_historical_response,
                     EMAIL['user'],
                     EMAIL['password']
