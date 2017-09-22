@@ -114,6 +114,7 @@ def main(date_time):
         
         sig_status.get_metadata()
         fieldnames = sig_status.fieldnames
+        fieldnames.append(':deleted')  #  add socrata deleted field for record deletes
         sig_status_data = datautil.reduce_to_keys(sig_status.data, fieldnames)
         date_fields = sig_status.date_fields
         sig_status_data = socratautil.strip_geocoding(sig_status_data)
@@ -135,7 +136,6 @@ def main(date_time):
                     '{}: {}'.format(change_type, len(cd_results[change_type]))
                 )
     
-            
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             
             socrata_payload = socratautil.create_payload(
@@ -174,6 +174,7 @@ def main(date_time):
             status_upsert_response
         )
 
+
         pub_log_response = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
             log_payload,
@@ -193,7 +194,7 @@ def main(date_time):
             )
             
         elif status_upsert_response['Errors']:
-            ('socrata Errors')
+            logging.info('socrata Errors')
             logging.info(socrata_payload)
             emailutil.send_socrata_alert(
                 ALERTS_DISTRIBUTION,
