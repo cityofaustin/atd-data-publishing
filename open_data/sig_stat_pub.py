@@ -136,7 +136,6 @@ def main(date_time):
                     '{}: {}'.format(change_type, len(cd_results[change_type]))
                 )
     
-
         if cd_results['new'] or cd_results['change'] or cd_results['delete']:
             
             socrata_payload = socratautil.create_payload(
