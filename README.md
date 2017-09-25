@@ -4,7 +4,7 @@ This repo houses ETL scripts for Austin Transportation's open data projects. The
 
 ## Quick Start
 
-We use [Miniconda](https://conda.io/miniconda.html)) to manage Python environments. If you don't want to use Anaconda, [requirements.txt]() identifies all of the packages required to run the scripts in this repo.
+We use [Anaconda](https://conda.io/miniconda.html) to manage Python environments. If you don't want to use Anaconda, skip step #1 and in step #3 use `pip install -r requirements.txt`.
 
 1. Install [Miniconda](https://conda.io/miniconda.html). Check out the [test drive](https://conda.io/docs/test-drive.html#managing-environments) if you haven't used Anaconda before.
 
@@ -12,7 +12,7 @@ We use [Miniconda](https://conda.io/miniconda.html)) to manage Python environmen
 
 3. `cd` into the repo directory, and run `conda create --name datapub1 --file requirements.txt` to create the data publishing environment
 
-4. Create your `secrets.py` file following the template in [fake-py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/fake_py)
+4. Create your `secrets.py` file following the template in [fake-secrets.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/config/fake_secrets.py)
 
 ## About the Repo Structure
 
