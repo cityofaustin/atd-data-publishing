@@ -7,7 +7,6 @@ import shutil
 import pdb
 
 import arrow
-import pandas
 import requests
 
 
@@ -127,7 +126,7 @@ def mills_to_iso(dicts, keys, tz='US/Central'):
     return dicts
 
 
-def unix_to_mills(dicts):
+def unix_to_mills(dicts,keys):
     print('convert unix dates to milleseconds')
 
     for record in dicts:
@@ -196,13 +195,13 @@ def unix_to_iso(dicts, **options):
     return dicts
 
 
-def replaceTimezone(dicts, tz='US/Central', in_format='unix'):
+def replaceTimezone(dicts, keys, tz='US/Central', in_format='unix'):
     '''
     replace the timzone of a 'naive' timestamp with its timezone
     '''
     for record in dicts:
-        for key in record:
-            if 'DATE' in key.upper():
+        for key in record: 
+            if key in keys:
                 if record[key]:
                     if in_format in ['unix', 'iso']:
                         #  arrow can parse unix or iso
