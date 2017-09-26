@@ -21,6 +21,19 @@ def get_token(creds):
     return token
 
 
+def geocode(url, address):
+    
+    params = {
+        'f' : 'json',
+        'street': address,
+        'outSR' : '4326'
+    }
+
+    res = requests.post(url, params=params)
+    res = res.json()
+    return res
+
+
 def query_all_features(url, token):
     print('Query all features')
     url = url + 'query'
