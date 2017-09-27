@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ../open_data
+cd ../data_tracker
 source activate datapub1
-python knack_data_pub.py traffic_reports data_tracker_prod -socrata -agol
+python traffic_reports.py
 source deactivate
