@@ -1,6 +1,10 @@
-#  update CSR records with status informat from Data Tracker (Knack)
-#  todo:
-#  validation:  ensure only mapped exist values in message
+''' 
+Generate XML message to update 311 Service Reqeusts
+via Enterprise Service Bus
+
+todo:
+- email alerts
+'''
 import argparse
 import logging
 import pdb
@@ -9,23 +13,72 @@ import arrow
 import knackpy
 
 import _setpath
+from config.config import cfg_esb
 from config.secrets import *
 from util import datautil
 from util import emailutil
 
 
+def get_csr_filters(emi_field, esb_status_field, esb_status_match):
+    #  construct a knack filter object
+    filters = {
+            'match': 'and',
+            'rules': [
+                {
+                   'field': emi_field,
+                   'operator': 'is not blank'
+                },
+                {
+                    'field': esb_status_field,
+                    'operator': 'is',
+                    'value': esb_status_match
+                }
+            ]
+        };
+
+    return filters
+
+
+def check_for_data():
+    #  check for data at public endpoint
+    #  this api call does not count against
+    #  daily subscription limit
+    kn = knackpy.Knack(
+        view=cfg['view'],
+        scene=cfg['scene'],
+        app_id=KNACK_CREDENTIALS[app_name]['app_id'],
+        api_key='knack',
+        page_limit=1,
+        rows_per_page=1
+    )
+    
+    if kn.data_raw:
+        return True
+    else:
+        return False
+
+
+def get_data(filters):
+    return knackpy.Knack(
+        obj=cfg['obj'],
+        app_id=KNACK_CREDENTIALS[app_name]['app_id'],
+        api_key=KNACK_CREDENTIALS[app_name]['api_key'],
+        filters=filters
+    )
+
+
 def build_xml_payload(record):
-    record['LAST_ACTIVITY_DETAILS'] = format_activity_details(record)
+    record['TMC_ACTIVITY_DETAILS'] = format_activity_details(record)
     record['PUBLICATION_DATETIME'] = arrow.now().format()
 
-    with open(template_path, 'r') as fin:
+    with open(cfg['template'], 'r') as fin:
         template = fin.read()
         return template.format(**record)
 
 
 def format_activity_details(record):
-    activity = record['LAST_ACTIVITY']
-    details = record['LAST_ACTIVITY_DETAILS']
+    activity = record['TMC_ACTIVITY']
+    details = record['TMC_ACTIVITY_DETAILS']
 
     if activity and details:
         return '{} - {}'.format(activity, details)
@@ -57,15 +110,14 @@ def main(date_time):
     print('starting stuff now')
 
     try:
-        kn = knackpy.Knack(
-            view=view,
-            scene=scene,
-            ref_obj=[obj],
-            app_id=KNACK_CREDENTIALS[app_name]['app_id'],
-            api_key=KNACK_CREDENTIALS[app_name]['api_key']
-        )
+        data = check_for_data()
+        #  check for data at public endpoint
+        if data:
+            #  get data at private enpoint
+            filters = get_csr_filters(cfg['emi_field'], cfg['esb_status_field'], cfg['esb_status_match'])
+            kn = get_data(filters)
 
-        if not kn.data:
+        else:
             logging.info('No new records to process')
             return None
 
@@ -80,7 +132,7 @@ def main(date_time):
             payload = payload.encode("ascii", errors="ignore")
             payload = payload.decode("ascii")
             
-            with open('{}/{}.xml'.format(outpath, record['id']), 'w') as fout:
+            with open('{}/{}_{}.xml'.format(outpath, record['id'], arrow.now().timestamp), 'w') as fout:
                 fout.write(payload)
             
         return 'GOOD JOB!'
@@ -99,7 +151,6 @@ def main(date_time):
 
         raise e
 
-
 if __name__ == '__main__':
     args = cli_args()
     app_name = args.app_name
@@ -108,23 +159,18 @@ if __name__ == '__main__':
     now_s = now.format('YYYY_MM_DD')
 
     #  init logging 
-    logfile = '{}/csr_updater_{}.log'.format(LOG_DIRECTORY, now_s)
+    logfile = '{}/esb_xml_gen_{}.log'.format(LOG_DIRECTORY, now_s)
     logging.basicConfig(filename=logfile, level=logging.INFO)
     logging.info('START AT {}'.format(str(now)))
 
     #  config
     knack_creds = KNACK_CREDENTIALS
-    obj = 'object_83'
-    view = 'view_1445'
-    scene = 'scene_514'
-    template_path = '../config/esb_csr_template.xml'
+    cfg = cfg_esb['tmc_activities']
     
     #  template output path
-    outpath = '{}/xml'.format(LOG_DIRECTORY)
+    outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
 
     results = main(now)
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
-
-
 
 
