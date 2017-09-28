@@ -1,4 +1,4 @@
-    ''' 
+''' 
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
 
@@ -110,8 +110,9 @@ def main(date_time):
     print('starting stuff now')
 
     try:
+        data = check_for_data()
         #  check for data at public endpoint
-        if check_for_data():
+        if data:
             #  get data at private enpoint
             filters = get_csr_filters(cfg['emi_field'], cfg['esb_status_field'], cfg['esb_status_match'])
             kn = get_data(filters)
