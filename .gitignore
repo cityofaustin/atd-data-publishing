@@ -13,4 +13,5 @@ tp.py
 script_status.md
 log
 *.log
+xml
 secrets.py

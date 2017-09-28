@@ -210,3 +210,20 @@ cfg = {
 }
 
 
+cfg_esb = {
+    'tmc_activities' : {  
+        'obj' : 'object_75',
+        'scene' : 'scene_514',
+        'view' : 'view_1653',
+        'template' : '../config/esb_csr_template.xml',
+        'emi_field' : 'field_1868',
+        'esb_status_field' : 'field_1860',
+        'esb_status_match' : 'READY_TO_SEND',
+        'endpoint' : 'http://esbtest01.austintexas.gov:7888/submitKnack'
+    }
+} 
+
+
+
+
+
