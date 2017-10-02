@@ -52,7 +52,7 @@ def main(date_time):
             kits_query
         )
         
-        kits_data = datautil.replaceTimezone(kits_data)
+        kits_data = datautil.replaceTimezone(kits_data, ['OPERATION_STATE_DATETIME'])
 
         kits_data = datautil.stringify_key_values(kits_data)
         
@@ -128,7 +128,7 @@ def main(date_time):
         
         #  add special socrata deleted field
         #  required for sending delete requests to socrata
-        fieldnames = sig_status.fieldnames + ['deleted']
+        fieldnames = sig_status.fieldnames + [':deleted']
 
         #  transform signal status socrata data for comparison 
         #  with "new" data from kits
