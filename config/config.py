@@ -82,11 +82,41 @@ cfg = {
         'view' : 'view_1567',
         'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/cabinet_assets/FeatureServer/0/',
         'include_ids' : True,
-        'fetch_locations' : True,
         'socrata_resource_id' : 'x23u-shve',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : None,
-        'location_join_field' : 'SIGNAL_ID',
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }   
+    },
+    'pole_attachments' : {
+        'primary_key' : 'POLE_ATTACH_ID',
+        'ref_obj' : ['object_120'],
+        'obj' : None,
+        'scene' : 'scene_589',
+        'view' : 'view_1597',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/pole_attachments/FeatureServer/0/',
+        'include_ids' : True,
+        'socrata_resource_id' : 'btg5-ebcy',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : None,
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
+    },
+    'traffic_reports' : {
+        'primary_key' : 'TRAFFIC_REPORT_ID',
+        'ref_obj' : ['object_121'],
+        'obj' : None,
+        'scene' : 'scene_614',
+        'view' : 'view_1626',
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/traffic_reports/FeatureServer/0/',
+        'include_ids' : True,
+        'socrata_resource_id' : 'dx9v-zd7x',
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : None,
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
