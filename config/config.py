@@ -26,6 +26,19 @@ cfg = {
             'lon' : 'LOCATION_longitude'
         }
     },
+    'signal_requests' : {
+        'primary_key' : 'REQUEST_ID',
+        'obj' : None,
+        'scene' : 'scene_75',
+        'view' : 'view_200',
+        'ref_obj' : ['object_11', 'object_13'],
+        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/TRANSPORTATION_signal_requests/FeatureServer/0/',
+        'include_ids' : True,
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
+    },
     'cameras' : {
         'primary_key' : 'CAMERA_ID',
         'ref_obj' : ['object_53', 'object_11'],

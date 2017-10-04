@@ -105,7 +105,6 @@ def main(date_time):
                 agol_fail += 1
                 
                 if agol_fail == 1:
-                    pdb.set_trace()
                     #  alert on first failure, but continue processing
                     emailutil.send_email(
                         ALERTS_DISTRIBUTION,
