@@ -16,9 +16,9 @@
           <csr>
              <id>{id}</id><!--   tmc activity id -->
              <sr_number>{SR_NUMBER}</sr_number>
-             <issue_status_code>{ISSUE_STATUS_CODE}</issue_status_code>
+             <issue_status_code>{ISSUE_STATUS_CODE_SNAPSHOT}</issue_status_code>
              <activity_details>{TMC_ACTIVITY_DETAILS}</activity_details><!--   concatenation of activity type and details -->
-             <activity_date>{TMC_ACTIVITY_DATE}</activity_date>
+             <activity_date>{TMC_ACTIVITY_DATETIME}</activity_date>
           </csr>
         </data>
       </acc:submitKnack>

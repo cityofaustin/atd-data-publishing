@@ -91,8 +91,6 @@ def main(date_time):
                 else: 
                     logging.warning( 'Record {} failed to process with error {}'.format(record_id, res.content) ) 
                     fail.append(res.content)
-                
-                print('hey')
 
         for record in sent:
             payload = create_payload(record)
@@ -116,13 +114,13 @@ def main(date_time):
         print('Failed to publish ESB msg data for {}'.format(date_time))
         print(e)
         
-        # emailutil.send_email(
-        #     ALERTS_DISTRIBUTION,
-        #     'ESB Publication Failure',
-        #     str(e),
-        #     EMAIL['user'],
-        #     EMAIL['password']
-        # )
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'ESB Publication Failure',
+            str(e),
+            EMAIL['user'],
+            EMAIL['password']
+        )
 
         raise e
 

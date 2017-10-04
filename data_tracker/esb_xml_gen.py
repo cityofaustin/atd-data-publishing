@@ -1,9 +1,6 @@
 ''' 
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
-
-todo:
-- email alerts
 '''
 import argparse
 import logging
@@ -111,12 +108,13 @@ def main(date_time):
 
     try:
         data = check_for_data()
+
         #  check for data at public endpoint
         if data:
             #  get data at private enpoint
             filters = get_csr_filters(cfg['emi_field'], cfg['esb_status_field'], cfg['esb_status_match'])
             kn = get_data(filters)
-
+            
         else:
             logging.info('No new records to process')
             return None
@@ -141,13 +139,13 @@ def main(date_time):
         print('Failed to process data for {}'.format(date_time))
         print(e)
         
-        # emailutil.send_email(
-        #     ALERTS_DISTRIBUTION,
-        #     'Location Update Failure',
-        #     str(e),
-        #     EMAIL['user'],
-        #     EMAIL['password']
-        # )
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Location Update Failure',
+            str(e),
+            EMAIL['user'],
+            EMAIL['password']
+        )
 
         raise e
 
@@ -172,5 +170,4 @@ if __name__ == '__main__':
 
     results = main(now)
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
-
 
