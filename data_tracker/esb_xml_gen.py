@@ -39,7 +39,8 @@ def get_csr_filters(emi_field, esb_status_field, esb_status_match):
 def check_for_data():
     #  check for data at public endpoint
     #  this api call does not count against
-    #  daily subscription limit
+    #  daily subscription limit because we do not
+    #  provide reference objects
     kn = knackpy.Knack(
         view=cfg['view'],
         scene=cfg['scene'],
@@ -55,12 +56,16 @@ def check_for_data():
         return False
 
 
-def get_data(filters):
+def get_data():
+    #  get data at public enpoint and also get
+    #  necessary field metadata (which is not public)
+    #  field dat ais fetched because we provide a ref_obj array
     return knackpy.Knack(
-        obj=cfg['obj'],
+        ref_obj=cfg['ref_obj'],
+        view=cfg['view'],
+        scene=cfg['scene'],
         app_id=KNACK_CREDENTIALS[app_name]['app_id'],
-        api_key=KNACK_CREDENTIALS[app_name]['api_key'],
-        filters=filters
+        api_key=KNACK_CREDENTIALS[app_name]['api_key']
     )
 
 
@@ -112,8 +117,7 @@ def main(date_time):
         #  check for data at public endpoint
         if data:
             #  get data at private enpoint
-            filters = get_csr_filters(cfg['emi_field'], cfg['esb_status_field'], cfg['esb_status_match'])
-            kn = get_data(filters)
+            kn = get_data()
             
         else:
             logging.info('No new records to process')
@@ -123,14 +127,17 @@ def main(date_time):
         date_fields_kn = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
         kn.data = datautil.mills_to_iso(kn.data, date_fields_kn)
 
-        for record in kn.data:
+        for record in kn.data:            
             payload = build_xml_payload(record)
             #  ESB requires ASCII characters only
             #  We drop non-ASCII characters by encoding as ASCII with "ignore" flag
             payload = payload.encode("ascii", errors="ignore")
             payload = payload.decode("ascii")
             
-            with open('{}/{}_{}.xml'.format(outpath, record['id'], arrow.now().timestamp), 'w') as fout:
+            #  If for some reason this record already has an XML message in queue
+            #  (e.g. the ESB is down), the previous message will be overwritten
+            #  don't change the message format without considering esb_xml_send.py
+            with open('{}/{}.xml'.format(outpath, record['id']), 'w') as fout:
                 fout.write(payload)
             
         return 'GOOD JOB!'

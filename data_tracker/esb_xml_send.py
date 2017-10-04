@@ -23,7 +23,7 @@ from util import emailutil
 
   
 def get_record_id_from_file(directory, f):
-    record_id = f.split('_')[0]
+    record_id = f.split('.')[0]
     return record_id
 
 def get_msg(directory, f):
@@ -32,9 +32,17 @@ def get_msg(directory, f):
     with open(fin, 'r') as msg:
         return msg.read()
 
-def send_msg(msg, endpoint, timeout=20):
+def send_msg(msg, endpoint, path_cert, path_key, timeout=20):
     headers = {'content-type': 'text/xml'}
-    res = requests.post(endpoint, data=msg, headers=headers, timeout=timeout)
+    res = requests.post(
+        endpoint,
+        data=msg,
+        headers=headers,
+        timeout=timeout,
+        verify=False,
+        cert=(path_cert, path_key)
+    )
+
     return res
 
 def move_file(old_dir, new_dir, f):
@@ -83,25 +91,31 @@ def main(date_time):
             if filename.endswith(".xml"): 
                 record_id = get_record_id_from_file(inpath, filename)
                 msg = get_msg(inpath, filename)
-                res = send_msg(msg, cfg['endpoint'])
+                res = send_msg(msg, ESB_ENDPOINT['prod'], cfg['path_cert'], cfg['path_key'])
                 
                 if res.status_code == 200:
                     sent.append(record_id)
                     move_file(inpath, outpath, filename)
                 else: 
+
                     logging.warning( 'Record {} failed to process with error {}'.format(record_id, res.content) ) 
                     fail.append(res.content)
 
         for record in sent:
             payload = create_payload(record)
+            record_id = payload['id']
             
             res = knackpy.update_record(
                 payload,
-                cfg['obj'],  #  assumes record object is included in config ref_obj and is the first elem in array
+                cfg['obj'],
                 'id',
                 knack_creds['app_id'],
                 knack_creds['api_key']
             )
+
+            if 'total_pages' in res:
+                if res['total_pages'] == 0:
+                    raise Exception('Failed to update Knack record after ESB pub: {}'.format(record_id) )
             
         #  send email at end if issues
         if fail:
