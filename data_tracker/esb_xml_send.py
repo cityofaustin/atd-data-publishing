@@ -114,13 +114,13 @@ def main(date_time):
         print('Failed to publish ESB msg data for {}'.format(date_time))
         print(e)
         
-        # emailutil.send_email(
-        #     ALERTS_DISTRIBUTION,
-        #     'ESB Publication Failure',
-        #     str(e),
-        #     EMAIL['user'],
-        #     EMAIL['password']
-        # )
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'ESB Publication Failure',
+            str(e),
+            EMAIL['user'],
+            EMAIL['password']
+        )
 
         raise e
 
