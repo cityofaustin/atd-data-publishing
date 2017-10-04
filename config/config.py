@@ -262,11 +262,7 @@ cfg_esb = {
         'emi_field' : 'field_1868',
         'esb_status_field' : 'field_1860',
         'esb_status_match' : 'READY_TO_SEND',
-        'endpoint' : 'http://esbtest01.austintexas.gov:7888/submitKnack'
+        'path_cert' : '../config/cert.pem',
+        'path_key' : '../config/key.pem',
     }
 } 
-
-
-
-
-
