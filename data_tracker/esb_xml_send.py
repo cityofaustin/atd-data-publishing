@@ -23,7 +23,7 @@ from util import emailutil
 
   
 def get_record_id_from_file(directory, f):
-    record_id = f.split('_')[0]
+    record_id = f.split('.')[0]
     return record_id
 
 def get_msg(directory, f):
@@ -107,7 +107,7 @@ def main(date_time):
             
             res = knackpy.update_record(
                 payload,
-                cfg['obj'],  #  assumes record object is included in config ref_obj and is the first elem in array
+                cfg['obj'],
                 'id',
                 knack_creds['app_id'],
                 knack_creds['api_key']
