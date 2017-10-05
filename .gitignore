@@ -15,3 +15,5 @@ log
 *.log
 xml
 secrets.py
+*.key
+*.pem
