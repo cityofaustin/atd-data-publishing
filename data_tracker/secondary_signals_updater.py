@@ -110,10 +110,9 @@ def main(date_time):
             identify new and changed primary-secondary relationships
             '''
             if signal_id in primary_signals_old:
-                
                 new_secondaries = collections.Counter(primary_signals_new[signal_id])
                 old_secondaries = collections.Counter(primary_signals_old[signal_id])
-    
+                
                 if old_secondaries != new_secondaries:
                     
                     payload.append({
