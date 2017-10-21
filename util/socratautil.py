@@ -135,6 +135,7 @@ def create_location_fields(
     lat_field='LOCATION_latitude',
     lon_field='LOCATION_longitude'
 ):
+
    for record in dicts:
     #  create location field if lat and lon are avaialble
     if lat_field in record and lon_field in record:
@@ -147,6 +148,10 @@ def create_location_fields(
     else:
         #  otherwise create empty location field
         record['location'] = ''
+
+        else:
+            #  otherwise create empty location field
+            record['location'] = ''
 
     return dicts
 
