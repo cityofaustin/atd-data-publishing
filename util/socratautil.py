@@ -58,7 +58,7 @@ class Soda(object):
 
     def get_public_data(self):
         print('fetch public socrata data')
-        res = requests.get(self.url, verify=False)
+        res = requests.get(self.url)
         self.data = res.json()
         return self.data
 
@@ -72,8 +72,7 @@ class Soda(object):
         
         res = requests.get(
             self.url,
-            auth=auth,
-            verify=False
+            auth=auth
         )
 
         return res.json()
@@ -88,8 +87,7 @@ class Soda(object):
         
         res = requests.get(
             self.url_metadata,
-            auth=auth,
-            verify=False
+            auth=auth
         )
         
         self.metadata = res.json()
@@ -133,21 +131,25 @@ def create_payload(detection_obj, prim_key):
 def create_location_fields(
     dicts,
     lat_field='LOCATION_latitude',
-    lon_field='LOCATION_longitude'
+    lon_field='LOCATION_longitude',
+    location_field_name='location'
 ):
     
     for record in dicts:
-        #  create location field if lat and lon are avaialble
-        if lat_field in record and lon_field in record:
-            
-            record['location'] = '({},{})'.format(
-                record[lat_field],
-                record[lon_field]
-            )
+        
+        try:
+            #  create location field if lat and lon are avaialble
+            if record[lat_field] and record[lon_field]:
+                record[location_field_name] = '({},{})'.format(
+                    record[lat_field],
+                    record[lon_field]
+                )
+            else:
+                record[location_field_name] = ''
 
-        else:
+        except KeyError:
             #  otherwise create empty location field
-            record['location'] = ''
+            record[location_field_name] = ''
 
     return dicts
 
@@ -175,8 +177,7 @@ def upsert_data(creds, payload, resource):
     res = requests.post(
         url,
         data=json_data,
-        auth=auth,
-        verify=False
+        auth=auth
     )
     
     return res.json()
