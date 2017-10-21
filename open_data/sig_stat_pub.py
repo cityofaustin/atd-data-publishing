@@ -164,7 +164,9 @@ def main(date_time):
             )
 
             socrata_payload = socratautil.create_location_fields(
-                socrata_payload
+                socrata_payload,
+                lat_field='LOCATION_LATITUDE',
+                lon_field='LOCATION_LONGITUDE'
             )
 
             socrata_payload = datautil.lower_case_keys(
