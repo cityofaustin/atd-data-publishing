@@ -135,18 +135,20 @@ def create_location_fields(
     lat_field='LOCATION_latitude',
     lon_field='LOCATION_longitude'
 ):
-    
-
-    for record in dicts:
-        if lat_field in record and lon_field in record:
-            
+   for record in dicts:
+    #  create location field if lat and lon are avaialble
+    if lat_field in record and lon_field in record:
+        if record[lat_field] and record[lon_field]:
             record['location'] = '({},{})'.format(
                 record[lat_field],
                 record[lon_field]
             )
+            
+    else:
+        #  otherwise create empty location field
+        record['location'] = ''
 
     return dicts
-
 
 def strip_geocoding(dicts):
     print('strip geocoding field')
