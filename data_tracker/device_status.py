@@ -1,8 +1,5 @@
 '''
 todo:
-- test updaterecord
-- check ip comm status datetime
-- test ping command
 - enable email alert
 ping field device and update ip comm status in Knack database
 command ex: device_status_check.py travel_sensors
@@ -10,8 +7,9 @@ command ex: device_status_check.py travel_sensors
 import argparse
 import json
 import logging
-import os
+from os import system as system_call
 import pdb
+from platform import system as system_name  
 import traceback
 
 import arrow
@@ -24,15 +22,20 @@ from util import datautil
 from util import emailutil
 
 def ping_ip(ip):
+    #  https://stackoverflow.com/questions/2953462/pinging-servers-in-python
     print(ip)
     logging.debug( 'ping {}'.format(ip) )
-    response = os.system("ping -n 1 -w 1000 " + ip)
+        
+    #  logic for system-specific param
+    #  -w / -W is timeout -n/-c is number of packets
+    params= "-w 1000 -n 1" if system_name().lower()=="windows" else "-W 1 -c 1"    
+
+    response = system_call("ping " + params + " " + ip)
+
     logging.debug(str(response))
 
     if response != 0:
-        logging.warning( 'no response from {}'.format(ip) )
         return "OFFLINE"
-
     else:
         return "ONLINE"
 
