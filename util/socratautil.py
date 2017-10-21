@@ -58,7 +58,7 @@ class Soda(object):
 
     def get_public_data(self):
         print('fetch public socrata data')
-        res = requests.get(self.url, verify=False)
+        res = requests.get(self.url)
         self.data = res.json()
         return self.data
 
@@ -72,8 +72,7 @@ class Soda(object):
         
         res = requests.get(
             self.url,
-            auth=auth,
-            verify=False
+            auth=auth
         )
 
         return res.json()
@@ -88,8 +87,7 @@ class Soda(object):
         
         res = requests.get(
             self.url_metadata,
-            auth=auth,
-            verify=False
+            auth=auth
         )
         
         self.metadata = res.json()
@@ -175,8 +173,7 @@ def upsert_data(creds, payload, resource):
     res = requests.post(
         url,
         data=json_data,
-        auth=auth,
-        verify=False
+        auth=auth
     )
     
     return res.json()
