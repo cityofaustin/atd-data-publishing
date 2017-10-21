@@ -131,21 +131,25 @@ def create_payload(detection_obj, prim_key):
 def create_location_fields(
     dicts,
     lat_field='LOCATION_latitude',
-    lon_field='LOCATION_longitude'
+    lon_field='LOCATION_longitude',
+    location_field_name='location'
 ):
     
     for record in dicts:
-        #  create location field if lat and lon are avaialble
-        if lat_field in record and lon_field in record:
-            
-            record['location'] = '({},{})'.format(
-                record[lat_field],
-                record[lon_field]
-            )
+        
+        try:
+            #  create location field if lat and lon are avaialble
+            if record[lat_field] and record[lon_field]:
+                record[location_field_name] = '({},{})'.format(
+                    record[lat_field],
+                    record[lon_field]
+                )
+            else:
+                record[location_field_name] = ''
 
-        else:
+        except KeyError:
             #  otherwise create empty location field
-            record['location'] = ''
+            record[location_field_name] = ''
 
     return dicts
 

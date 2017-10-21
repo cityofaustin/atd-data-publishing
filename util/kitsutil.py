@@ -5,27 +5,19 @@ import arrow
 import pymssql
 
 
-def generate_status_id_query(data, id_key):
-    print('prep kits query')
-    
-    ids = [record[id_key] for record in data]
-    
-    where_ids = str(tuple(ids))
-    
-    query  = '''
+def status_query():
+   return '''
         SELECT i.INTID as KITS_ID
-            , e.DATETIME as OPERATION_STATE_DATETIME
-            , e.STATUS as OPERATION_STATE
-            , e.PLANID as PLAN_ID
-            , i.ASSETNUM as {}
-            FROM [KITS].[INTERSECTION] i
-            LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
-            ON i.[INTID] = e.[INTID]
-            WHERE i.ASSETNUM IN {} AND e.DATETIME IS NOT NULL
-            ORDER BY e.DATETIME DESC
-    '''.format(id_key, where_ids)
-    
-    return query
+        , e.DATETIME as OPERATION_STATE_DATETIME
+        , e.STATUS as OPERATION_STATE
+        , e.PLANID as PLAN_ID
+        , i.ASSETNUM as SIGNAL_ID
+        FROM [KITS].[INTERSECTION] i
+        LEFT OUTER JOIN [KITS].[INTERSECTIONSTATUS] e
+        ON i.[INTID] = e.[INTID]
+        WHERE e.DATETIME IS NOT NULL
+        ORDER BY e.DATETIME DESC
+    '''
 
 
 def data_as_dict(creds, query):

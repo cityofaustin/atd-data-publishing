@@ -42,10 +42,7 @@ def main(date_time):
         socr.get_metadata()
         signal_data = datautil.upper_case_keys(socr.data)
         
-        kits_query = kitsutil.generate_status_id_query(
-            signal_data,
-            'SIGNAL_ID'
-        )
+        kits_query = kitsutil.status_query()
 
         kits_data = kitsutil.data_as_dict(
             KITS_CREDENTIALS,
@@ -177,13 +174,14 @@ def main(date_time):
                 socrata_payload,
                 fieldnames
             )
-            
+            pdb.set_trace()
             upsert_res = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
                 socrata_payload,
                 socr_sig_stat_res_id
             )
-        
+            pdb.set_trace()
+
         else:
             upsert_res = {
                 'Errors' : 0,
