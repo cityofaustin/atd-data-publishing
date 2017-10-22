@@ -13,10 +13,8 @@ from util import socratautil
 
 socr_sig_res_id = 'xwqn-2f78'
 socr_sig_stat_res_id = '5zpr-dehc'
-sig_stat_hist = 'x62n-vjpq'
 socr_pub_log_res_id = 'n5kp-f8k4'
 flash_statuses = ['1', '2', '3']
-socr_hist_fields = ['signal_id', 'operation_state_duration', 'operation_state', 'record_retired_datetime', 'record_id', 'location_name', 'processed_datetime', 'operation_state_datetime']
 
 then = arrow.now()
 now_s = then.format('YYYY_MM_DD')
@@ -30,7 +28,6 @@ def main(date_time):
     print('starting stuff now')
 
     try:
-
         # get current traffic signal data from Socrata      
         socr = socratautil.Soda(
             socr_sig_res_id,
@@ -174,13 +171,12 @@ def main(date_time):
                 socrata_payload,
                 fieldnames
             )
-            pdb.set_trace()
+
             upsert_res = socratautil.upsert_data(
                 SOCRATA_CREDENTIALS,
                 socrata_payload,
                 socr_sig_stat_res_id
             )
-            pdb.set_trace()
 
         else:
             upsert_res = {
@@ -225,63 +221,7 @@ def main(date_time):
                 EMAIL['password']
             )
 
-        if cd_results['delete']:
-            hist_payload = datautil.lower_case_keys(
-                cd_results['delete']
-            )
-
-            hist_payload = socratautil.add_hist_fields(hist_payload)
-
-            hist_payload = datautil.reduce_to_keys(hist_payload, socr_hist_fields)
-
-            upsert_hist_res = socratautil.upsert_data(
-                SOCRATA_CREDENTIALS,
-                hist_payload,
-                sig_stat_hist
-            )
-
-            hist_log_payload = socratautil.prep_pub_log(
-                date_time,
-                'signal_status_historical_update',
-                upsert_hist_res
-            )
-
-            pub_log_hist_res = socratautil.upsert_data(
-                SOCRATA_CREDENTIALS,
-                hist_log_payload,
-                socr_pub_log_res_id
-            )
-
-            if 'error' in upsert_hist_res:
-                loggig.info('socrata error historical dataset')
-                logging.info(socrata_payload)
-                emailutil.send_socrata_alert(
-                    ALERTS_DISTRIBUTION,
-                    sig_stat_hist,
-                    upsert_hist_res,
-                    EMAIL['user'],
-                    EMAIL['password']
-                )
-                
-            elif upsert_hist_res['Errors']:
-                logging.info('socrata error historical dataset')
-                logging.info(socrata_payload)
-                emailutil.send_socrata_alert(
-                    ALERTS_DISTRIBUTION,
-                    sig_stat_hist,
-                    upsert_hist_res,
-                    EMAIL['user'],
-                    EMAIL['password']
-                )
-
-        else:
-            print('no new historical status data to upload')
-            upsert_hist_res = None
-
-        return {
-            'res': upsert_res,
-            'res_historical': upsert_hist_res,
-        }
+        return upsert_res
     
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
@@ -299,5 +239,5 @@ def main(date_time):
 
 results = main(then)
 
-print(results['res'])
+print(results)
 logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
