@@ -157,14 +157,15 @@ def main(date_time):
                 'SIGNAL_ID'
             )
 
-            socrata_payload = socratautil.create_location_fields(
-                socrata_payload,
-                lat_field='LOCATION_LATITUDE',
-                lon_field='LOCATION_LONGITUDE'
-            )
-
             socrata_payload = datautil.lower_case_keys(
                 socrata_payload
+            )
+
+            socrata_payload = socratautil.create_location_fields(
+                socrata_payload,
+                lat_field='location_latitude',
+                lon_field='location_longitude',
+                location_field='location'
             )
 
             socrata_payload = datautil.reduce_to_keys(
