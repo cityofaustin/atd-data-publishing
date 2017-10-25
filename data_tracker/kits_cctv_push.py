@@ -18,6 +18,7 @@ kits_table_geom = "KITSDB.KITS.CameraSpatialData"
 kits_table_camera = "KITSDB.KITS.CAMERA"
 kits_table_web = "KITSDB.KITS.WEBCONFIG_MAIN"
 
+
 fieldmap = {
     # kits_field : data_tracker_field
     "CAMNUMBER" : {
@@ -78,6 +79,14 @@ fieldmap = {
         "default" : 1,
         "table" : kits_table_camera
     },
+    "SkipDownload" : {
+        "knack_id" : "DISABLE_IMAGE_PUBLISH",
+        "type" : bool,
+        "reverse_flags" : True,
+        "detect_changes" : True,
+        "default" : None,
+        "table" : kits_table_camera
+    },
     "WebID" : {
         "knack_id" : None,
         "type" : int,
@@ -136,7 +145,7 @@ def convert_data(data, fieldmap):
         new_record = { 
             fieldname : fieldmap[fieldname]['type'](record[fieldname]) 
             for fieldname in record.keys()
-            if fieldname in fieldmap and record[fieldname]
+            if fieldname in fieldmap and fieldname in record.keys()
         }
 
         new_data.append(new_record)
@@ -144,8 +153,8 @@ def convert_data(data, fieldmap):
     return new_data
 
 
-def setDefaults(list_of_dicts, fieldmap):
-    for row in list_of_dicts:
+def setDefaults(dicts, fieldmap):
+    for row in dicts:
         for field in fieldmap.keys():
 
             if (field not in row and
@@ -154,13 +163,13 @@ def setDefaults(list_of_dicts, fieldmap):
                 
                 row[field] = fieldmap[field]['default']
 
-    return list_of_dicts
+    return dicts
 
 
-def createCAMCOMMENT(list_of_dicts):
-    for row in list_of_dicts:
+def createCAMCOMMENT(dicts):
+    for row in dicts:
         row['CAMCOMMENT'] = 'Updated via API on {}'.format(now.format());
-    return list_of_dicts
+    return dicts
 
 
 def getMaxID(table, id_field):
@@ -222,8 +231,8 @@ def createDeleteQuery(table, match_key, match_val):
 
 def main(date_time):
     print('starting stuff now')
-    # get knack data
     
+    # get knack data
     kn = knackpy.Knack(
         scene=knack_scene,
         view=knack_view,
@@ -232,13 +241,12 @@ def main(date_time):
         api_key=KNACK_CREDENTIALS[app_name]['api_key']
     )
 
-
     field_names = kn.fieldnames
     kn.data = datautil.filter_by_key_exists(kn.data, primary_key_knack)
     fieldmap_knack_kits = {
         fieldmap[x]['knack_id'] : x for x in fieldmap.keys()
         if fieldmap[x]['knack_id'] != None
-        }
+    }
 
     #  remove entries that do not have filter key 
     for key in filters.keys():  
@@ -265,12 +273,12 @@ def main(date_time):
 
     knack_data_def = setDefaults(knack_data_repl, fieldmap)
     knack_data_repl = createCAMCOMMENT(knack_data_repl)
-
+    
     #  get kits data
     camera_query = createCameraQuery(kits_table_camera)
     kits_data = kitsutil.data_as_dict(kits_creds, camera_query)
     kits_data_conv = convert_data(kits_data, fieldmap)
-    
+
     #  compile list of keys to compare and run change detection
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]['detect_changes'] ]
     data_cd = datautil.detect_changes(kits_data_conv, knack_data_repl, 'CAMNUMBER', keys=compare_keys)
@@ -307,6 +315,8 @@ def main(date_time):
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geom, query_web])
     
     if data_cd['change']:
+        print(len(data_cd['change']))
+        data_cd['change'] = data_cd['change'][0:5]
         
         logging.info('change: {}'.format( len(data_cd['change']) ))
         for record in data_cd['change']:
