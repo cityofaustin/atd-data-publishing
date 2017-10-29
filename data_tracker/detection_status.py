@@ -2,15 +2,21 @@
 Assign detection status to traffic signal based on status of its detectors. 
 Update detection status log when signal detection status changes.
 '''
-import os
-import logging
-import traceback
+import argparse
 from collections import defaultdict
+import logging
+import os
+import traceback
 import pdb
+
 import arrow
-import data_helpers
-import knack_api as kn
-import secrets
+import knackpy
+
+import _setpath
+from config.config import cfg
+from config.secrets import *
+from util import datautil
+from util import emailutil
 
 def groupBySignal(detector_data):
     '''
@@ -106,18 +112,42 @@ def getMaxDate(sig, det_status):
     else:
         return arrow.now().format('MM-DD-YYYY')
 
+
+
+def cli_args():
+    parser = argparse.ArgumentParser(
+        prog='Assign detection status to traffic signal based on status of its detectors',
+        description='Update service requests in the CSR system from Data Tracker'
+    )
+
+    parser.add_argument(
+        'app_name',
+        action="store",
+        type=str,
+        help='Name of the knack application that will be accessed'
+    )
+
+    args = parser.parse_args()
+    
+    return(args)
+
+
+
 if __name__ == '__main__':
 
     now = arrow.now()
     now_s = now.format('YYYY_MM_DD')
 
     #  init logging 
-    log_directory = secrets.LOG_DIRECTORY
+    log_directory = LOG_DIRECTORY
     cur_dir = os.path.dirname(__file__)
     logfile = '{}/detection_status_{}.log'.format(log_directory, now_s)
     log_path = os.path.join(cur_dir, logfile)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logging.info('START AT {}'.format(str(now)))
+
+    args = cli_args()
+    app_name = args.app_name
 
     try:
         #  field labels on detector object that provides source status and date
@@ -128,8 +158,8 @@ if __name__ == '__main__':
         SIG_DATE_LABEL = 'DETECTION_STATUS_DATE'
 
         #  Knack API config
-        api_key = secrets.KNACK_CREDENTIALS['api_key']
-        app_id = secrets.KNACK_CREDENTIALS['app_id']
+        api_key = KNACK_CREDENTIALS[app_name]['api_key']
+        app_id = KNACK_CREDENTIALS[app_name]['app_id']
 
         config_detectors = {
             'scene' : 'scene_468',
@@ -154,21 +184,37 @@ if __name__ == '__main__':
         }
 
         #  get detector data
-        detectors = kn.View(scene=config_detectors['scene'], view=config_detectors['view'], field_obj=config_detectors['objects'], api_key=api_key, app_id=app_id)
+        detectors = knackpy.Knack(
+            scene=config_detectors['scene'],
+            view=config_detectors['view'],
+            ref_obj=config_detectors['objects'],
+            api_key=api_key,
+            app_id=app_id,
+            timeout=30
+        )
 
         #  get signal data
-        signals = kn.View(scene=config_signals['scene'], view=config_signals['view'], field_obj=config_signals['objects'], api_key=api_key, app_id=app_id)
-        signals.data_parsed = data_helpers.filter_by_key(signals.data_parsed, 'SIGNAL_STATUS', ['TURNED_ON'])
+        signals = knackpy.Knack(
+            scene=config_signals['scene'],
+            view=config_signals['view'],
+            ref_obj=config_signals['objects'],
+            api_key=api_key,
+            app_id=app_id,
+            timeout=30
+        )
+        
+        signals.data = datautil.filter_by_key_exists(signals.data, 'SIGNAL_STATUS')
+        signals.data = datautil.filter_by_val( signals.data, 'SIGNAL_STATUS', ['TURNED_ON'])
 
         #  staging dict
-        lookup = groupBySignal(detectors.data_parsed)
-
+        lookup = groupBySignal(detectors.data)
+        
         #  record update count
         count_sig = 0
         count_status = 0
 
         #  iterate through signals, get status, update record in Knack database
-        for sig in signals.data_parsed:
+        for sig in signals.data:
             
             old_status = None
             new_status = getStatus(sig, lookup)
@@ -182,41 +228,24 @@ if __name__ == '__main__':
                     continue
 
             payload_signals = {
-                'KNACK_ID' : sig['KNACK_ID'],
+                'id' : sig['id'],
                 SIG_STATUS_LABEL : new_status,
                 SIG_DATE_LABEL : getMaxDate(sig, lookup)
             }
-
+            
             #  replace field labels with database fieldnames
-            payload_signals = data_helpers.replace_keys([payload_signals], signals.field_map)
+            payload_signals = datautil.replace_keys([payload_signals], signals.field_map)
 
             #  update signal record with detection status and date
-            res = kn.update_record(payload_signals[0], config_signals['objects'][0], 'KNACK_ID', app_id, api_key)
+            res = knackpy.update_record(
+                payload_signals[0],
+                config_signals['objects'][0],
+                'id',
+                app_id,
+                api_key
+            )
         
             count_sig += 1
-    
-            #  update signal status log
-            if not old_status and new_status == 'OK':  # detection is new
-                event = 'DETECTION INSTALLED'
-            elif new_status == 'OK' and old_status != 'OK':  #  detection restored
-                event = 'DETECTION RESTORED'
-            elif new_status == 'NO DETECTION':  #  detection uninstalled
-                event = 'DETECTION UNINSTALLED'
-            else:
-                event = 'ISSUE REPORTED'  #  detection not ok
-
-            payload_status_log = {
-                'EVENT' : event,
-                'EVENT_DATE' : new_status_date,
-                'SIGNAL' : [sig['KNACK_ID']],  #  signal connection field is passed as an array of length 1
-            }
-            
-            #  replace field labels with database fieldnames
-            payload_status_log = data_helpers.replace_keys([payload_status_log], fieldmap_status_log)
-            
-            #  update signal detection status log
-            res = kn.insert_record(payload_status_log[0], config_status_log['objects'][0], app_id, api_key)
-            
             count_status += 1
 
         logging.info('{} signal records updated'.format(count_sig))
@@ -224,10 +253,10 @@ if __name__ == '__main__':
         logging.info('END AT {}'.format(str( arrow.now().format()) ))
 
     except Exception as e:
-        print('Failed to process data for {}'.format(date_time))
+        print('Failed to process data for {}'.format(arrow.now()))
         error_text = traceback.format_exc()
-        email_subject = "Detection Status Update Failure".format(dataset)
-        email_helpers.send_email(secrets.ALERTS_DISTRIBUTION, email_subject, error_text)
+        email_subject = "Detection Status Update Failure"
+        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, MAIL['user'], EMAIL['password'])
         logging.error(error_text)
         print(e)
         raise e
