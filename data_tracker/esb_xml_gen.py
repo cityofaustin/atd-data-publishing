@@ -16,6 +16,29 @@ from util import datautil
 from util import emailutil
 
 
+#  invalid XLM characters to be encoded
+SPECIAL = {
+    "<" : '&lt;',
+    ">" : '&gt;',
+    "\"" :'&quot;',
+    "'" : '&apos;',
+    "&" : '&amp;',
+}
+
+
+def encode_special_characters(text):
+    #  ESB requires ASCII characters only
+    #  We drop non-ASCII characters by encoding as ASCII with "ignore" flag
+    text = text.encode("ascii", errors="ignore")
+    text = text.decode("ascii")
+
+    #  We also encode invalid XML characters
+    for char in SPECIAL.keys():
+        text = text.replace(char, SPECIAL[char])
+
+    return text
+
+
 def get_csr_filters(emi_field, esb_status_field, esb_status_match):
     #  construct a knack filter object
     filters = {
@@ -71,6 +94,7 @@ def get_data():
 
 def build_xml_payload(record):
     record['TMC_ACTIVITY_DETAILS'] = format_activity_details(record)
+    record['TMC_ACTIVITY_DETAILS'] = encode_special_characters(record['TMC_ACTIVITY_DETAILS'])
     record['PUBLICATION_DATETIME'] = arrow.now().format()
 
     with open(cfg['template'], 'r') as fin:
@@ -112,9 +136,9 @@ def main(date_time):
     print('starting stuff now')
 
     try:
+        #  check for data at public endpoint
         data = check_for_data()
 
-        #  check for data at public endpoint
         if data:
             #  get data at private enpoint
             kn = get_data()
@@ -129,11 +153,6 @@ def main(date_time):
 
         for record in kn.data:            
             payload = build_xml_payload(record)
-            #  ESB requires ASCII characters only
-            #  We drop non-ASCII characters by encoding as ASCII with "ignore" flag
-            payload = payload.encode("ascii", errors="ignore")
-            payload = payload.decode("ascii")
-            
             #  If for some reason this record already has an XML message in queue
             #  (e.g. the ESB is down), the previous message will be overwritten
             #  don't change the message format without considering esb_xml_send.py
