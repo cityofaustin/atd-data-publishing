@@ -5,6 +5,35 @@ import arrow
 import pymssql
 
 
+def get_conn(creds, max_tries=5):
+    if max_tries > 15:
+        raise Exception('Retry limit is 15')
+
+    attempts = 0
+
+    while attempts <= max_tries:
+        #  try to connect to database and retry as needed
+        attempts += 1
+
+        try:
+            conn = pymssql.connect(
+                server=creds['server'],
+                user=creds['user'],
+                password=creds['password'],
+                database=creds['database'],
+                timeout=10
+            )
+
+        except pymssql.OperationalError as e:
+            #  handle error unless max tries exceeded
+            if 'Adaptive Server connection failed' in str(e) and attempts < max_tries:
+                continue
+            else:
+                raise e
+
+        return conn
+
+
 def status_query():
    return '''
         SELECT i.INTID as KITS_ID
@@ -20,18 +49,9 @@ def status_query():
     '''
 
 
-def data_as_dict(creds, query):
-    print('fetch kits data')
-
-    conn = pymssql.connect(
-        server=creds['server'],
-        user=creds['user'],
-        password=creds['password'],
-        database=creds['database'],
-        timeout=10
-    )
-
-    cursor = conn.cursor(as_dict=True)
+def data_as_dict(creds, query, max_tries=5):
+    conn = get_conn(creds, max_tries=max_tries)
+    cursor = conn.cursor(as_dict=True)   
     cursor.execute(query)  
     data = cursor.fetchall()
     conn.close()
@@ -65,16 +85,10 @@ def check_for_stale(dataset, time_field, minute_tolerance):
     return {'stale': stale, 'delta_minutes' : int(delta_minutes) }
 
 
-def insert_multi_table(creds, query_array):
+def insert_multi_table(creds, query_array, max_tries=5):
     print('multi-table insert in kits')
     
-    conn = pymssql.connect(
-        server=creds['server'],
-        user=creds['user'],
-        password=creds['password'],
-        database=creds['database'],
-        timeout=10
-    )
+    conn = get_conn(creds, max_tries=max_tries)
     
     cursor = conn.cursor()
     
