@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 import logging
 import pdb
+
 import sys
 import time
 
@@ -132,6 +133,17 @@ filters = {
    'CAMERA_MFG' : ['Axis', 'Sarix', 'Spectra Enhanced']
 }
 
+def map_bools(dicts):
+    #  convert boolean values to 1/0 for SQL compatibility 
+    for record in dicts:
+        for key in record.keys():
+            try:
+                if fieldmap[key]['type'] == bool:
+                    record[key] = int(record[key])
+            except KeyError:
+                continue
+
+    return dicts
 
 def createCameraQuery(table_name):
     return "SELECT * FROM {}".format(table_name)
@@ -286,7 +298,7 @@ def main(date_time):
     if data_cd['new']:
         logging.info('new: {}'.format( len(data_cd['new']) ))    
         max_cam_id = getMaxID(kits_table_camera, 'CAMID')
-        
+        data_cd['new'] = map_bools(data_cd['new'])
         for record in data_cd['new']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
             #  insert camera query
@@ -315,7 +327,7 @@ def main(date_time):
     
     if data_cd['change']:
         print(len(data_cd['change']))
-        data_cd['change'] = data_cd['change'][0:5]
+        data_cd['change'] = map_bools(data_cd['change'])
         
         logging.info('change: {}'.format( len(data_cd['change']) ))
         for record in data_cd['change']:
@@ -333,7 +345,7 @@ def main(date_time):
             geometry = "geometry::Point({}, {}, 4326)".format(record['LONGITUDE'], record['LATITUDE'])
             record_geom['GeometryItem'] = geometry
             record_geom['CamID'] = match_id
-            query_geo = createUpdateQuery(kits_table_geom, record_geom, 'CamID')
+            query_geom = createUpdateQuery(kits_table_geom, record_geom, 'CamID')
 
             #  update webconfig query
             record_web = {}
@@ -342,8 +354,7 @@ def main(date_time):
             record_web['WebURL'] = 'http://{}'.format(record['VIDEOIP'])
             query_web = createUpdateQuery(kits_table_web, record_web, 'WebID')
             #  execute queries
-            
-            insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
+            insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geom, query_web])
             
     if data_cd['delete']:
         logging.info('delete: {}'.format( len(data_cd['delete']) ))
@@ -363,7 +374,7 @@ def main(date_time):
             #  update webconfig query
             query_web = createDeleteQuery(kits_table_web, 'WebID', match_id)
             #  execute queries
-            
+            pdb.set_trace()            
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
 
     if data_cd['no_change']:
