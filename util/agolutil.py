@@ -186,38 +186,23 @@ def query_atx_street(segment_id):
         return None
 
 
-def point_in_poly(service_name, layer_id, point_geom, outfields):
-    #  check if point is within polygon feature
-    #  return attributes of containing feature 
-    #  assume input geometry spatial reference is WGS84
+def point_in_poly(service_name, layer_id, params):
+    '''
+    check if point is within polygon feature
+    return attributes of containing feature 
+    assume input geometry spatial reference is WGS84
+    docs: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
+    '''
     print('Point in poly: {}'.format(service_name))
-    point = '{},{}'.format(point_geom[0],point_geom[1]) 
     
-    outfields = ','.join( str(e) for e in outfields )
     query_url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/{}/FeatureServer/{}/query'.format(service_name, layer_id)
-    params = {
-        'f' : 'json',
-        'outFields'  : outfields,
-        'geometry': point,
-        'returnGeometry' : False,
-        'spatialRel' :'esriSpatialRelIntersects',
-        'inSR' : 4326,
-        'geometryType' : 'esriGeometryPoint'
-    }
     
+    if 'spatialRel' not in params:
+        params['spatialRel'] = 'esriSpatialRelIntersects'
+
     res = requests.get(query_url, params=params)
-
     res = res.json()
-
-    if 'features' in res:
-        if len(res['features']) > 0:
-            return res['features'][0]['attributes']
-
-        else:
-            return ''
-
-    else:
-        raise ValueError('point in poly request failure')
+    return res
 
 
 def parse_response(res_msg, req_type):
