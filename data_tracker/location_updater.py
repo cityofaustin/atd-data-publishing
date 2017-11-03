@@ -238,11 +238,10 @@ def main(date_time):
             response_json = knackpy.update_record(
                 location[0],
                 obj,
-                'id',
                 KNACK_CREDENTIALS[app_name]['app_id'],
                 KNACK_CREDENTIALS[app_name]['api_key']
             )
-            
+
             update_response.append(response_json)
 
         if (len(unmatched_locations) > 0):
@@ -270,7 +269,6 @@ def main(date_time):
 
         raise e
 
-
 if __name__ == '__main__':
     args = cli_args()
     app_name = args.app_name
@@ -285,7 +283,3 @@ if __name__ == '__main__':
 
     results = main(now)
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
-
-
-
-
