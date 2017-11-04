@@ -137,7 +137,6 @@ def main(date_time):
                 response_json = knackpy.update_record(
                     record,
                     obj,
-                    'id',
                     knack_creds['app_id'],
                     knack_creds['api_key']
                 )

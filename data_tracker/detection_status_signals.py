@@ -240,7 +240,6 @@ if __name__ == '__main__':
             res = knackpy.update_record(
                 payload_signals[0],
                 config_signals['objects'][0],
-                'id',
                 app_id,
                 api_key
             )
