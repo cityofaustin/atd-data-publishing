@@ -270,7 +270,6 @@ def main(date_time):
 
         raise e
 
-
 if __name__ == '__main__':
     args = cli_args()
     app_name = args.app_name
@@ -285,7 +284,3 @@ if __name__ == '__main__':
 
     results = main(now)
     logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
-
-
-
-
