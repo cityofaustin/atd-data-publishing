@@ -238,11 +238,10 @@ def main(date_time):
             response_json = knackpy.update_record(
                 location[0],
                 obj,
-                'id',
                 KNACK_CREDENTIALS[app_name]['app_id'],
                 KNACK_CREDENTIALS[app_name]['api_key']
             )
-            
+
             update_response.append(response_json)
 
         if (len(unmatched_locations) > 0):

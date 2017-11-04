@@ -234,7 +234,6 @@ def main(date_time):
             res = knackpy.update_record(
                 record,
                 knack_obj,
-                'id',
                 knack_creds['app_id'],
                 knack_creds['api_key']
             )
