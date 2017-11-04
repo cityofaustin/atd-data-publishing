@@ -92,7 +92,6 @@ def main():
                     response_json = knackpy.update_record(
                             device[0],  #  convert device from array len 1 to dict
                             cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array
-                            'id',
                             knack_creds['app_id'],
                             knack_creds['api_key']
                     )
