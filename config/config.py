@@ -1,4 +1,4 @@
-#  conifguration file for knack_data_pub.py
+#  conifguration file for Knack records
 
 cfg = {
     'atd_visitor_log' : {
@@ -267,4 +267,18 @@ cfg_esb = {
         'path_key' : '../config/key.pem',
     }
 } 
+
+
+cfg_fulcrum = {
+    'data_tracker_prod' {
+        'work_orders' : {  
+            'obj' : '',
+            'ref_obj' : [],
+            'scene' : '',
+            'view' : '',
+        }
+    }
+} 
+
+
 
