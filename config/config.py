@@ -269,16 +269,44 @@ cfg_esb = {
 } 
 
 
-cfg_fulcrum = {
-    'data_tracker_prod' {
-        'work_orders' : {  
-            'obj' : '',
-            'ref_obj' : [],
-            'scene' : '',
-            'view' : '',
+cfg_knack_fulcrum = {
+    'data_tracker_test_fulcrum' : {
+        'work_orders_public' : {  
+            'scene' : 'scene_514',
+            'view' : 'view_1785',
+        },
+        'work_orders_private' : {  
+            'obj' : 'object_31',
+            'ref_obj' : ['object_31'],
+            'scene' : 'scene_665',
+            'view' : 'view_1786',
         }
     }
 } 
+
+
+knack_fulc_fieldmap = [
+    {
+
+    }
+]
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
