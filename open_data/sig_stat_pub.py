@@ -50,7 +50,6 @@ def main(date_time):
 
         kits_data = datautil.stringify_key_values(kits_data)
         
-
         #  verify the KITS data is current
         #  sometimes the signal status service goes down
         #  in which case contact ATMS support
@@ -110,12 +109,9 @@ def main(date_time):
         else:
             new_data = []
         
-
         #  get current signal status dataset and metadata from socrata
         sig_status = socratautil.Soda(
-            socr_sig_stat_res_id,
-            user=SOCRATA_CREDENTIALS['user'],
-            password=SOCRATA_CREDENTIALS['password']
+            socr_sig_stat_res_id
         )
         
         sig_status.get_metadata()

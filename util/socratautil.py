@@ -50,7 +50,6 @@ class Soda(object):
         self.fieldnames = None
 
         if not (user and password):
-            logging.warning('Username and password are required for private datasets.')
             self.data = self.get_public_data()
 
         else:
@@ -59,6 +58,7 @@ class Soda(object):
     def get_public_data(self):
         print('fetch public socrata data')
         res = requests.get(self.url)
+        res.raise_for_status()
         self.data = res.json()
         return self.data
 
@@ -74,20 +74,15 @@ class Soda(object):
             self.url,
             auth=auth
         )
-
+        
+        res.raise_for_status()
         return res.json()
 
     def get_metadata(self):
         print('Get metadata')
         
-        auth = (
-            self.user,
-            self.password
-        )
-        
         res = requests.get(
-            self.url_metadata,
-            auth=auth
+            self.url_metadata
         )
         
         self.metadata = res.json()
