@@ -1,5 +1,9 @@
 '''
 fulcrum / knack integration enginge
+
+
+todo:
+- assigned to id lookup/mapping
 '''
 
 import argparse
@@ -72,7 +76,7 @@ def get_fulcrum_id(knack_record, api_key, table):
     '''
     query = fulcutil.get_query_by_value('knack_id', knack_record['id'], table)
     res = fulcutil.query(api_key, query)
-    
+    pdb.set_trace()
     if len(res['rows']) == 1:
         knack_record['fulcrum_id'] = res['rows'][0]['_record_id']
         return knack_record
