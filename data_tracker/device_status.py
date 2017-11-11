@@ -16,7 +16,7 @@ import arrow
 import knackpy
 
 import _setpath
-from config.config import cfg
+from config.knack.config import cfg
 from config.secrets import *
 from util import datautil
 from util import emailutil
@@ -121,13 +121,15 @@ def cli_args():
         'device_type',
         action="store",
         type=str,
-        help='Type of device to ping. \'signal\' or \'travel_sensor\' or \'cctv\'.'
+        choices=['signals', 'travel_sensor', 'cameras'],
+        help='Type of device to ping.'
     )
 
     parser.add_argument(
         'app_name',
         action="store",
         type=str,
+        choices=['data_tracker_prod', 'data_tracker_test'],
         help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
     )
 
