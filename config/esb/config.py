@@ -5,6 +5,7 @@ cfg = {
         'scene' : 'scene_514',
         'view' : 'view_1653',
         'template' : '../config/esb/esb_csr_template.xml',
+        'template' : '../config/esb_csr_template.xml',
         'emi_field' : 'field_1868',
         'esb_status_field' : 'field_1860',
         'esb_status_match' : 'READY_TO_SEND',
