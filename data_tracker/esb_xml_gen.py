@@ -10,7 +10,7 @@ import arrow
 import knackpy
 
 import _setpath
-from config.config import cfg_esb
+from config.esb.config import cfg
 from config.secrets import *
 from util import datautil
 from util import emailutil
@@ -123,6 +123,7 @@ def cli_args():
     parser.add_argument(
         'app_name',
         action="store",
+        choices=['data_tracker_prod', 'data_tracker_test'],
         type=str,
         help='Name of the knack application that will be accessed'
     )
@@ -189,7 +190,7 @@ if __name__ == '__main__':
 
     #  config
     knack_creds = KNACK_CREDENTIALS
-    cfg = cfg_esb['tmc_activities']
+    cfg = cfg['tmc_activities']
     
     #  template output path
     outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')

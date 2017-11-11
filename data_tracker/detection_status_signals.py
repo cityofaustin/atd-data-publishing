@@ -13,7 +13,6 @@ import arrow
 import knackpy
 
 import _setpath
-from config.config import cfg
 from config.secrets import *
 from util import datautil
 from util import emailutil
@@ -123,6 +122,7 @@ def cli_args():
     parser.add_argument(
         'app_name',
         action="store",
+        choices=['data_tracker_prod', 'data_tracker_test'],
         type=str,
         help='Name of the knack application that will be accessed'
     )
