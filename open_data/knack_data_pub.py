@@ -15,7 +15,7 @@ import arrow
 import knackpy
 
 import _setpath
-from config.config import cfg
+from config.knack.config import cfg
 from config.secrets import *
 from util import agolutil
 from util import datautil
@@ -250,10 +250,10 @@ def cli_args():
         help='Name of the dataset that will be published.'
     )
 
-
     parser.add_argument(
         'app_name',
         action="store",
+        choices=['data_tracker_prod', 'data_tracker_test', 'visitor_sign_in_prod'],
         type=str,
         help='Name of the knack application that will be accessed'
     )
