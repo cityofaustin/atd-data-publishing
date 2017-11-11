@@ -1,5 +1,3 @@
-#  conifguration file for knack_data_pub.py
-
 cfg = {
     'atd_visitor_log' : {
         'obj' : None,

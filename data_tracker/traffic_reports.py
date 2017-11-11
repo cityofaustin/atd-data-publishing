@@ -17,7 +17,7 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from config.traffic_report_fields import *
+from config.traffic_report.meta import *
 from util import emailutil
 from util import datautil
 from util import agolutil
