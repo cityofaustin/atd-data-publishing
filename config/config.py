@@ -269,7 +269,7 @@ cfg_esb = {
 } 
 
 
-cfg_knack_fulcrum = {
+CFG_KNACK_FULCRUM = {
     'data_tracker_test_fulcrum' : {
         'work_orders_public' : {  
             'scene' : 'scene_514',
@@ -285,7 +285,7 @@ cfg_knack_fulcrum = {
 } 
 
 
-knack_fulc_fieldmap = [
+KNACK_FULC_FIELDMAP = [
     {
         'name_knack' : 'id',
         'name_fulcrum' : 'knack_id',
@@ -303,7 +303,7 @@ knack_fulc_fieldmap = [
         'type_knack' : str,
     },
     {
-        'name_knack' : '',
+        'name_knack' : 'TECHNICIAN_LEAD',
         'name_fulcrum' : '_assigned_to_id',
         'detect_changes' : True,
         'table_fulcrum' : '',
@@ -319,7 +319,7 @@ knack_fulc_fieldmap = [
         'type_knack' : str,
     },
     {
-        'name_knack' : '',
+        'name_knack' : 'CREATED_DATE',
         'name_fulcrum' : '_created_at',
         'detect_changes' : True,
         'table_fulcrum' : '',
@@ -327,7 +327,7 @@ knack_fulc_fieldmap = [
         'type_knack' : 'date_unix',
     },
     {
-        'name_knack' : '',
+        'name_knack' : 'MODIFIED_DATE',
         'name_fulcrum' : '_updated_at',
         'detect_changes' : True,
         'table_fulcrum' : '',
@@ -335,13 +335,13 @@ knack_fulc_fieldmap = [
         'type_knack' : 'date_unix',
     },
     {
-        'name_knack' : 'work_type',
+        'name_knack' : 'WORK_TYPE',
         'name_fulcrum' : 'work_type',
         'detect_changes' : True,
         'table_fulcrum' : 'this might change', #todo
     },
     {
-        'name_knack' : 'asset_type',
+        'name_knack' : 'ASSET_TYPE',
         'name_fulcrum' : 'asset_type',
         'detect_changes' : True,
         'table_fulcrum' : '',
@@ -355,19 +355,19 @@ knack_fulc_fieldmap = [
         'table_fulcrum' : '',
     },
     {
-        'name_knack' : 'problem_found',
+        'name_knack' : 'PROBLEM_FOUND',
         'name_fulcrum' : 'problem_found',
         'detect_changes' : True,
         'table_fulcrum' : '',
     },
     {
-        'name_knack' : 'action_taken',
+        'name_knack' : 'ACTION_TAKEN',
         'name_fulcrum' : 'action_taken',
         'detect_changes' : True,
         'table_fulcrum' : '',
     },
     {
-        'name_knack' : 'work_order_id',
+        'name_knack' : 'WORK_ORDER_ID',
         'name_fulcrum' : 'work_order_id',
         'detect_changes' : True,
         'table_fulcrum' : '',
