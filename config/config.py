@@ -1,4 +1,4 @@
-#  conifguration file for knack_data_pub.py
+#  conifguration file for Knack records
 
 cfg = {
     'atd_visitor_log' : {
