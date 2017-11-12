@@ -168,7 +168,7 @@ def main(date_time):
         
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
-            'Location Update Failure',
+            'ESB XML Generate Failure',
             str(e),
             EMAIL['user'],
             EMAIL['password']
