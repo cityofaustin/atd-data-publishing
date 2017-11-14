@@ -81,7 +81,8 @@ def main(date_time):
                 lat_field=lat_field,
                 lon_field=lon_field
             )
-
+            
+            
             del_response = agolutil.delete_features(
                 cfg[dataset]['service_url'],
                 token
@@ -105,7 +106,7 @@ def main(date_time):
                 agol_fail += 1
                 
                 if agol_fail == 1:
-                    pdb.set_trace()
+                    
                     #  alert on first failure, but continue processing
                     emailutil.send_email(
                         ALERTS_DISTRIBUTION,

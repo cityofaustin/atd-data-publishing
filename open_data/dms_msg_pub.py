@@ -80,6 +80,8 @@ def main(date_time):
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[pt30o0]','')
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[fo13]','')
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[fo2]','')
+            msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[jl3]','')
+            msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[pt30]','')
 
 
         
