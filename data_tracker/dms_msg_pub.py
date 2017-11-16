@@ -12,7 +12,6 @@ from util import datautil
 from util import emailutil
 from util import socratautil   
 
-
 then = arrow.now()
 now_s = then.format('YYYY_MM_DD')
 
@@ -57,9 +56,6 @@ def main(date_time):
                 api_key=knack_creds['api_key']
         )
 
-
-        
-        
         knack_data = kn.data
         if kits_data:
             new_data = datautil.merge_dicts(
@@ -80,17 +76,12 @@ def main(date_time):
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[pt30o0]','')
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[fo13]','')
             msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[fo2]','')
-
-
-        
+            msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[jl3]','')
+            msg['DMS_MESSAGE'] = msg['DMS_MESSAGE'].replace('[pt30]','')
 
         print('remove keys & re-name')
         new_data = datautil.reduce_to_keys(new_data,['id','MESSAGE_TIME','DMS_MESSAGE'])
         new_data = datautil.replace_keys(new_data,kn.field_map)
-
-
-        
-
 
         print('sending messages to Knack')
         count = 0
@@ -104,11 +95,9 @@ def main(date_time):
                 knack_creds['app_id'],
                 knack_creds['api_key']
             )
+
             print(response)
            
-
-        
-
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
@@ -122,8 +111,6 @@ def main(date_time):
 
         raise e
  
-
 results = main(then)
 
-print(results['res'])
 logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
