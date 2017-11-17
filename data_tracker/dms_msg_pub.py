@@ -92,10 +92,10 @@ def main(date_time):
             response = knackpy.update_record(
                 record,
                 ref_obj[0],
-                'id',
                 knack_creds['app_id'],
                 knack_creds['api_key']
             )
+
             print(response)
            
     except Exception as e:
@@ -113,5 +113,4 @@ def main(date_time):
  
 results = main(then)
 
-print(results['res'])
 logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
