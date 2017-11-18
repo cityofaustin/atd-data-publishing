@@ -1,14 +1,14 @@
 '''
-todo:
-- enable email alert
-ping field device and update ip comm status in Knack database
-command ex: device_status_check.py travel_sensors
+Ping network devices and update ip comm status in Knack database.
+
+command ex: device_status_check.py travel_sensors data_tracker_prod
 '''
 import argparse
 import json
 import logging
 from os import system as system_call
 import pdb
+from multiprocessing.dummy import Pool as ThreadPool 
 from platform import system as system_name  
 import traceback
 
@@ -21,14 +21,19 @@ from config.secrets import *
 from util import datautil
 from util import emailutil
 
-def ping_ip(ip):
-    #  https://stackoverflow.com/questions/2953462/pinging-servers-in-python
-    print(ip)
-    logging.debug( 'ping {}'.format(ip) )
-        
-    #  logic for system-specific param
-    #  -w / -W is timeout -n/-c is number of packets
-    params= "-w 1000 -n 1" if system_name().lower()=="windows" else "-W 1 -c 1"    
+
+def ping_ip(ip, timeout=3):
+    '''
+    Ping an IP address
+    https://stackoverflow.com/questions/2953462/pinging-servers-in-python
+    '''
+    if system_name().lower() == "windows":
+        #  -w is timeout -n is number of packets
+        params = "-w {} -n 1".format(timeout * 1000) # convert seconds to mills for non-windows
+
+    else:
+        #  -W is timeout -c is number of packets
+        params = "-W {} -c 1".format(timeout)   
 
     response = system_call("ping " + params + " " + ip)
 
@@ -40,8 +45,38 @@ def ping_ip(ip):
         return "ONLINE"
 
 
+def get_status(device):
+    
+    #  get old IP status, setting it to NO COMMUNICATION if not present    
+    state_previous = device.setdefault('IP_COMM_STATUS', 'NO COMMUNICATION')
+    
+    ip = device.get(ip_field)
+
+    if ip:
+        state_new = ping_ip(device[ip_field])
+    
+    else:
+        #  set to NO COMMUINICATION if no IP address
+        state_new='NO COMMUNICATION'
+
+    if state_previous != state_new:
+
+        device['IP_COMM_STATUS'] = state_new
+        #  timestamps into and out of knack are naive
+        #  so we create a naive local timestamp by replacing
+        #  a localized timestamp's timezone info with UTC
+        device['COMM_STATUS_DATETIME_UTC'] = arrow.now().replace(tzinfo='UTC').timestamp * 1000
+
+        return device
+
+    else:
+        return None
+
+
+
 def main():
     try:
+        #  get device data from Knack application
         kn = knackpy.Knack(
             obj=cfg[device_type]['obj'],
             scene=cfg[device_type]['scene'],
@@ -51,6 +86,9 @@ def main():
             api_key=knack_creds['api_key']
         )
 
+        #  optionally write to JSON
+        #  this is a special case for CCTV cameras.
+        #  we copy the JSON to our internal web server
         if out_json:
             out_dir = IP_JSON_DESTINATION
             json_data = datautil.reduce_to_keys(kn.data, out_fields_json)
@@ -62,43 +100,32 @@ def main():
             with open(filename, 'w') as of:
                 json.dump(json_data, of)
 
-        for device in kn.data:
-            
-            if ip_field in device:
-                
-                if not 'IP_COMM_STATUS' in device:
-                    device['IP_COMM_STATUS'] = 'OFFLINE'
-                
-                state_previous = device['IP_COMM_STATUS']
-                
-                if device[ip_field]:
-                    state_new = ping_ip(device[ip_field])
-              
-                else:
-                    continue
+        pool = ThreadPool(8)
 
-                if state_previous != state_new:
+        results = pool.map(get_status, kn.data)
+        
+        for result in results:
+            '''
+            Result is None if status has not changed. Otherwise result
+            is device record dict
+            '''
+            if result:
+                #  format for upload to Knack
+                result = datautil.reduce_to_keys([result], out_fields_upload)
+                result = datautil.replace_keys(result, kn.field_map)
 
-                    device['IP_COMM_STATUS'] = state_new
-                    #  all timestamps into and out of knack are naive
-                    #  so we create a naive local timestamp by replacing
-                    #  a localized timestamp's timezone info with UTC
-                    device['COMM_STATUS_DATETIME_UTC'] = arrow.now().replace(tzinfo='UTC').timestamp * 1000
-                    device = datautil.reduce_to_keys([device], out_fields_upload)
-                    device = datautil.replace_keys(device, kn.field_map)
-                    
-                    logging.debug(device)
-                    
-                    response_json = knackpy.update_record(
-                            device[0],  #  convert device from array len 1 to dict
-                            cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array
-                            knack_creds['app_id'],
-                            knack_creds['api_key']
-                    )
-                    
-                    logging.debug(response_json)
-                    
-        return "done"
+                response_json = knackpy.update_record(
+                    result[0],
+                    cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array
+                    knack_creds['app_id'],
+                    knack_creds['api_key']
+                )
+
+        # close the pool and wait for the work to finish 
+        pool.close() 
+        pool.join() 
+        
+        return True
     
     except Exception as e:
         print('Failed to process data for {}'.format(str(now)) )
@@ -108,7 +135,6 @@ def main():
         logging.error(error_text)
         print(e)
         raise e
-
 
 
 def cli_args():
