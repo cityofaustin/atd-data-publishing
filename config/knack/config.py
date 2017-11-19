@@ -19,6 +19,7 @@ cfg = {
         'socrata_resource_id' : 'p53x-x73x',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'CONTROLLER_IP',
+        'status_field' : 'SIGNAL_STATUS',
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
@@ -48,6 +49,7 @@ cfg = {
         'socrata_resource_id' : 'b4k4-adkb',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'CAMERA_IP',
+        'status_field' : 'CAMERA_STATUS',
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
@@ -176,6 +178,7 @@ cfg = {
         'socrata_resource_id' : '6yd9-yz29',
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'SENSOR_IP',
+        'status_field' : 'SENSOR_STATUS',
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
