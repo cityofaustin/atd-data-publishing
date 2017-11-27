@@ -24,8 +24,27 @@ update_fields = [
     'JURISDICTION_LABEL',
     'SIGNAL_ENG_AREA',
     'COUNCIL_DISTRICT',
+    'BUS_STOPS',
     'UPDATE_PROCESSED'
 ]
+
+field_maps =  {
+    #  service name
+    'EXTERNAL_cmta_stops_new' : {  
+        'fields' : {
+            #  AGOL Field : Knack Field
+            'ID' : 'BUS_STOPS',
+        },
+    },
+}
+
+
+def format_stringify_list(input_list):
+    '''
+    Function to format features when merging multiple feature attributes
+    '''
+    return ', '.join(str(l) for l in input_list)
+
 
 '''
 layer config for interacting with ArcGIS Online
@@ -43,7 +62,7 @@ layers = [
     },
     {
         'service_name' : 'BOUNDARIES_jurisdictions',
-        #  will attempt secondary attempt secondary service if no results at primary 
+        #  will attempt secondary service if no results at primary 
         'service_name_secondary' : 'BOUNDARIES_jurisdictions_planning',
         'outFields' : 'JURISDICTION_LABEL',
         'layer_id' : 0,
@@ -54,7 +73,16 @@ layers = [
         'outFields' : 'SIGNAL_ENG_AREA',
         'layer_id' : 0,
         'handle_features' : 'use_first'
-    }
+    },
+    {   
+        'service_name' : 'EXTERNAL_cmta_stops_new',
+        'outFields' : 'ID',
+        'layer_id' : 0,
+        'distance' : 350,
+        'units' : 'esriSRUnit_Foot',
+        'handle_features' : 'merge_all',
+        'apply_format' : format_stringify_list
+    },
 ]
 
 filters = {
@@ -69,6 +97,24 @@ filters = {
         }
     ]
 }
+
+
+def map_fields(record, field_map):
+    '''
+    Replace field names according to field map. Used to replace ArcGIS Online
+    reference feature service field names with database field names.
+    '''
+    new_record = {}
+
+    for field in record.keys():
+        outfield = field_map['fields'].get(field)
+
+        if outfield:
+            new_record[outfield] = record[field]
+        else:
+            new_record[field] = record[field]
+
+    return new_record
 
 
 def get_params(layer_config):
@@ -92,25 +138,7 @@ def get_params(layer_config):
 
     return params
 
-
-def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='knack_data_pub.py',
-        description='Publish Knack data to Socrata and ArcGIS Online'
-    )
-
-    parser.add_argument(
-        'app_name',
-        action="store",
-        type=str,
-        help='Name of the knack application that will be accessed'
-    )
-
-    args = parser.parse_args()
-    
-    return(args)
-
-
+        
 
 def join_features_to_record(features, layer_config, record):
     ''''
@@ -152,7 +180,31 @@ def join_features_to_record(features, layer_config, record):
                     
                 record[field].append(str(feature['attributes'][field]).strip())
 
+        if layer_config.get('apply_format'):
+            #  apply special formatting function to attribute array
+            for field in feature['attributes'].keys():
+                input_val = record[field]
+                record[field] = layer_config['apply_format'](input_val)
+
     return record
+
+
+def cli_args():
+    parser = argparse.ArgumentParser(
+        prog='knack_data_pub.py',
+        description='Publish Knack data to Socrata and ArcGIS Online'
+    )
+
+    parser.add_argument(
+        'app_name',
+        action="store",
+        type=str,
+        help='Name of the knack application that will be accessed'
+    )
+
+    args = parser.parse_args()
+    
+    return(args)
 
 
 def main(date_time):
@@ -175,6 +227,10 @@ def main(date_time):
             logging.info('No new records to process')
             return None
 
+        '''
+        remove "update fields" from record. these are e-appended via
+        spatial lookup
+        '''  
         keep_fields = [field for field in kn.fieldnames if field not in update_fields]
         kn.data = datautil.reduce_to_keys(kn.data, keep_fields)
         
@@ -200,6 +256,12 @@ def main(date_time):
                                 
                     if len(res['features']) > 0:
                         location = join_features_to_record(res['features'], layer, location)
+                        
+                        field_map = field_maps.get(layer['service_name'])
+                        
+                        if field_map:
+                            location = map_fields(location, field_map)
+                            
                         continue
 
                     if 'service_name_secondary' in layer:
@@ -215,7 +277,6 @@ def main(date_time):
                         if len(res['features']) > 0:
                             location = join_features_to_record(res['features'], layer, location)
                             continue
-                       
                     '''
                     no intersecting features found.
                     set update fields to null to overwrite any existing data
