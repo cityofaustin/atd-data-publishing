@@ -14,6 +14,7 @@ class Soda(object):
         user=None,
         password=None,
         portal='data.austintexas.gov',
+        query=None,
         record_limit=5000,
         timeout=10
     ):
@@ -25,20 +26,17 @@ class Soda(object):
         ----------
         '''
         if not resource:
-            raise Excpetion('Resource identifier is required.')
+            raise Exception('Resource identifier is required.')
 
         self.resource = resource
         self.portal = portal
         self.user = user
         self.password = password
+        self.query = query
         self.record_limit = int(record_limit)
         self.timeout = float(timeout)
         
-        self.url = 'https://{}/resource/{}.json?$limit={}'.format(
-            self.portal,
-            self.resource,
-            self.record_limit
-        )
+        self.url = self._get_url()
         
         self.url_metadata = 'https://{}/api/views/{}.json'.format(
             self.portal,
@@ -54,6 +52,20 @@ class Soda(object):
 
         else:
             self.data = self.get_private_data()
+
+    def _get_url(self):
+            url = 'https://{}/resource/{}.json?$limit={}'.format(
+                self.portal,
+                self.resource,
+                self.record_limit
+            )
+
+            if self.query:
+                #  see: https://dev.socrata.com/docs/queries/
+                url = '{}&{}'.format(url, self.query)
+
+            print(url)
+            return url
 
     def get_public_data(self):
         print('fetch public socrata data')
