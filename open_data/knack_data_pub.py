@@ -93,14 +93,13 @@ def main(date_time):
                 agol_payload
             )
             
-            for res in add_response['addResults']:
-                if 'success' in res:
+            try:
+                for res in add_response['addResults']:
                     if res['success']:
                         continue
-                
-                logging.info('AGOL publicatoin failed to upload. {}'.format(
-                    res
-                ))
+            
+            except KeyError:
+                logging.info('AGOL publicatoin failed to upload. {}'.format(res))
 
                 agol_fail += 1
                 
@@ -109,7 +108,7 @@ def main(date_time):
                     emailutil.send_email(
                         ALERTS_DISTRIBUTION,
                         'AGOL Feature Publish Failure: {}'.format(dataset),
-                        str(res),
+                        str(add_response),
                         EMAIL['user'],
                         EMAIL['password']
                     )
