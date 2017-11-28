@@ -224,6 +224,18 @@ cfg = {
             'lon' : 'LOCATION_longitude'
         }
     },
+    'gridsmart' : {
+        #  endpoint for device status check only. 
+        #  data publishing is handled via detectors config
+        'primary_key' : 'DETECTOR_ID',
+        'ref_obj' : ['object_98', 'object_12'],
+        'obj' : None,
+        'scene' : 'scene_468',
+        'view' : 'view_1791',
+        'include_ids' : True,
+        'pub_log_id' : 'n5kp-f8k4',
+        'ip_field' : 'DETECTOR_IP',
+    },
     'timed_corridors' : {
         'primary_key' : 'ATD_SYNC_SIGNAL_ID',
         'ref_obj' : ['object_12', 'object_42', 'object_43'],

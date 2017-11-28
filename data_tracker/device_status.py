@@ -147,7 +147,7 @@ def cli_args():
         'device_type',
         action="store",
         type=str,
-        choices=['signals', 'travel_sensors', 'cameras'],
+        choices=['signals', 'travel_sensors', 'cameras', 'gridsmart'],
         help='Type of device to ping.'
     )
 
