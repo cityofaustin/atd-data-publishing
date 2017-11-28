@@ -1,10 +1,6 @@
 ''' 
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
-
-todo:
-- define ESB_LOG_DIRECTORY and update secrets
-- email alerts
 '''
 import argparse
 import logging
@@ -21,14 +17,50 @@ from config.secrets import *
 from util import datautil
 from util import emailutil
 
-  
-def get_record_id_from_file(directory, f):
-    record_id = f.split('.')[0]
-    return record_id
 
-def get_msg(directory, f):
+def get_record_id_from_file(directory, file):
+    '''
+    Extract Knack record id from filename.
+
+    Expects XML messages to be namedw with incremental record ID as well as
+    Knack database ID. The former is used to sort records in chronological
+    order (not returned by this function) and the latter is used to update
+    the Knack record with a 'SENT' status when message has been successfully
+    transmitted to ESB.
+
+    Expected format is incrementaId_knackId.xml. E.g. 10034_axc3345f23msf0.xml
+    '''
+    record_data = file.split('.')[0]
+    return record_data.split('_')[1]
+
+
+def get_sorted_file_list(path):
+    '''
+    Retrieve XML files from directory and return a sorted list of
+    files based on filename.
+
+    Assumes ascendant sorting of filenames is equivalent to sorting
+    oldest to newest records in database. This is accomplished by naming files
+    with their incremental record ID via esb_xml_gen.py
+
+    Returns array of filenames sorted A-Z, aka oldest to newest.
+    '''
+    files = []
+
+    for file in os.listdir(path):
+        filename = os.fsdecode(file)
+            
+        if filename.endswith(".xml"): 
+            files.append(file)
+    
+    files.sort()
+
+    return files
+
+
+def get_msg(directory, file):
     #  read xml msg memory
-    fin = os.path.join(directory, f)
+    fin = os.path.join(directory, file)
     with open(fin, 'r') as msg:
         return msg.read()
 
@@ -86,23 +118,34 @@ def main(date_time):
 
         sent = []
         fail = []
-        for file in os.listdir(inpath):
-            filename = os.fsdecode(file)
+        
+        '''
+        Get files in order by incremental ID. This ensures messages
+        are transmitted chronologically.
+        '''
+        files = get_sorted_file_list(inpath)
+        
+        for filename in files:
+            '''
+            Extract record id, send message to ESB, move file to 'sent' folder,
+            and update Knack record with status of SENT.
+            '''
+            record_id = get_record_id_from_file(inpath, filename)
             
-            if filename.endswith(".xml"): 
-                record_id = get_record_id_from_file(inpath, filename)
-                msg = get_msg(inpath, filename)
-                res = send_msg(msg, ESB_ENDPOINT['prod'], cfg['path_cert'], cfg['path_key'])
-                
-                if res.status_code == 200:
-                    sent.append(record_id)
-                    move_file(inpath, outpath, filename)
-                else: 
+            msg = get_msg(inpath, filename)
+            
+            res = send_msg(msg, ESB_ENDPOINT['prod'], cfg['path_cert'], cfg['path_key'])
 
-                    logging.warning( 'Record {} failed to process with error {}'.format(record_id, res.content) ) 
-                    fail.append(res.content)
-
-        for record in sent:
+            res.raise_for_staus()
+            
+            move_file(inpath, outpath, filename)
+            
+            else: 
+                logging.warning( 'Record {} failed to process with error {}'.format(record_id, res.content) ) 
+                fail.append(res.content)
+                continue
+            
+            ''' Update Knack Record '''
             payload = create_payload(record)
             record_id = payload['id']
             
@@ -113,15 +156,9 @@ def main(date_time):
                 knack_creds['api_key']
             )
 
-            if 'total_pages' in res:
-                if res['total_pages'] == 0:
-                    raise Exception('Failed to update Knack record after ESB pub: {}'.format(record_id) )
-            
-        #  send email at end if issues
-        if fail:
-            raise Exception('Records failed to publish to ESB. See log for more details.')
+            res.raise_for_status()
 
-        logging.info('{} records transmitted.'.format(len(sent)))
+        logging.info('{} records transmitted.'.format(len(files)))
         
 
     except Exception as e:
