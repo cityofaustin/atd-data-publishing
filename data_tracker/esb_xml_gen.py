@@ -154,10 +154,15 @@ def main(date_time):
 
         for record in kn.data:            
             payload = build_xml_payload(record)
-            #  If for some reason this record already has an XML message in queue
-            #  (e.g. the ESB is down), the previous message will be overwritten
-            #  don't change the message format without considering esb_xml_send.py
-            with open('{}/{}.xml'.format(outpath, record['id']), 'w') as fout:
+            '''
+            XML messages are formatted with incremental ATD_ACTIVITY_ID as well as
+            database record id. 
+
+            If for some reason this record already has an XML message in queue
+            (e.g. the ESB is down), the previous message will be overwritten
+            don't change the message format without considering esb_xml_send.py
+            '''
+            with open('{}/{}_{}.xml'.format(outpath, record['ATD_ACTIVITY_ID'], record['id']), 'w') as fout:
                 fout.write(payload)
             
         return 'GOOD JOB!'
