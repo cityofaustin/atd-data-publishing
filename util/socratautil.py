@@ -5,6 +5,9 @@ import pdb
 import arrow
 import requests
 
+#  remove get public/private data
+#  soql
+#  better docs
 
 class Soda(object):
     
@@ -14,16 +17,37 @@ class Soda(object):
         user=None,
         password=None,
         portal='data.austintexas.gov',
-        query=None,
-        record_limit=5000,
+        soql={'$limit' : 5000},
         timeout=10
     ):
         '''  
         Class to interact with Socrata-powered data portal via the SODA API as
         documented at https://dev.socrata.com/consumers/getting-started.html
         
+        This is a simplified version of Socrata's sodapy 
+        (https://github.com/xmunoz/sodapy) which has been tailored to our
+        data publishing needs.
+
         Parameters
         ----------
+        resource : string (required)
+            Socrata resource identifier
+        portal : string
+            Domain name of Socrata-powered data portal
+        user : string
+            Login username. Required for private datasets.
+        password: string
+            Login password. Required for private datasets.
+        soql: dic
+            A dictionary of SoQL clauses, where each key/value is a parameter
+            and value to be passed as a query string to the endpoint URL. As
+            described here: https://dev.socrata.com/docs/queries/
+            Default parameter is record limit of 5k records.
+        timeout
+            The request timeout time in seconds
+
+        Returns a Soda instance with data stored in dictionary at self.data.
+        Default record limit is 5k records.
         '''
         if not resource:
             raise Exception('Resource identifier is required.')
@@ -32,12 +56,14 @@ class Soda(object):
         self.portal = portal
         self.user = user
         self.password = password
-        self.query = query
-        self.record_limit = int(record_limit)
+        self.soql = soql
         self.timeout = float(timeout)
         
-        self.url = self._get_url()
-        
+        self.url = 'https://{}/resource/{}.json'.format(
+            self.portal,
+            self.resource,
+        )
+
         self.url_metadata = 'https://{}/api/views/{}.json'.format(
             self.portal,
             self.resource
@@ -47,48 +73,32 @@ class Soda(object):
         self.metadata = None
         self.fieldnames = None
 
-        if not (user and password):
-            self.data = self.get_public_data()
+        self.data = self.get_data()
 
-        else:
-            self.data = self.get_private_data()
 
-    def _get_url(self):
-            url = 'https://{}/resource/{}.json?$limit={}'.format(
-                self.portal,
-                self.resource,
-                self.record_limit
+    def get_data(self):
+        print('Get socrata data.')
+
+        if self.user and self.password:
+            auth = (
+                self.user,
+                self.password
             )
+        else:
+            auth = None
 
-            if self.query:
-                #  see: https://dev.socrata.com/docs/queries/
-                url = '{}&{}'.format(url, self.query)
+        params = self.soql
+        
+        res = requests.get(
+            self.url,
+            params=params,
+            auth=auth
+        )
 
-            print(url)
-            return url
-
-    def get_public_data(self):
-        print('fetch public socrata data')
-        res = requests.get(self.url)
         res.raise_for_status()
         self.data = res.json()
         return self.data
 
-    def get_private_data(self):
-        print('fetch private socrata data')
-        
-        auth = (
-            self.user,
-            self.password
-        )
-        
-        res = requests.get(
-            self.url,
-            auth=auth
-        )
-        
-        res.raise_for_status()
-        return res.json()
 
     def get_metadata(self):
         print('Get metadata')
@@ -102,9 +112,11 @@ class Soda(object):
         self.get_date_fields()
         return self.metadata
 
+
     def get_fieldnames(self):
         self.fieldnames = [ col['fieldName'] for col in self.metadata['columns'] ]
         return self.fieldnames
+
 
     def get_date_fields(self):
         self.date_fields = [ field['fieldName'] for field in self.metadata['columns'] if 'date' in field['dataTypeName'] ] 
@@ -162,7 +174,7 @@ def create_location_fields(
 
 
 def strip_geocoding(dicts):
-    print('strip geocoding field')
+    print('Strip geocoding field')
 
     for record in dicts:
         if 'location' in record:
@@ -175,7 +187,7 @@ def strip_geocoding(dicts):
 
 
 def upsert_data(creds, payload, resource):
-    print('upsert open data ' + resource)
+    print('Upsert open data ' + resource)
     
     url = 'https://data.austintexas.gov/resource/{}.json'.format(resource)    
     auth = (creds['user'], creds['password'])
@@ -191,7 +203,7 @@ def upsert_data(creds, payload, resource):
 
 
 def replace_resource(creds, resource, payload):
-    print('replace resource ' + resource)
+    print('Replace resource ' + resource)
     url = 'https://data.austintexas.gov/resource/{}.json'.format(resource)    
     auth = (creds['user'], creds['password'])
     json_data = json.dumps(payload)
@@ -200,7 +212,7 @@ def replace_resource(creds, resource, payload):
 
 
 def replace_non_data_file(creds, resource, filename, file, timeout=10):
-    print('replace non data file')
+    print('Replace non-data file.')
     # see here https://github.com/xmun0x/sodapy
     auth = (creds['user'], creds['password'])
     uri = 'https://data.austintexas.gov/api/views/{}.txt'.format(resource)
@@ -219,7 +231,7 @@ def replace_non_data_file(creds, resource, filename, file, timeout=10):
 
 
 def prep_pub_log(date_time, event, socrata_response):
-    print('prep publication log')
+    print('Prep publication log')
 
     if 'message' not in socrata_response:
         socrata_response['message'] = ''
