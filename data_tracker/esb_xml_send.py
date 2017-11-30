@@ -83,9 +83,9 @@ def move_file(old_dir, new_dir, f):
     os.rename(infile, outfile)
 
 
-def create_payload(record):
+def create_payload(record_id):
     payload = {
-        'id' : record,
+        'id' : record_id,
         cfg['esb_status_field'] : 'SENT'
     }
     return payload
@@ -115,9 +115,6 @@ def main(date_time):
 
     try:
         directory = os.fsencode(inpath)
-
-        sent = []
-        fail = []
         
         '''
         Get files in order by incremental ID. This ensures messages
@@ -136,18 +133,12 @@ def main(date_time):
             
             res = send_msg(msg, ESB_ENDPOINT['prod'], cfg['path_cert'], cfg['path_key'])
 
-            res.raise_for_staus()
+            res.raise_for_status()
             
             move_file(inpath, outpath, filename)
-            
-            else: 
-                logging.warning( 'Record {} failed to process with error {}'.format(record_id, res.content) ) 
-                fail.append(res.content)
-                continue
-            
+                        
             ''' Update Knack Record '''
-            payload = create_payload(record)
-            record_id = payload['id']
+            payload = create_payload(record_id)
             
             res = knackpy.update_record(
                 payload,
@@ -155,8 +146,6 @@ def main(date_time):
                 knack_creds['app_id'],
                 knack_creds['api_key']
             )
-
-            res.raise_for_status()
 
         logging.info('{} records transmitted.'.format(len(files)))
         
