@@ -99,7 +99,7 @@ def main(date_time):
                         continue
             
             except KeyError:
-                logging.info('AGOL publicatoin failed to upload. {}'.format(res))
+                logging.info('AGOL publicatoin failed to upload. {}'.format(add_response))
 
                 agol_fail += 1
                 
