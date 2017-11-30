@@ -2,16 +2,18 @@
 Transform traffic count files so that they can be
 inserted into ArcSDE database
 '''
-import os
 import csv
-import pdb
 import hashlib
 import logging
+import os
+import pdb
 import traceback
-import arrow
-from secrets import *
-from util import emailutil
 
+import arrow
+
+import _setpath
+from config.secrets import *
+from util import emailutil
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
@@ -23,6 +25,7 @@ logging.info('START SPD AT {}'.format(str(now)))
 
 root_dir = TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = TRAFFIC_COUNT_OUTPUT_SPD_DIR
+
 row_id_name = 'ROW_ID'
 directions = ['NB', 'EB', 'WB', 'SB']
 

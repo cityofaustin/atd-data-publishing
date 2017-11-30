@@ -2,19 +2,21 @@
 Transform traffic count files so that they can be
 inserted into ArcSDE database
 '''
-import os
 import csv
-import pdb
 import hashlib
 import logging
+import os
+import pdb
 import traceback
+
 import arrow
-from secrets import *
+
+import _setpath
+from config.secrets import *
 from util import emailutil
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
-
 
 logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
