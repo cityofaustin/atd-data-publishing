@@ -2,21 +2,24 @@
 Transform traffic count files so that they can be
 inserted into ArcSDE database
 '''
-import os
 import csv
-import pdb
 import hashlib
 import logging
+import os
+import pdb
 import traceback
+
 import arrow
-from secrets import *
+
+import _setpath
+from config.secrets import *
 from util import emailutil
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
 
-logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
+logfile = '{}/traffic_study_pub_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START VOL AT {}'.format(str(now)))
 
@@ -25,7 +28,7 @@ out_dir = TRAFFIC_COUNT_OUTPUT_VOL_DIR
 row_id_name = 'ROW_ID'
 
 fieldnames = ['DATETIME', 'YEAR', 'MONTH', 'DAY_OF_MONTH', 'DAY_OF_WEEK', 'TIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', row_id_name, 'SITE_CODE']
-directions = ['NB', 'EB', 'WB', 'SB']
+directions = ['NB', 'EB', 'WB', 'SB', 'THRUS', 'LTS']
 
 def getFile(path):
     print(path)
@@ -55,13 +58,16 @@ def splitRowsByDirection(rows):
         time = row['Time']
 
         date_data = parseDateTime(date, time)
-        
+
         if 'Total' in row.keys():  #  only files with bi-directional data will have a total
             total = row['Total']
         else:
             total = None
         
         for d in directions:
+            #  clean up row keys in event of extra whitespace (it happens)
+            row = {key.strip() : row[key] for key in row.keys()}
+
             if d in row.keys():
                 new_row = {}
                 new_row['CHANNEL'] = d
@@ -132,9 +138,21 @@ def main():
                 rows = splitRowsByDirection(rows)
                 rows = appendKeyVal(rows, 'DATA_FILE', data_file)
                 rows = appendKeyVal(rows, 'SITE_CODE', site_code)
-                rows = createRowIDs(rows, row_id_name, ['DATETIME', 'DATA_FILE', 'COUNT_CHANNEL'])
-                # https://stackoverflow.com/questions/34771268/md5-hashing-a-csv-with-python
-                out_path = os.path.join(out_dir, 'fme_' + name)
+                rows = createRowIDs(
+                    rows,
+                    row_id_name,
+                    ['DATETIME', 'DATA_FILE', 'COUNT_CHANNEL']
+                )
+                
+                #  acquire study year from first row in data
+                try:
+                    year = rows[0]['YEAR']
+                except IndexError:
+                    print('oops')
+
+                #  file name in format 'fme_{study year}_{original file name ending in .csv}'
+                filename = 'fme_{}_{}'.format(year, name)
+                out_path = os.path.join(out_dir, filename)
                 
                 #  write to file
                 with open(out_path, 'w', newline='\n') as outfile:
@@ -161,11 +179,17 @@ def main():
 
 try:
     main()
+    logging.info('END AT: {}'.format(arrow.now().format()))
 
 except Exception as e:
     error_text = traceback.format_exc()
     print(error_text)
     logging.error(error_text)
-    emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Count Volume Process Failure', error_text)
-
-logging.info('END AT: {}'.format(arrow.now().format()))
+    emailutil.send_email(
+        ALERTS_DISTRIBUTION,
+        'Traffic Study Volume Process Failure',
+        error_text,
+        EMAIL['user'],
+        EMAIL['password']
+    )
+    raise e
