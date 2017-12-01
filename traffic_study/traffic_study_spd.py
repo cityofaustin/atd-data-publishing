@@ -2,27 +2,30 @@
 Transform traffic count files so that they can be
 inserted into ArcSDE database
 '''
-import os
 import csv
-import pdb
 import hashlib
 import logging
+import os
+import pdb
 import traceback
-import arrow
-from secrets import *
-from util import emailutil
 
+import arrow
+
+import _setpath
+from config.secrets import *
+from util import emailutil
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
 
-logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
+logfile = '{}/traffic_study_pub_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START SPD AT {}'.format(str(now)))
 
 root_dir = TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = TRAFFIC_COUNT_OUTPUT_SPD_DIR
+
 row_id_name = 'ROW_ID'
 directions = ['NB', 'EB', 'WB', 'SB']
 
@@ -166,7 +169,12 @@ def main():
 
                 fieldnames = [key for key in data['combined'][0].keys()]
 
-                out_path = os.path.join(out_dir, 'fme_' + name)
+                #  acquire study year from first row in data
+                year = data['combined'][0]['YEAR']
+
+                #  file name in format 'fme_{study year}_{original file name ending in .csv}'
+                filename = 'fme_{}_{}'.format(year, name)
+                out_path = os.path.join(out_dir, filename)
                 
                 #  write to file
                 with open(out_path, 'w', newline='\n') as outfile:
@@ -191,10 +199,18 @@ def main():
 
 try:
     main()
+    logging.info('END AT: {}'.format(arrow.now().format()))
 
 except Exception as e:
     error_text = traceback.format_exc()
     logging.error(error_text)
-    emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Count Classification Process Failure', error_text)
+    emailutil.send_email(
+        ALERTS_DISTRIBUTION,
+        'Traffic Study Speed Process Failure',
+        error_text,
+        EMAIL['user'],
+        EMAIL['password']
+    )
+    raise e
 
-logging.info('END AT: {}'.format(arrow.now().format()))
+

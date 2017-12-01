@@ -1,22 +1,24 @@
 '''
-Transform traffic count files so that they can be
-inserted into ArcSDE database
+Transform traffic study classfication files so that they can be
+inserted into ArcSDE database and published as open data
 '''
-import os
 import csv
-import pdb
 import hashlib
 import logging
+import os
+import pdb
 import traceback
+
 import arrow
-from secrets import *
+
+import _setpath
+from config.secrets import *
 from util import emailutil
 
 now = arrow.now()
 now_s = now.format('YYYY_MM_DD')
 
-
-logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
+logfile = '{}/traffic_study_pub_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START CLS AT {}'.format(str(now)))
 
@@ -44,8 +46,12 @@ fieldmap = {
 
 
 def getFile(path):
+    '''
+    Extract report metadata from top of report
+    '''
     print(path)
     with open(path, 'r') as in_file:
+
         data = {'data_file':[], 'site_code':''}
 
         append_lines = False
@@ -135,8 +141,13 @@ def main():
                 data_file = data['data_file']
                 site_code = data['site_code']
                 data['combined'] = []
+                
                 for d in directions:
                     if d in data:
+                        '''
+                        Extract file data for each direction ('channel') in report,
+                        and append array of rows in data['combined']
+                        '''
                         reader =  csv.DictReader(data[d])
                         rows = [row for row in reader]
                         data[d] = rows
@@ -146,9 +157,8 @@ def main():
                         data['combined'] = data[d] + data['combined']
                 
                 for row in data['combined']:
-
                     #  check for empty rows
-                    if not date.strip():
+                    if not row['Date'].strip():
                         data['combined'].remove(row)
                         continue
 
@@ -163,11 +173,23 @@ def main():
                     del(row['Time'])
 
                 data['combined'] = mapFields(data['combined'], fieldmap)
-                data['combined'] = createRowIDs(data['combined'], row_id_name, ['DATETIME', 'DATA_FILE', 'CLASS_CHANNEL'])
+                
+                data['combined'] = createRowIDs(
+                    data['combined'],
+                    row_id_name,
+                    ['DATETIME', 'DATA_FILE', 'CLASS_CHANNEL']
+                )
 
+                #  acquire fieldnames from first row in data
                 fieldnames = [key for key in data['combined'][0].keys()]
 
-                out_path = os.path.join(out_dir, 'fme_' + name)
+                #  acquire study year from first row in data
+                year = data['combined'][0]['YEAR']
+
+                #  file name in format 'fme_{study year}_{original file name ending in .csv}'
+                filename = 'fme_{}_{}'.format(year, name)
+
+                out_path = os.path.join(out_dir, filename)
                 
                 #  write to file
                 with open(out_path, 'w', newline='\n') as outfile:
@@ -193,10 +215,18 @@ def main():
 
 try:
     main()
+    logging.info('END AT: {}'.format(arrow.now().format()))
 
 except Exception as e:
         error_text = traceback.format_exc()
         logging.error(error_text)
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Count Classification Process Failure', error_text)
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Traffic Study Classification Process Failure',
+            error_text,
+            EMAIL['user'],
+            EMAIL['password']
+        )
+        raise e
 
-logging.info('END AT: {}'.format(arrow.now().format()))
+

@@ -1,13 +1,16 @@
 '''
-Downloadt traffic study locations form ArcGIS Online
+Download traffic study locations form ArcGIS Online
 and publish to Austin's Open Data Portal
 '''
 import csv
-import pdb
 import logging
+import pdb
 import traceback
+
 import arrow
-from secrets import *
+
+import _setpath
+from config.secrets import *
 from util import emailutil
 from util import socratautil
 from util import agolutil
@@ -54,7 +57,12 @@ def main():
             features.append(add_feature)
     
     features = socratautil.create_location_fields(features)
-    upsert_response = socratautil.replace_data(socrata_creds, socrata_resource_id, features)
+    upsert_response = socratautil.replace_resource(
+        socrata_creds,
+        socrata_resource_id,
+        features
+    )
+
     return 'Done'
 
 
@@ -62,7 +70,6 @@ if __name__ == '__main__':
 
     now = arrow.now()
     now_s = now.format('YYYY_MM_DD')
-
     
     logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
     logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -75,6 +82,13 @@ if __name__ == '__main__':
         error_text = traceback.format_exc()
         print(error_text)
         logging.error(error_text)
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Count Locations Process Failure', error_text)
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Traffic Count Locations Process Failure',
+            error_text,
+            EMAIL['user'],
+            EMAIL['password']
+        )
+        raise e
 
     logging.info('END AT: {}'.format(arrow.now().format()))

@@ -1,42 +1,60 @@
 '''
-load processed traffic study files into single master csv
-it might seem dumb that we're loading these into a csv
-but it's the only open-source DB available to us at present
+Load processed traffic study files into single master csv.
+Use record id hashes to update existing records if needed.
+Refresh entire published dataset on open data portal.
 '''
-import os
-import sys
-from shutil import copyfile
 import argparse
 import csv
-import pdb
 import logging
+import os
+import pdb
+from shutil import copyfile
+import sys
 import traceback
+
 import arrow
-from secrets import *
+
+import _setpath
+from config.secrets import *
 from util import emailutil
 from util import socratautil
+
 
 config = {
     'VOLUME' : {
         'primary_key' :'TRAFFIC_STUDY_COUNT_ID',
         'source_dir' : TRAFFIC_COUNT_OUTPUT_VOL_DIR,
-        'socrata_resource_id' : 'jasf-x4rx'
+        'socrata_resource_id' : 'jasf-x4rx',
+        'fieldnames' : ['DATETIME', 'YEAR', 'MONTH', 'DAY_OF_MONTH', 'DAY_OF_WEEK', 'TIME', 'COUNT_CHANNEL', 'CHANNEL', 'COUNT_TOTAL', 'DATA_FILE', 'ROW_ID', 'SITE_CODE', 'TRAFFIC_STUDY_COUNT_ID']
     },
     'SPEED' : {
         'primary_key' :'TRAFFIC_STUDY_SPEED_ID',
         'source_dir' : TRAFFIC_COUNT_OUTPUT_SPD_DIR,
-        'socrata_resource_id' : 'et93-wr2y'
+        'socrata_resource_id' : 'et93-wr2y',
+        'fieldnames' : ['COUNT_TOTAL', 'SPEED_0_14', 'SPEED_15_19', 'SPEED_20_24', 'SPEED_25_29', 'SPEED_30_34', 'SPEED_35_39', 'SPEED_40_44', 'SPEED_45_49', 'SPEED_50_54', 'SPEED_55_59', 'SPEED_60_64', 'SPEED_65_69', 'SPEED_70_200', 'DATA_FILE', 'SITE_CODE', 'SPEED_CHANNEL', 'DATETIME', 'YEAR', 'MONTH', 'DAY_OF_MONTH', 'DAY_OF_WEEK', 'TIME', 'ROW_ID', 'TRAFFIC_STUDY_SPEED_ID']
     },
     'CLASSIFICATION' : {
         'primary_key' :'TRAFFIC_STUDY_CLASS_ID',
         'source_dir' : TRAFFIC_COUNT_OUTPUT_CLASS_DIR,
-        'socrata_resource_id' : '2hke-by7g'
-    }
+        'socrata_resource_id' : '2hke-by7g',
+        'fieldnames' : ['COUNT_TOTAL', 'CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4', 'CLASS_5', 'CLASS_6', 'CLASS_7', 'CLASS_8', 'CLASS_9', 'CLASS_10', 'CLASS_11', 'CLASS_12', 'CLASS_13', 'DATA_FILE', 'SITE_CODE', 'CLASS_CHANNEL', 'DATETIME', 'YEAR', 'MONTH', 'DAY_OF_MONTH', 'DAY_OF_WEEK', 'TIME', 'ROW_ID', 'TRAFFIC_STUDY_CLASS_ID']
+    },
 }
 
 def cli_args():
-    parser = argparse.ArgumentParser(prog='traffic_study_loader.py', description='Load traffic study data into master tabular datasets')
-    parser.add_argument('dataset', action="store", type=str, help='Name of the dataset that will be published. Available choices are speed, volume, and classification.')
+    parser = argparse.ArgumentParser(
+        prog='traffic_study_loader.py',
+        description='Load traffic study data into master tabular datasets'
+    )
+
+    parser.add_argument(
+        'dataset',
+        action="store",
+        type=str,
+        choices=['speed', 'volume', 'classification'],
+        help='Name of the dataset that will be processed.'
+    )
+
     args = parser.parse_args()
     
     return(args)
@@ -72,7 +90,8 @@ def retainRecords(input_csv, match_key, compare_vals):
         reader = csv.DictReader(infile) 
         for row in reader:
             if match_key in row:
-                if row[match_key] in compare_vals:  # test if a new version of the record exists in the new records
+                # test if a new version of the record exists in the new records
+                if row[match_key] in compare_vals:  
                     continue
                 else:
                     records_retain.append(row)
@@ -84,10 +103,13 @@ def writeData(filename, fieldnames, data, primary_key):
         counter = 0
         writer = csv.DictWriter(output_file, fieldnames=fieldnames)
         writer.writeheader()
+
         for row in data:
             counter += 1
-            row[primary_key] = counter
-            writer.writerow(row)
+            # ensure row only contains keys matching fieldnames...gunk happens
+            row_filtered = {key : row.get(key) for key in fieldnames}
+            row_filtered[primary_key] = counter
+            writer.writerow(row_filtered)
 
     logging.info('{} records processed'.format(counter))
     return True
@@ -103,37 +125,55 @@ def moveFiles(source_dir, dest_dir):
             new_file = os.path.join(dest_dir, name)
             os.rename(old_file, new_file)
 
-        break  #  don't walk subfolders
+        break  #  don't walk subfolders!
     return True
 
 
-def main(primary_key, match_key, source_dir, output_dir, outfile, archive_file):
+def main(
+        primary_key,
+        match_key,
+        source_dir,
+        output_dir,
+        outfile,
+        archive_file,
+        fieldnames
+    ):
     
     record_data = getNewRecords(source_dir, match_key)
     records_new = record_data[0]
     records_ids = record_data[1]
 
-    if len(records_new) == 0:  #  stop if no new records
-        print('no new records')
-        sys.exit()
 
-    fieldnames = list(records_new[0].keys())  #  create fieldname list from first record in records_new
-    fieldnames.append(primary_key)  #  add primary key field which does not exist in new records
+    if len(records_new) == 0:  #  stop if no new records
+        logging.info('No new records.')
+        sys.exit()
+    
+    #  add primary key field which does not exist in new records
+    fieldnames.append(primary_key)
     records_retain = []
 
     if os.path.isfile(outfile):
         #  copy existing output to archive
         copyfile(outfile, archive_file)
-        records_retain = retainRecords(archive_file, match_key, records_ids)  #  determine which existing records will be retained
+        
+        #  determine which existing records will be retained
+        records_retain = retainRecords(archive_file, match_key, records_ids)  
 
     records_new = records_new + records_retain
     results = writeData(outfile, fieldnames, records_new, primary_key)
 
     if results:
-        move_files = moveFiles( source_dir, os.path.join(source_dir, 'PROCESSED') )
+        move_files = moveFiles(
+            source_dir,
+            os.path.join(source_dir, 'PROCESSED')
+        )
 
     if records_new:
-        upsert_response = socratautil.replace_data(socrata_creds, socrata_resource_id, records_new)
+        upsert_response = socratautil.replace_resource(
+            socrata_creds,
+            socrata_resource_id,
+            records_new
+        )
         
     return move_files
 
@@ -146,13 +186,13 @@ if __name__ == '__main__':
     args = cli_args()
     dataset = args.dataset.upper()
 
-    
     logfile = '{}/traffic_count_pub_{}.log'.format(LOG_DIRECTORY, now_s)
     logging.basicConfig(filename=logfile, level=logging.INFO)
     logging.info('START {} LOADER AT {}'.format(dataset, str(now)))
 
     source_dir = config[dataset]['source_dir']
     primary_key = config[dataset]['primary_key']
+    fieldnames = config[dataset]['fieldnames']
     match_key = 'ROW_ID'
     output_dir = TRAFFIC_COUNT_MASTER_DIR
     outfile_name = '{}.csv'.format(dataset)
@@ -164,11 +204,26 @@ if __name__ == '__main__':
     socrata_resource_id = config[dataset]['socrata_resource_id']
 
     try:
-        results = main(primary_key, match_key, source_dir, output_dir, outfile, archive_file)
+        results = main(
+            primary_key,
+            match_key,
+            source_dir,
+            output_dir,
+            outfile,
+            archive_file,
+            fieldnames
+        )
 
     except Exception as e:
         error_text = traceback.format_exc()
         logging.error(error_text)
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Count Loader Process Failure', error_text)
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Traffic Count Loader Process Failure',
+            error_text,
+            EMAIL['user'],
+            EMAIL['password']
+        )
+        raise e
 
     logging.info('END AT: {}'.format(arrow.now().format()))
