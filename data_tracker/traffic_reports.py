@@ -10,6 +10,7 @@ See: http://www.ci.austin.tx.us/qact/qact_rss.cfm
 import logging
 import os
 import pdb
+import traceback
 
 import arrow
 import feedparser
@@ -255,7 +256,8 @@ def main(date_time):
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Report Process Failure', str(e), EMAIL['user'], EMAIL['password'])
+        error_text = traceback.format_exc()
+        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Report Process Failure', str(error_text), EMAIL['user'], EMAIL['password'])
         raise e
 
 
