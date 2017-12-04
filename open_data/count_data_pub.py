@@ -1,3 +1,9 @@
+'''
+Extract radar traffic count data from KITS database and pulbish
+new records to City of Austin Open Data Portal.
+'''
+import argparse
+import hashlib
 import logging
 import pdb
 import sys
@@ -5,46 +11,24 @@ import sys
 import arrow
 import knackpy
 
-import hashlib
-import argparse
-
 import _setpath
 from config.secrets import *
-from util import kitsutil
 from util import datautil
 from util import emailutil
+from util import kitsutil
 from util import socratautil   
-
-
-# Issues:
-# Can't import more than the 5,000 socrata limit to get the most recent entryk
-
-
 
 then = arrow.now()
 now_s = then.format('YYYY_MM_DD')
-
-logfile = '{}/dms_msg_pub_{}.log'.format(LOG_DIRECTORY, now_s)
+logfile = '{}/radar_counts_{}.log'.format(LOG_DIRECTORY, now_s)
 logging.basicConfig(filename=logfile, level=logging.INFO)
 logging.info('START AT {}'.format(str(then)))
 
-# #  config
-# primay_key = 'DMS_ID'
-# knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
-# ref_obj = ['object_109']
-# scene = 'scene_569'
-# view = 'view_1564'
-
-socrata_counts = 'i626-g7ub'
-
-
+socrata_resource = 'i626-g7ub'
     
 def main(date_time):
-    print('starting stuff now')
-
     try:  
-
-        #finds most recent KITS data
+        #  find most recent KITS data
         kits_query_recent =   '''
             SELECT TOP (1) DETID as det_id
             ,CURDATETIME as dettime
@@ -55,24 +39,25 @@ def main(date_time):
             ORDER BY CURDATETIME DESC
             '''   
 
-
-        recent_kits = kitsutil.data_as_dict(
+        #  get most recent traffic count record from kits
+        kits_data_recent = kitsutil.data_as_dict(
             KITS_CREDENTIALS,
             kits_query_recent
         )
 
-
+        #  get most recent traffic count record from socrata
         socr = socratautil.Soda(
-            socrata_counts,
+            socrata_resource,
             user=SOCRATA_CREDENTIALS['user'],
             password=SOCRATA_CREDENTIALS['password'],
-            soql = {'$order':'curdatetime desc','$limit':1}
+            soql = {
+                '$order':'curdatetime desc',
+                '$limit':1
+            }
         )
 
-        # most recent socrata data
-        # https://data.austintexas.gov/resource/i626-g7ub.json?$order=curdatetime desc&$limit=1
-        #https://data.austintexas.gov/resource/i626-g7ub.json?$where=curdatetime>1509516000
-        for record in recent_kits:
+        #  
+        for record in kits_data_recent:
             new_date = arrow.get(record['dettime'],'US/Central')
             record['dettime'] = new_date.timestamp
 
@@ -91,32 +76,12 @@ def main(date_time):
                 FROM [KITS].[SYSDETHISTORYRM]
                 ORDER BY CURDATETIME DESC
                 '''
-
-
-
-        # if the socrata data is behind KITS data send new data
-        elif soc_data[0]['curdatetime'] < recent_kits[0]['dettime']:
-            
-            pdb.set_trace()
-            #creates query for counts since most recent socrata data
-            strtime = str(soc_data[0]['year'])
-            strtime+=('-')
-            if int(soc_data[0]['month']) <= 9:
-                strtime+=('0')
-            strtime+= str(soc_data[0]['month'])
-            strtime+=('-')
-            if int(soc_data[0]['day']) <= 9:
-                strtime+=('0')
-            strtime += str(soc_data[0]['day'])
-            strtime+=' '
-            if int(soc_data[0]['hour']) <= 9:
-                strtime+=('0')
-            strtime += str(soc_data[0]['hour'])
-            strtime+=(':')
-            if int(soc_data[0]['minute']) <= 9:
-                strtime+=('0')
-            strtime += str(soc_data[0]['minute'])
-            strtime+=(':00.000')
+        pdb.set_trace()
+        # send new data if the socrata data is behind KITS data
+        elif soc_data[0]['curdatetime'] < kits_data_recent[0]['dettime']:
+             
+            # create query for counts since most recent socrata data
+            strtime = 
 
 
             kits_query =  '''
@@ -218,20 +183,11 @@ def main(date_time):
                 else:
                     row['timebin'] = ''
 
-
-
-
-        
-
-        pdb.set_trace()
-
         kits_data = datautil.replaceTimezone(kits_data,'curdatetime')
         kits_data = datautil.iso_to_unix(kits_data,['curdatetime'])
 
         kits_data = datautil.stringify_key_values(kits_data)
         
-        #hash ID + Date + Lane
-        pdb.set_trace()
         
         hash_fields = ['detid','curdatetime','detname']
         for row in kits_data:
@@ -240,8 +196,6 @@ def main(date_time):
             hasher.update(in_str.encode('utf-8'))
             row['row_id'] = hasher.hexdigest()
 
-        pdb.set_trace()
-
         for line in kits_data:
             for detect in int_data:
                 if detect['detid'] == int(line['detid']):
@@ -249,7 +203,6 @@ def main(date_time):
                     line['detname'] = detect['detname']
 
         kits_data = datautil.stringify_key_values(kits_data)
-        pdb.set_trace()
 
         socr.get_metadata()
         fieldnames = socr.fieldnames
@@ -269,52 +222,46 @@ def main(date_time):
                 record['ROW_ID'] = hasher.hexdigest()
 
 
-        pdb.set_trace()
-
         kits_data = datautil.upper_case_keys(kits_data)
-
-        pdb.set_trace()
 
         socrata_payload = datautil.lower_case_keys(
             kits_data
         )
         
-
-        pdb.set_trace()
         status_upsert_response = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
             socrata_payload,
-            socrata_counts
+            socrata_resource
         )
 
-        pdb.set_trace()
         
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
-        # emailutil.send_email(
-        #     ALERTS_DISTRIBUTION,
-        #     'DATA PROCESSING ALERT: DMS Message Update',
-        #     str(e),
-        #     EMAIL['user'],
-        #     EMAIL['password']
-        # )
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'DATA PROCESSING ALERT: Radar Traffic Count Publisher',
+            str(e),
+            EMAIL['user'],
+            EMAIL['password']
+        )
 
         raise e
 
 
- 
 def cli_args():
     parser = argparse.ArgumentParser(
         prog='count_data_pub.py',
-        description='Publishes radar count data from KITS DB to Soccrata (open data portal).'
+        description='Publish radar count data from KITS DB to City of Austin Open Data Portal.'
     )
+
     parser.add_argument(
             '-replace',
             action='store_true',
             default=False,
             help='Ignores date restrictions on updating data and replaces all data.'
-        )
+    )
+
     args = parser.parse_args()
     
     return(args)
@@ -324,11 +271,6 @@ if __name__ == '__main__':
     
     args = cli_args()
     replace = args.replace
-
     results = main(then)
-
-
-
-
 
 logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
