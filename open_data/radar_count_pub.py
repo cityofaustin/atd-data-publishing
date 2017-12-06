@@ -100,23 +100,33 @@ def main(date_time):
         
         # send new data if the socrata data is behind KITS data
         elif soc_data[0]['curdatetime'] < kits_data_recent[0]['dettime']:
-             
+            
             # create query for counts since most recent socrata data
-            strtime = arrow.get(soc_data[0]['curdatetime']).format('YYYY-MM-DD HH:mm:ss')
+            #  query start time must be in local US/Central time (KITSDB is naive!)
+            strtime = arrow.get(soc_data[0]['curdatetime']).to('local').format('YYYY-MM-DD HH:mm:ss')
 
+            #  INTID is KITS_ID in data tracker / socrata
+            #  it uniquely identifies the radar device/location
+            #  detname and the lane and should be queried from the DETECTORSRM
+            #  table note that the values in the detname field in SYSDETHISTORYRM
+            #  are not current and appear to be updated only the first time the
+            #  detector is configured in KITS
             kits_query =  '''
-                SELECT DETID as detid
-                ,CURDATETIME as curdatetime
-                ,DETNAME as detname
-                ,VOLUME as volume
-                ,SPEED as speed
-                ,INTNAME as intname
-                ,OCCUPANCY as occupancy
-                FROM [KITS].[SYSDETHISTORYRM]
-                WHERE (CURDATETIME >= '{}')
+                SELECT i.DETID as detid
+                ,i.CURDATETIME as curdatetime
+                ,i.VOLUME as volume
+                ,i.SPEED as speed
+                ,i.INTNAME as intname
+                ,i.OCCUPANCY as occupancy
+                ,e.INTID as int_id
+                ,e.DETSN as detname
+                FROM [KITS].[SYSDETHISTORYRM] i
+                LEFT OUTER JOIN [KITS].[DETECTORSRM] e
+                ON i.[DETID] = e.[DETID]
+                WHERE (i.[CURDATETIME] >= '{}')
                 ORDER BY CURDATETIME DESC
                 '''.format(strtime)
-
+        
         else:
             logging.info('No Data to export, try: count_data_pub.py -replace')
             return True
@@ -125,17 +135,6 @@ def main(date_time):
                 KITS_CREDENTIALS,
                 kits_query
             )
-
-        int_query =   '''
-            SELECT DETID as detid
-            ,INTID as int_id
-            ,DETSN as detname
-            FROM [KITS].[DETECTORSRM]
-            '''
-        int_data = kitsutil.data_as_dict(
-            KITS_CREDENTIALS,
-            int_query
-        )
 
         for row in kits_data:
             row['month'] = row['curdatetime'].month
@@ -157,17 +156,12 @@ def main(date_time):
         kits_data = datautil.stringify_key_values(kits_data)
         
         hash_fields = ['detid','curdatetime','detname']
+
         for row in kits_data:
             hasher = hashlib.md5()
             in_str = ''.join([str(row[q]) for q in hash_fields])
             hasher.update(in_str.encode('utf-8'))
             row['row_id'] = hasher.hexdigest()
-
-        for line in kits_data:
-            for detect in int_data:
-                if detect['detid'] == int(line['detid']):
-                    line['int_id'] = detect['int_id']
-                    line['detname'] = detect['detname']
 
         kits_data = datautil.stringify_key_values(kits_data)
 
@@ -192,7 +186,7 @@ def main(date_time):
         socrata_payload = datautil.lower_case_keys(
             kits_data
         )
-        
+
         status_upsert_response = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
             socrata_payload,
@@ -230,8 +224,7 @@ def cli_args():
     return(args)
 
 if __name__ == '__main__':
-    #  parse command-line arguments
-    
+    #  parse command-line arguments    
     args = cli_args()
     replace = args.replace
     results = main(then)
