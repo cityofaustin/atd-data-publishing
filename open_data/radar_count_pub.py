@@ -47,6 +47,19 @@ def getTimebin(minute, hour):
     return arrow.get(timebin,'H:m').format('HH:mm')
 
 
+def getDirection(lane):
+    if 'SB' in lane:
+        return 'SB'
+    elif 'NB' in lane:
+        return 'NB'
+    elif 'EB' in lane:
+        return 'EB'
+    elif 'WB' in lane:
+        return 'WB'
+    else:
+        return None
+
+
 def main(date_time):
     try:  
         #  find most recent KITS data
@@ -144,12 +157,15 @@ def main(date_time):
             row['hour'] = row['curdatetime'].hour
             row['minute'] = row['curdatetime'].minute
             row['day_of_week'] = row['curdatetime'].weekday()
+            #  day of week is 0 to 6 starting on monday
+            #  shit to 0 to 6 starting on sunday
             if row['day_of_week'] == 6:
-                row['day_of_week'] == 0
+                row['day_of_week'] = 0
             else:
                 row['day_of_week'] = row['day_of_week'] + 1
 
             row['timebin'] = getTimebin(row['minute'], row['hour'])
+            row['direction'] = getDirection(row['detname'])
         
         kits_data = datautil.replaceTimezone(kits_data,'curdatetime')
         kits_data = datautil.iso_to_unix(kits_data,['curdatetime'])
