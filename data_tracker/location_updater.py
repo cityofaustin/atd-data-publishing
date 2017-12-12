@@ -20,14 +20,6 @@ from util import emailutil
 knack_creds = KNACK_CREDENTIALS
 obj = 'object_11'
 
-update_fields = [
-    'JURISDICTION_LABEL',
-    'SIGNAL_ENG_AREA',
-    'COUNCIL_DISTRICT',
-    'BUS_STOPS',
-    'UPDATE_PROCESSED'
-]
-
 field_maps =  {
     #  service name
     'EXTERNAL_cmta_stops_new' : {  
@@ -54,9 +46,10 @@ layers = [
     {   
         'service_name' : 'BOUNDARIES_single_member_districts',
         'outFields' : 'COUNCIL_DISTRICT',
+        'updateFields' : ['COUNCIL_DISTRICT'], #
         'layer_id' : 0,
-        'distance' : 100,
-        'units' : 'esriSRUnit_Foot',
+        'distance' : 33,  #  !!! this unit is interpreted as meters due to Esri bug !!!
+        'units' : 'esriSRUnit_Foot', #  !!! this unit is interpreted as meters due to Esri bug !!!
         #  how to handle query that returns multiple intersection features
         'handle_features' : 'merge_all'  
     },
@@ -65,25 +58,32 @@ layers = [
         #  will attempt secondary service if no results at primary 
         'service_name_secondary' : 'BOUNDARIES_jurisdictions_planning',
         'outFields' : 'JURISDICTION_LABEL',
+        'updateFields' : ['JURISDICTION_LABEL'],
         'layer_id' : 0,
         'handle_features' : 'use_first'
     },
     {
         'service_name' : 'ATD_signal_engineer_areas',
         'outFields' : 'SIGNAL_ENG_AREA',
+        'updateFields' : ['SIGNAL_ENG_AREA'],
         'layer_id' : 0,
         'handle_features' : 'use_first'
     },
     {   
         'service_name' : 'EXTERNAL_cmta_stops_new',
         'outFields' : 'ID',
+        'updateFields' : ['BUS_STOPS'],
         'layer_id' : 0,
-        'distance' : 350,
-        'units' : 'esriSRUnit_Foot',
+        'distance' : 107,  #  !!! this unit is interpreted as meters due to Esri bug !!!
+        'units' : 'esriSRUnit_Foot',  #  !!! this unit is interpreted as meters due to Esri bug !!!
         'handle_features' : 'merge_all',
         'apply_format' : format_stringify_list
     },
 ]
+
+#  knack database fields that will be updated
+#  payload is reduced to these fields
+update_fields = [field for layer in layers for field in layer['updateFields']] =
 
 filters = {
     #  filter for records where
@@ -228,7 +228,7 @@ def main(date_time):
             return None
 
         '''
-        remove "update fields" from record. these are e-appended via
+        remove "update fields" from record. these are re-appended via
         spatial lookup
         '''  
         keep_fields = [field for field in kn.fieldnames if field not in update_fields]
@@ -244,7 +244,7 @@ def main(date_time):
 
             for layer in layers:
                 layer['geometry'] = point
-
+                field_map = field_maps.get(layer['service_name'])
                 params = get_params(layer)
 
                 try:
@@ -255,9 +255,11 @@ def main(date_time):
                     )                    
                                 
                     if len(res['features']) > 0:
-                        location = join_features_to_record(res['features'], layer, location)
-                        
-                        field_map = field_maps.get(layer['service_name'])
+                        location = join_features_to_record(
+                            res['features'],
+                            layer,
+                            location
+                        )
                         
                         if field_map:
                             location = map_fields(location, field_map)
@@ -275,15 +277,21 @@ def main(date_time):
                         )
 
                         if len(res['features']) > 0:
-                            location = join_features_to_record(res['features'], layer, location)
+                            location = join_features_to_record(
+                                res['features'],
+                                layer,
+                                location
+                            )
+
                             continue
-                    '''
-                    no intersecting features found.
-                    set update fields to null to overwrite any existing data
-                    '''
-                    for field in update_fields:
-                        if field in layer['outFields']:
-                            location[field] = ''
+
+                    #  no intersecting features found
+                    for field in layer['updateFields']:
+                        '''
+                        set corresponding fields on location record to null to
+                        overwrite any existing data
+                        '''
+                        location[field] = ''
 
                     continue
 
@@ -293,7 +301,7 @@ def main(date_time):
                     raise e
             
             location['UPDATE_PROCESSED'] = True
-            location = datautil.reduce_to_keys([location], update_fields + ['id'])
+            location = datautil.reduce_to_keys([location], update_fields + ['id', 'UPDATE_PROCESSED'])
             location = datautil.replace_keys(location, kn.field_map)
             
             response_json = knackpy.update_record(
