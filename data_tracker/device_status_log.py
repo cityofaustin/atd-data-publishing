@@ -68,7 +68,7 @@ def main():
 
         for device in kn.data:
             #  count stats only for devices that are TURNED_ON
-            if device[status_field] == status_filter_value:
+            if device[status_field] in status_filters:
                 status = device['IP_COMM_STATUS']
                 stats[status] += 1
 
@@ -107,7 +107,7 @@ def cli_args():
         'device_type',
         action="store",
         type=str,
-        choices=['signals', 'travel_sensors', 'cameras'],
+        choices=['signals', 'travel_sensors', 'cameras', 'gridsmart'],
         help='Type of device to calculate.'
     )
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         
     primary_key = cfg[device_type]['primary_key']
     status_field = cfg[device_type]['status_field']
-    status_filter_value = 'TURNED_ON'
+    status_filters = cfg[device_type]['status_filter_comm_status']
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
