@@ -23,7 +23,8 @@ cfg = {
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
-        }
+        },
+        'status_filter_comm_status' : ['TURNED_ON']
     },
     'signal_requests' : {
         'primary_key' : 'REQUEST_ID',
@@ -53,7 +54,8 @@ cfg = {
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
-        }
+        },
+        'status_filter_comm_status' : ['TURNED_ON']
     },
     'dms' : {
         'primary_key' : 'DMS_ID',
@@ -182,7 +184,8 @@ cfg = {
         'location_fields' : {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
-        }
+        },
+        'status_filter_comm_status' : ['TURNED_ON']
     },
     'quote_of_the_week' : {
         'primary_key' : 'id',
@@ -235,6 +238,8 @@ cfg = {
         'include_ids' : True,
         'pub_log_id' : 'n5kp-f8k4',
         'ip_field' : 'DETECTOR_IP',
+        'status_field' : 'DETECTOR_STATUS',
+        'status_filter_comm_status' : ['OK', 'BROKEN', 'UNKNOWN']
     },
     'timed_corridors' : {
         'primary_key' : 'ATD_SYNC_SIGNAL_ID',
