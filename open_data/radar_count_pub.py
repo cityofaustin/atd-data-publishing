@@ -99,17 +99,22 @@ def main(date_time):
         
         if replace:
             # get all kits data
-            kits_query =   '''
-                SELECT DETID as detid
-                ,CURDATETIME as curdatetime
-                ,DETNAME as detname
-                ,VOLUME as volume
-                ,SPEED as speed
-                ,INTNAME as intname
-                ,OCCUPANCY as occupancy
-                FROM [KITS].[SYSDETHISTORYRM]
+            print('Get all kits data')
+
+            kits_query =  '''
+                SELECT i.DETID as detid
+                ,i.CURDATETIME as curdatetime
+                ,i.VOLUME as volume
+                ,i.SPEED as speed
+                ,i.INTNAME as intname
+                ,i.OCCUPANCY as occupancy
+                ,e.INTID as int_id
+                ,e.DETSN as detname
+                FROM [KITS].[SYSDETHISTORYRM] i
+                LEFT OUTER JOIN [KITS].[DETECTORSRM] e
+                ON i.[DETID] = e.[DETID]
                 ORDER BY CURDATETIME DESC
-                '''
+            '''
         
         # send new data if the socrata data is behind KITS data
         elif soc_data[0]['curdatetime'] < kits_data_recent[0]['dettime']:
@@ -149,6 +154,7 @@ def main(date_time):
                 kits_query
             )
 
+        print('Processing date/time fields')
         for row in kits_data:
             row['month'] = row['curdatetime'].month
             row['day'] = row['curdatetime'].day
