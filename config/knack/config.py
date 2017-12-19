@@ -267,5 +267,20 @@ cfg = {
             'lat' : 'LOCATION_latitude',
             'lon' : 'LOCATION_longitude'
         }
+    },
+    'work_orders' : {
+        'primary_key' : 'ATD_WORK_ORDER_ID',
+        'obj' : None,
+        'scene' : 'scene_683',
+        'view' : 'view_1829',
+        'ref_obj' : ['object_31', 'object_11'],
+        'socrata_resource_id' : 'hst3-hxcz',
+        'pub_log_id' : 'n5kp-f8k4',
+        'status_field' : 'WORK_ORDER_STATUS',
+        'location_fields' : {
+            'lat' : 'LOCATION_latitude',
+            'lon' : 'LOCATION_longitude'
+        }
     }
 }
+

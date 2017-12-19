@@ -59,6 +59,11 @@ class Soda(object):
         self.soql = soql
         self.timeout = float(timeout)
         
+        if self.user and self.password:
+            self.auth = (self.user, self.password)
+        else:
+            self.auth = None
+
         self.url = 'https://{}/resource/{}.json'.format(
             self.portal,
             self.resource,
@@ -79,20 +84,12 @@ class Soda(object):
     def get_data(self):
         print('Get socrata data.')
 
-        if self.user and self.password:
-            auth = (
-                self.user,
-                self.password
-            )
-        else:
-            auth = None
-
         params = self.soql
         
         res = requests.get(
             self.url,
             params=params,
-            auth=auth
+            auth=self.auth
         )
 
         res.raise_for_status()
@@ -104,10 +101,12 @@ class Soda(object):
         print('Get metadata')
         
         res = requests.get(
-            self.url_metadata
+            self.url_metadata,
+            auth=self.auth
         )
         
         self.metadata = res.json()
+
         self.get_fieldnames()
         self.get_date_fields()
         return self.metadata
