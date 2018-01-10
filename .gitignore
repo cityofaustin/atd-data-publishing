@@ -11,9 +11,11 @@ bcycle_1.py
 to_test.py
 tp.py
 script_status.md
-log
 *.log
-xml
+*.csv
+*.xml
 secrets.py
 *.key
 *.pem
+device_data_cameras.json
+transportation-data-publishing/shell_scripts/*.sh

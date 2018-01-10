@@ -1,0 +1,5 @@
+feedparser
+fulcrum
+knackpy
+pymssql
+yagmail

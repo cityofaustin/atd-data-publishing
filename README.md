@@ -4,15 +4,28 @@ This repo houses ETL scripts for Austin Transportation's open data projects. The
 
 ## Quick Start
 
-We use [Anaconda](https://conda.io/miniconda.html) to manage Python environments. If you don't want to use Anaconda, skip step #1 and in step #3 use `pip install -r requirements.txt`.
+We use Docker and cron to launch scripts in individual containers on a Linux host. Getting things up and running consists of building the Docker image on the host, then running the `deploy.sh` script to build shell scripts and deploy cron jobs.
 
-1. Install [Miniconda](https://conda.io/miniconda.html). Check out the [test drive](https://conda.io/docs/test-drive.html#managing-environments) if you haven't used Anaconda before.
+1. Install [Docker](https://docs.docker.com/) on a Linux machine.
 
-2. Clone this repository into your directory of choice: `git clone https://github.com/cityofaustin/transportation-data-publishing`
+2. Start Docker: `systemctl start docker`
 
-3. `cd` into the repo directory, and run `conda create --name datapub1 --file requirements.txt` to create the data publishing environment
+3. Clone this repository to your Docker host: `git clone https://github.com/cityofaustin/transportation-data-publishing`
+ 
+4. Create your `secrets.py` and drop it into `transportation-data-publishing/config` following the template in [fake-secrets.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/config/fake_secrets.py)
 
-4. Create your `secrets.py` file following the template in [fake-secrets.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/config/fake_secrets.py)
+5. If setting up ESB inegration add certificates to `transportation-data-publishing/config/esb`
+
+6. `cd` into the repository and build the Docker image (this will take a few minutes): `docker build -t tdp-py36 -f Dockerfile-tdp-py36 .`
+
+7. To deploy the scripts, run `bash deploy.sh`.
+
+The deployment script will:
+- Generate shell scripts to launch each script in a Docker container, as defined in `config.py`.
+- Deploy a crontab file (`crontab.txt`) to run shell scripts on the schedules defined in `config.py`. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST**
+- Establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
+
+8. If you want to modify the script configuration, edit `config.py` as needed. To (re)deploy, remove any existing entries from `crontab.txt` and run `bash deploy.sh`.
 
 ## About the Repo Structure
 
