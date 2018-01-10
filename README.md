@@ -18,14 +18,11 @@ We use Docker and cron to launch scripts in individual containers on a Linux hos
 
 6. `cd` into the repository and build the Docker image (this will take a few minutes): `docker build -t tdp-py36 -f Dockerfile-tdp-py36 .`
 
-7. To deploy the scripts, run `bash deploy.sh`.
+7. Generate the shell scripts and crontab file: `bash build.sh`.
 
-The deployment script will:
-- Generate shell scripts to launch each script in a Docker container, as defined in `config.py`.
-- Deploy a crontab file (`crontab.txt`) to run shell scripts on the schedules defined in `config.py`. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST**
-- Establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
+8. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST** To deploy the scripts, run `bash deploy.sh`. This will install a crontab file (`crontab.txt`) to run shell scripts on the schedules defined in `config.py` and establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
 
-8. If you want to modify the script configuration, edit `config.py` as needed. To (re)deploy, remove any existing entries from `crontab.txt` and run `bash deploy.sh`.
+9. If you want to modify the script configuration, edit `config.py` as needed. To (re)deploy, remove any existing entries from `crontab.txt` and run `bash deploy.sh`.
 
 ## About the Repo Structure
 
