@@ -57,7 +57,12 @@ def main():
 
             features.append(add_feature)
     
-    features = socratautil.create_location_fields(features)
+    features = socratautil.create_location_fields(
+        features,
+        lat_field='LATITUDE',
+        lon_field='LONGITUDE'
+    )
+
     upsert_response = socratautil.replace_resource(
         socrata_creds,
         socrata_resource_id,

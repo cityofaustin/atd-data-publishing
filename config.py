@@ -22,10 +22,10 @@ CONFIG = {
     {
       'args': [],
       'cron': '50 2 * * *',
-      'enabled': True,
-      'image': None,
-      'name': 'backup',
-      'path': 'transportation-data-publishing/data_tracker',
+      'enabled': True,  #  will ignore if false
+      'image': None,  #  use None for default
+      'name': 'backup',  #  must be unique to config
+      'path': 'transportation-data-publishing/data_tracker',  #  relative to repo root
       'script': 'backup.py'
     },
     {
@@ -396,6 +396,15 @@ CONFIG = {
       'name': 'work_orders',
       'path': 'transportation-data-publishing/open_data',
       'script': 'knack_data_pub.py'
+    },
+    {
+      'args': [],
+      'cron': '50 3 * * *',
+      'enabled': True,
+      'image': None,
+      'name': 'traffic_study_locations',
+      'path': 'transportation-data-publishing/traffic_study',
+      'script': 'traffic_study_locations.py'
     }
   ]
 }
