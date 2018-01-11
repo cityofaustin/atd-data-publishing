@@ -7,6 +7,7 @@ import sys
 
 from config import CONFIG
 from config import DOCKER_BASE_CMD
+from config import LOGROTATE
 
 
 def checkVersion():
@@ -56,6 +57,9 @@ def listToFile(list_, filename, write_mode='a+'):
 if __name__ == '__main__':
     checkVersion()
 
+    crontab_filename = 'crontab.sh'
+    logrotate_filename = 'tdp.logrotate'
+
     #  Get the absolute path of the repository
     build_path = os.getcwd()
 
@@ -99,8 +103,21 @@ if __name__ == '__main__':
 
         crons.append(cron)
 
+    #  Write cron jobs
     crons.append('') #  ensures last line of crontab file is empty (as required)
-    listToFile(crons, 'crontab.sh', write_mode='a+')
+    listToFile(
+        crons, 
+        crontab_filename, 
+        write_mode='a+'
+    )
+
+    #  Write logrotate config
+    logrotate = LOGROTATE.replace('$BUILD_PATH', build_path)
+    listToFile(
+        [logrotate], 
+        logrotate_filename, 
+        write_mode='a+'
+    )
 
 
 
