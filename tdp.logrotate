@@ -1,9 +1,2 @@
 #  Logrotate config for transportation-data-publishing script logs
-#  Copy to Docker host at /etc/logrotate.d
-/app/transportation-data-publishing/log/*.log {
-    missingok
-    nocompress
-    nocreate
-    daily
-    rotate 7
-}
+#  Will be copied to /etc/logrotate.d on Docker host

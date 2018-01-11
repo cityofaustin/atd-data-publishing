@@ -15,6 +15,17 @@ sudo docker run \\
     -c "$CMD"
 '''
 
+#  Logrotate config template
+LOGROTATE = '''
+$BUILD_PATH/transportation-data-publishing/log/*.log {
+    missingok
+    nocompress
+    nocreate
+    daily
+    rotate 7
+}
+'''
+
 #  Script configuration
 CONFIG = {
   'default_image' : 'tdp-py36',
