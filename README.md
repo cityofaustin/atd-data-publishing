@@ -1,10 +1,10 @@
 # transportation-data-publishing
 
-This repo houses ETL scripts for Austin Transportation's open data projects. They're written in Python. 
+This repo houses ETL scripts for Austin Transportation's data integration projects. They're written in Python. 
 
 ## Quick Start
 
-We use Docker and cron to launch scripts in individual containers on a Linux host. Getting things up and running consists of building the Docker image on the host, then running the `deploy.sh` script to build shell scripts and deploy cron jobs.
+We use Docker and cron to launch scripts in individual containers on a Linux host. Getting things up and running consists of building the Docker image on the host, then running `build.sh` and `deploy.sh` to start the cron jobs.
 
 1. Install [Docker](https://docs.docker.com/) on a Linux machine.
 
