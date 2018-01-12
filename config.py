@@ -24,6 +24,14 @@ $BUILD_PATH/transportation-data-publishing/log/*.log {
     daily
     rotate 7
 }
+
+$BUILD_PATH/transportation-data-publishing/xml/*.xml {
+    missingok
+    nocompress
+    nocreate
+    weekly
+    rotate 0
+}
 '''
 
 #  Script configuration

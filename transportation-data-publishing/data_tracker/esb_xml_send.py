@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import pdb
+import traceback
 
 import arrow
 import knackpy
@@ -151,13 +152,15 @@ def main(date_time):
         
 
     except Exception as e:
-        print('Failed to publish ESB msg data for {}'.format(date_time))
-        print(e)
+        print(f'Failed to process data for {date_time}. See logs for detail.')
+        error_text = traceback.format_exc()
+        logging.error(str(e))
+        logging.error(error_text)
         
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
             'ESB Publication Failure',
-            str(e),
+            str(error_text),
             EMAIL['user'],
             EMAIL['password']
         )
