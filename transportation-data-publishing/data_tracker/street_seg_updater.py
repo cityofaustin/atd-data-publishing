@@ -54,10 +54,17 @@ def main(date_time):
         for street_segment in kn.data:
             
             try:
-                segment_data = agolutil.query_atx_street(street_segment[primay_key])
+                token = agolutil.get_token(AGOL_CREDENTIALS)
+                features = agolutil.query_atx_street(street_segment[primay_key], token)
 
+                if features.get('features'):
+                    if len(features['features']) > 0:
+                        segment_data = features['features'][0]['attributes']
+                    else:
+                        unmatched_segments.append(street_segment[primay_key])
+                        continue
                 
-                if not segment_data:
+                else:
                     unmatched_segments.append(street_segment[primay_key])
                     continue
 
