@@ -162,7 +162,7 @@ def parse_attributes(query_results):
     return results
 
 
-def query_atx_street(segment_id):
+def query_atx_street(segment_id, token):
     print('Query atx street segment {}'.format(segment_id))
 
     url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/TRANSPORTATION_street_segment/FeatureServer/0/query'
@@ -171,19 +171,14 @@ def query_atx_street(segment_id):
         'f' : 'json',
         'where' : where,
         'returnGeometry' : False,
-        'outFields'  : '*'
+        'outFields'  : '*',
+        'token' : token
     }
     
     res = requests.post(url, params=params)
+    res.raise_for_status()
     
-    res = res.json()
-    
-    if 'features' in res:
-        if len(res['features']) > 0:
-            return res['features'][0]['attributes']
-
-    else:
-        return None
+    return res.json()
 
 
 def point_in_poly(service_name, layer_id, params):
