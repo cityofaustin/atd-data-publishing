@@ -48,8 +48,14 @@ def main(date_time):
                 date_fields_kn = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
 
                 kn.data = datautil.mills_to_iso(kn.data, date_fields_kn)
-                kn.to_csv(file_name)
                 
+                try:
+                    kn.to_csv(file_name)
+                
+                except UnicodeError:
+                    kn.data = [{key : str(d[key]).encode()} for d in kn.data for key in d ]
+                    kn.to_csv(file_name)
+
                 count += 1
             
             else:
