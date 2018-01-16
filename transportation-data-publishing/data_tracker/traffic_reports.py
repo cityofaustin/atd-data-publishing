@@ -130,17 +130,22 @@ def has_match(dicts, val, key):
 def parseTitle(title):
     #  parse a the feed "title" element
     #  assume feed will never have Euro sign (it is non-ascii)
-    title = title.replace('    ', '€')
-    #  remove remaining whitespace clumps like so: 
-    title = " ".join(title.split())
-    #  split into list on
-    title = title.split('€')
-    #  remove empty strings reducing to twoelements
-    #  first is address, second is issue type, with leading dash (-)
-    title = list(filter(None, title))
+    try:
+        title = title.replace('    ', '€')
+        #  remove remaining whitespace clumps like so: 
+        title = " ".join(title.split())
+        #  split into list on
+        title = title.split('€')
+        #  remove empty strings reducing to twoelements
+        #  first is address, second is issue type, with leading dash (-)
+        title = list(filter(None, title))
 
-    issue = title[1].replace('-', '').strip()
-    address = title[0].replace('/', '&')
+        issue = title[1].replace('-', '').strip()
+        address = title[0].replace('/', '&')
+    except IndexError as e:
+        logging.info(title)
+        raise e
+        
     return address, issue
 
 
