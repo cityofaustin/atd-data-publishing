@@ -82,10 +82,6 @@ layers = [
     },
 ]
 
-#  knack database fields that will be updated
-#  payload is reduced to these fields
-update_fields = [field for layer in layers for field in layer['updateFields']] =
-
 filters = {
     #  filter for records where
     #  UPDATE_PROCESSED field is No
@@ -212,6 +208,10 @@ def main(date_time):
     print('starting stuff now')
 
     try:
+        #  knack database fields that will be updated
+        #  payload is reduced to these fields
+        update_fields = [field for layer in layers for field in layer['updateFields']]
+
         kn = knackpy.Knack(
             obj=obj,
             app_id=KNACK_CREDENTIALS[app_name]['app_id'],
@@ -255,7 +255,7 @@ def main(date_time):
                         params
                     )                    
                                 
-                    if len(res['features']) > 0:
+                    if res.get('features'):
                         location = join_features_to_record(
                             res['features'],
                             layer,
