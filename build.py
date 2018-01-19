@@ -121,4 +121,3 @@ if __name__ == '__main__':
         logrotate_filename, 
         write_mode='a+'
     )
-
