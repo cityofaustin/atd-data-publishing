@@ -40,7 +40,7 @@ def cron_entry(cron, path):
     '''
     Build a crontab entry
     '''
-    return f'{cron} bash {path}'
+    return '{} bash {}'.format(cron, path)
 
 
 def list_to_file(list_, filename, write_mode='a+'):
