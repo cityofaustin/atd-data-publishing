@@ -1,5 +1,5 @@
 '''
-Generate shell scripts and crontab for deployment of 
+Generate shell scripts, logrotate config and crontab for deployment of 
 transportation-data-publishing scripts.
 '''
 import os
@@ -10,7 +10,7 @@ from config import DOCKER_BASE_CMD
 from config import LOGROTATE
 
 
-def checkVersion():
+def check_version():
     '''
     Check system python version and raise exception if <2.7
     '''
@@ -36,14 +36,14 @@ def shellScript(build_path, path, script, args, image):
     return DOCKER_BASE_CMD.replace('$BUILD_PATH', build_path).replace('$IMAGE', image).replace('$CMD', cmd)
 
     
-def cronEntry(cron, path):
+def cron_entry(cron, path):
     '''
     Build a crontab entry
     '''
     return '{} bash {}'.format(cron, path)
 
 
-def listToFile(list_, filename, write_mode='a+'):
+def list_to_file(list_, filename, write_mode='a+'):
     '''
     Write a list of strings to file
     '''
@@ -55,16 +55,16 @@ def listToFile(list_, filename, write_mode='a+'):
 
 
 if __name__ == '__main__':
-    checkVersion()
+    check_version()
 
     crontab_filename = 'crontab.sh'
     logrotate_filename = 'tdp.logrotate'
 
-    #  Get the absolute path of the repository
+    #  get the absolute path of the repository
     build_path = os.getcwd()
 
     crons = []
-    crons.append('') #  ensures newline when appending to crontab
+    crons.append('') # ensure newline when appending to crontab
 
     for script in CONFIG['scripts']:
 
@@ -90,13 +90,13 @@ if __name__ == '__main__':
             script['name']
         )
 
-        listToFile(
+        list_to_file(
             [sh],
             sh_filename,
             write_mode='w+'
         )
 
-        cron = cronEntry(
+        cron = cron_entry(
             script['cron'],
             sh_filename
         )
@@ -104,8 +104,11 @@ if __name__ == '__main__':
         crons.append(cron)
 
     #  Write cron jobs
-    crons.append('') #  ensures last line of crontab file is empty (as required)
-    listToFile(
+    
+    #  add empty cron entry to ensure last line of crontab file is empty (as required)
+    crons.append('') 
+
+    list_to_file(
         crons, 
         crontab_filename, 
         write_mode='a+'
@@ -113,20 +116,9 @@ if __name__ == '__main__':
 
     #  Write logrotate config
     logrotate = LOGROTATE.replace('$BUILD_PATH', build_path)
-    listToFile(
+    list_to_file(
         [logrotate], 
         logrotate_filename, 
         write_mode='a+'
     )
-
-
-
-
-
-
-
-
-
-
-
 
