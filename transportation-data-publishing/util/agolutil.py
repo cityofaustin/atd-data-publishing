@@ -196,8 +196,9 @@ def point_in_poly(service_name, layer_id, params):
         params['spatialRel'] = 'esriSpatialRelIntersects'
 
     res = requests.get(query_url, params=params)
-    res = res.json()
-    return res
+    res.raise_for_status()
+
+    return res.json()
 
 
 def parse_response(res_msg, req_type):

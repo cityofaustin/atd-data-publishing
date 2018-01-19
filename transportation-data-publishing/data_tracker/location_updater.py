@@ -255,7 +255,7 @@ def main(date_time):
                         params
                     )                    
                                 
-                    if len(res['features']) > 0:
+                    if res.get('features'):
                         location = join_features_to_record(
                             res['features'],
                             layer,
