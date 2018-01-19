@@ -1,2 +1,0 @@
-#  Logrotate config for transportation-data-publishing script logs
-#  Will be copied to /etc/logrotate.d on Docker host

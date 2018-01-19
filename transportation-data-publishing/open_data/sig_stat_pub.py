@@ -167,7 +167,9 @@ def main(date_time):
             
             socrata_payload = socratautil.create_payload(
                 cd_results,
-                'SIGNAL_ID'
+                'SIGNAL_ID',
+                add_timestamp=True,
+                generate_ids=True
             )
 
             socrata_payload = datautil.lower_case_keys(
@@ -180,7 +182,7 @@ def main(date_time):
                 lon_field='location_longitude',
                 location_field='location'
             )
-
+            
             socrata_payload = datautil.reduce_to_keys(
                 socrata_payload,
                 fieldnames
@@ -204,6 +206,7 @@ def main(date_time):
         update_pub_log(upsert_res)
 
         if upsert_res.get('error') or upsert_res.get('Errors'):
+            logging.info(socrata_payload)
             raise Exception(str(upsert_res))
 
         return upsert_res
