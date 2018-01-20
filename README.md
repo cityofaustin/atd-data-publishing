@@ -20,9 +20,10 @@ We use Docker and cron to launch scripts in individual containers on a Linux hos
 
 7. Generate the shell scripts and crontab file: `bash build.sh`.
 
-8. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST** To deploy the scripts, run `bash deploy.sh`. This will install a crontab file (`crontab.txt`) to run shell scripts on the schedules defined in `config.py` and establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
+8. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST**
+To deploy the scripts, run `bash deploy.sh`. This will install a crontab file (`crontab.sh`) to run shell scripts on the schedules defined in `config.py` and establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
 
-9. If you want to modify the script configuration, edit `config.py` as needed. To (re)deploy, remove any existing entries from `crontab.txt` and run `bash deploy.sh`.
+9. If you want to modify the script configuration, edit job schedules in `config.py` as needed, then run `bash build.sh` and `bash deploy.sh` on your host.
 
 ## About the Repo Structure
 
