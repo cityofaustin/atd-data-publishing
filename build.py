@@ -115,13 +115,3 @@ if __name__ == '__main__':
     #  write logrotate
     logrotate = LOGROTATE.replace('$BUILD_PATH', build_path)
     list_to_file(logrotate_filename, [], header=logrotate, write_mode='w')
-
-
-
-
-
-
-
-
-
-
