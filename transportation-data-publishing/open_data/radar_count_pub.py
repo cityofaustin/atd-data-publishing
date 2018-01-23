@@ -218,6 +218,8 @@ def main(date_time):
             socrata_resource
         )
 
+        logging.info(status_upsert_response)
+
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         print(e)
