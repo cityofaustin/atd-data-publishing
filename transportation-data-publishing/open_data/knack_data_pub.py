@@ -193,10 +193,14 @@ def main(start_time):
                 }
 
             if upsert_response.get('Errors') or upsert_response.get('error'):
+                logging.error(upsert_response)
+                logging.info(socrata_payload)
                 emailutil.send_socrata_alert(
                     ALERTS_DISTRIBUTION,
                     resource,
-                    upsert_response
+                    upsert_response,
+                    EMAIL['user'],
+                    EMAIL['password']
                 )
 
             #  get pub log payload
