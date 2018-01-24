@@ -6,6 +6,7 @@ import os
 import sys
 
 from config import CONFIG
+from config import CRONTAB
 from config import DOCKER_BASE_CMD
 from config import LOGROTATE
 
@@ -43,14 +44,18 @@ def cron_entry(cron, path):
     return '{} bash {}'.format(cron, path)
 
 
-def list_to_file(list_, filename, write_mode='a+'):
-    '''
-    Write a list of strings to file
-    '''
+def list_to_file(filename, list_, write_mode='a', header=None):
     with open(filename, write_mode) as fout:
+        if header:
+            fout.write(header)
+
         for l in list_:
             fout.write(l)
             fout.write('\n')
+        
+        #  terminate file with empty line
+        #  this is for crontab
+        fout.write('\n')
     return
 
 
@@ -91,9 +96,10 @@ if __name__ == '__main__':
         )
 
         list_to_file(
-            [sh],
             sh_filename,
-            write_mode='w+'
+            [],
+            header=sh,
+            write_mode='w'
         )
 
         cron = cron_entry(
@@ -103,21 +109,9 @@ if __name__ == '__main__':
 
         crons.append(cron)
 
-    #  Write cron jobs
-    
-    #  add empty cron entry to ensure last line of crontab file is empty (as required)
-    crons.append('') 
+    #  write crontab
+    list_to_file(crontab_filename, crons, header=CRONTAB, write_mode='w')
 
-    list_to_file(
-        crons, 
-        crontab_filename, 
-        write_mode='a+'
-    )
-
-    #  Write logrotate config
+    #  write logrotate
     logrotate = LOGROTATE.replace('$BUILD_PATH', build_path)
-    list_to_file(
-        [logrotate], 
-        logrotate_filename, 
-        write_mode='a+'
-    )
+    list_to_file(logrotate_filename, [], header=logrotate, write_mode='w')

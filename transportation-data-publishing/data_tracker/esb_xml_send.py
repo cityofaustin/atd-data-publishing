@@ -78,10 +78,12 @@ def send_msg(msg, endpoint, path_cert, path_key, timeout=20):
 
     return res
 
+
 def move_file(old_dir, new_dir, f):
     infile = os.path.join(old_dir, f)
     outfile = os.path.join(new_dir, f)
     os.rename(infile, outfile)
+    return True
 
 
 def create_payload(record_id):
@@ -184,8 +186,9 @@ if __name__ == '__main__':
     cfg = cfg['tmc_activities']
     
     #  template output path
-    inpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
-    outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'sent')
+    base_path = os.path.abspath(ESB_XML_DIRECTORY)
+    inpath = '{}/{}'.format(base_path, 'ready_to_send')
+    outpath = '{}/{}'.format(base_path, 'sent')
 
     if not os.path.exists(inpath):
         os.makedirs(inpath)

@@ -118,20 +118,23 @@ class Soda(object):
         return self.date_fields
 
 
-def create_payload(detection_obj, prim_key):
+
+def create_payload(detection_obj, prim_key, add_timestamp=False, generate_ids=False):
     #  readies a socrata upsert from the results of change detection
     #  see https://dev.socrata.com/publishers/upsert.html
-    now = arrow.now()
     payload = []
     payload = payload + detection_obj['new'] + detection_obj['change']
 
     for record in payload:
-        record['processed_datetime'] = now.timestamp
+        if add_timestamp:
+            now = arrow.now()
+            record['processed_datetime'] = now.timestamp
         
-        record['record_id'] = '{}_{}'.format(
-            record[prim_key],
-            str(now.timestamp)
-        )
+        if generate_ids:
+            record['record_id'] = '{}_{}'.format(
+                record[prim_key],
+                str(now.timestamp)
+            )
 
     for record in detection_obj['delete']:
         payload.append({
@@ -146,7 +149,8 @@ def create_location_fields(
     dicts,
     lat_field='location_latitude',
     lon_field='location_longitude',
-    location_field='location'
+    location_field='location',
+    ignore_missing=True
 ):
     '''
     Create special socrata "location" field from x/y values.
@@ -164,8 +168,11 @@ def create_location_fields(
                 record[location_field] = ''
 
         except KeyError:
-            #  otherwise create empty location field
-            record[location_field] = ''
+            #  do not add locaiton field if lat/lon keys are missing
+            if ignore_missing:
+                pass
+            else:
+                raise KeyError
 
     return dicts
 

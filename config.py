@@ -1,6 +1,12 @@
 '''
 Configuration file for automated deployment of transportation-data-publishing scripts.
 '''
+CRONTAB = '''
+#  Crontab File for transportation-data-publishing script deployment
+PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+MAILTO=""
+
+'''
 
 #  Shell script template
 DOCKER_BASE_CMD = '''
