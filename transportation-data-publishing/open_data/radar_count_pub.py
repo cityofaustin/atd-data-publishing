@@ -93,13 +93,10 @@ def main(date_time):
 
         socr.get_data()
 
-        #  
         for record in kits_data_recent:
             new_date = arrow.get(record['dettime'],'US/Central')
             record['dettime'] = new_date.timestamp
 
-        soc_data = socr.data
-        
         if replace:
             # get all kits data
             print('Get all kits data')
@@ -120,11 +117,11 @@ def main(date_time):
             '''
         
         # send new data if the socrata data is behind KITS data
-        elif soc_data[0]['curdatetime'] < kits_data_recent[0]['dettime']:
+        elif socr.data[0]['curdatetime'] < kits_data_recent[0]['dettime']:
             
             # create query for counts since most recent socrata data
             #  query start time must be in local US/Central time (KITSDB is naive!)
-            strtime = arrow.get(soc_data[0]['curdatetime']).to('local').format('YYYY-MM-DD HH:mm:ss')
+            strtime = arrow.get(socr.data[0]['curdatetime']).to('US/Central').format('YYYY-MM-DD HH:mm:ss')
 
             #  INTID is KITS_ID in data tracker / socrata
             #  it uniquely identifies the radar device/location
@@ -188,29 +185,13 @@ def main(date_time):
             hasher.update(in_str.encode('utf-8'))
             row['row_id'] = hasher.hexdigest()
 
-        kits_data = datautil.stringify_key_values(kits_data)
-
-        socr.get_metadata()
-        fieldnames = socr.fieldnames
-        socr_data = datautil.reduce_to_keys(socr.data, fieldnames)
-        date_fields = socr.date_fields
-        socr_data = datautil.upper_case_keys(socr_data)
-        socr_data = datautil.stringify_key_values(socr_data)
-
-        for record in socr_data:
-            rec_keys = list(record.keys())
-            if 'ROW_ID' not in rec_keys:
-                hasher = hashlib.sha1()
-                hash_fields = ['DETID','CURDATETIME','DETNAME']
-                in_str = ''.join([str(record[q]) for q in hash_fields])
-                hasher.update(in_str.encode('utf-8'))
-                record['ROW_ID'] = hasher.hexdigest()
-
-        kits_data = datautil.upper_case_keys(kits_data)
+        kits_data = datautil.stringify_key_values(kits_data)   
 
         socrata_payload = datautil.lower_case_keys(
             kits_data
         )
+
+        logging.info(len(socrata_payload))
 
         status_upsert_response = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
