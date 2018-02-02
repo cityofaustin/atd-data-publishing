@@ -96,11 +96,11 @@ def main(start_time):
                 token,
                 agol_payload
             )
-            
+
             try:
                 for res in add_response['addResults']:
-                    if res['success']:
-                        continue
+                    if not res['success']:
+                        raise KeyError
             
             except KeyError:
                 logging.info('AGOL publication failed to upload. {}'.format(add_response))
