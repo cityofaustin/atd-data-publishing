@@ -70,6 +70,7 @@ def add_features(url, token, payload):
     }
 
     res = requests.post(url, data=params)
+    res.raise_for_status()
     res = res.json()
     return res
 
