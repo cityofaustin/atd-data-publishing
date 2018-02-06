@@ -71,7 +71,7 @@ layers = [
         'handle_features' : 'use_first'
     },
     {   
-        'service_name' : 'EXTERNAL_cmta_stops_new',
+        'service_name' : 'EXTERNAL_cmta_stops',
         'outFields' : 'ID',
         'updateFields' : ['BUS_STOPS'],
         'layer_id' : 0,
@@ -254,7 +254,11 @@ def main(date_time):
                         layer['layer_id'],
                         params
                     )                    
-                                
+                    
+                    if res.get('error'):
+                        logging.info(res)
+                        raise Exception
+
                     if res.get('features'):
                         location = join_features_to_record(
                             res['features'],
@@ -298,7 +302,7 @@ def main(date_time):
 
                 except Exception as e:
                     unmatched_locations.append(location)
-                    print("Unable to retrieve segment {}".format(location))
+                    print("Unable to update location {}. See logfile for details".format(location))
                     raise e
             
             location['UPDATE_PROCESSED'] = True
