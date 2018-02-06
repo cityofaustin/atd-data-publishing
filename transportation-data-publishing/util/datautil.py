@@ -179,7 +179,7 @@ def unix_to_iso(dicts, **options):
                         record[key] = d.format(options['out_format'])
                     
                     except ValueError:
-                        print('{} not a valid unix timestamp'.format(record[key]))
+                        logging.info('{} not a valid unix timestamp'.format(record[key]))
                         continue
 
     return dicts
@@ -260,7 +260,7 @@ def detect_changes(old_data, new_data, join_key, **options):
 
             else:
                 #  delete old record if prim key not in new data
-                print('Delete record: {}'.format(old_record[join_key]))
+                print('Delete record')
                 delete.append(old_record)  
 
         for new_record in new_data:
@@ -268,7 +268,6 @@ def detect_changes(old_data, new_data, join_key, **options):
 
             if new_record[join_key] not in old_values:  
                 #  new record if prim key not in old 
-                print('new record: {}'.format(new_record[join_key]))
                 new.append(new_record)
                 continue
 
@@ -284,13 +283,10 @@ def detect_changes(old_data, new_data, join_key, **options):
                         if key in old_record:  #  key exists in old
 
                             if new_record[key] != old_record[key]:  #  key/val unequal
-                                print('unequal {}: {} new :{}'.format(key, old_record[key], new_record[key]))
-                                print(new_record)
                                 change_record = True
                                 continue
 
                         if key not in old_record:  #  key in new data not in old data
-                            print('new field: ' + key)
                             change_record = True
                             continue
 
@@ -300,7 +296,6 @@ def detect_changes(old_data, new_data, join_key, **options):
                                 continue
 
                         if key not in new_record:  #  key in old data not in new data
-                            print('key in old data not in new data: {} '.format(key))
                             new_record[key] = ''  #  append empty key val for upload
                             change_record = True
                             continue
