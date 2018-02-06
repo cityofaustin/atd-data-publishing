@@ -23,7 +23,7 @@ obj = 'object_11'
 
 field_maps =  {
     #  service name
-    'EXTERNAL_cmta_stops_new' : {  
+    'EXTERNAL_cmta_stops' : {  
         'fields' : {
             #  AGOL Field : Knack Field
             'ID' : 'BUS_STOPS',
