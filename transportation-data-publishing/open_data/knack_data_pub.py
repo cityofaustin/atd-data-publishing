@@ -24,7 +24,6 @@ from util import socratautil
 
 
 def main(start_time):
-    print('starting stuff now')
     
     try: 
         #  get data from Knack object or view
@@ -327,8 +326,6 @@ if __name__ == '__main__':
         fetch_locations = False
 
     results = main(now)
-
-print(results)
 
 
 
