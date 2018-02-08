@@ -4,6 +4,7 @@ import os
 import pdb
 import sys
 import time
+import traceback
 
 import arrow
 import knackpy
@@ -373,7 +374,6 @@ def main(date_time):
             #  update webconfig query
             query_web = createDeleteQuery(kits_table_web, 'WebID', match_id)
             #  execute queries
-            pdb.set_trace()            
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
 
     if data_cd['no_change']:
@@ -395,7 +395,8 @@ if __name__ == '__main__':
         main(now)
 
     except Exception as e:
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', str(e), EMAIL['user'], EMAIL['password'])
+        error_text = traceback.format_exc()
+        emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', error_text, EMAIL['user'], EMAIL['password'])
         logging.warning(str(e))
         print(e)
         raise e
