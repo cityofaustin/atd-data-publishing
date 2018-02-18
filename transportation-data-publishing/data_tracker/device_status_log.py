@@ -76,15 +76,13 @@ def main():
         payload = build_payload(stats)
         payload = datautil.replace_keys([payload], kn_log.field_map)
 
-        res = knackpy.insert_record(
+        res = knackpy.record(
             payload[0],
-            LOG_OBJ,  #  assumes record object is included in config ref_obj and is the first elem in array
-            knack_creds['app_id'],
-            knack_creds['api_key']
+            obj_key=LOG_OBJ,
+            app_id= knack_creds['app_id'],
+            api_key=knack_creds['api_key'],
+            method='insert',
         )
-
-        if res.get('errors'):
-            raise Exception(res['errors'])
 
         return True
     

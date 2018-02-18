@@ -155,15 +155,16 @@ def main(date_time):
             print( 'update record {} of {}'.format( count, len(payload_insert) ) )
             logging.info('update record {} of {}'.format( count, len(payload_insert) ) )
             
-            response_json = knackpy.update_record(
+            res = knackpy.record(
                 record,
-                params_pm['field_obj'][0],
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=params_pm['field_obj'][0],
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
 
-            logging.info(response_json)
-            update_response.append(response_json)
+            logging.info(res)
+            update_response.append(res)
 
         count = 0
 
@@ -172,15 +173,16 @@ def main(date_time):
             print( 'insert record {} of {}'.format( count, len(payload_insert) ) )
             logging.info('insert record {} of {}'.format( count, len(payload_insert) ) )
             
-            response_json = knackpy.insert_record(
+            res = knackpy.record(
                 record,
-                params_pm['field_obj'][0],
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=params_pm['field_obj'][0],
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='create',
             )
 
-            logging.info(response_json)
-            update_response.append(response_json)
+            logging.info(res)
+            update_response.append(res)
 
         logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return "done"

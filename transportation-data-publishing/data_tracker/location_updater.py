@@ -309,14 +309,15 @@ def main(date_time):
             location = datautil.reduce_to_keys([location], update_fields + ['id', 'UPDATE_PROCESSED'])
             location = datautil.replace_keys(location, kn.field_map)
             
-            response_json = knackpy.update_record(
+            res = knackpy.record(
                 location[0],
-                obj,
-                KNACK_CREDENTIALS[app_name]['app_id'],
-                KNACK_CREDENTIALS[app_name]['api_key']
+                obj_key=obj, 
+                app_id=KNACK_CREDENTIALS[app_name]['app_id'],
+                api_key=KNACK_CREDENTIALS[app_name]['api_key'],
+                method='update',
             )
 
-            update_response.append(response_json)
+            update_response.append(res)
 
         if (len(unmatched_locations) > 0):
             emailutil.send_email(

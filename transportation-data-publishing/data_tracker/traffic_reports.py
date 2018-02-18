@@ -236,12 +236,13 @@ def main(date_time):
         for record in records_archive:
             count += 1
             print( 'Updating record {} of {}'.format( count, len(records_archive) ) )
-            
-            res = knackpy.update_record(
+
+            res = knackpy.record(
                 record,
-                knack_obj,
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=knack_obj,
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
 
         count = 0
@@ -249,12 +250,14 @@ def main(date_time):
             count += 1
             print( 'Inserting record {} of {}'.format( count, len(records_insert) ) )
 
-            res = knackpy.insert_record(
+            res = knackpy.record(
                 record,
-                knack_obj,
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=knack_obj,
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='create',
             )
+
 
         return 'Done.'
 
