@@ -147,15 +147,16 @@ def main(date_time):
         for record in payload:
             count += 1
             print( 'updating record {} of {}'.format( count, len(payload) ) )
-        
-            response_json = knackpy.update_record(
+
+            res = knackpy.record(
                 record,
-                ref_obj[0], 
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=ref_obj[0], 
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
 
-            update_response.append(response_json)
+            update_response.append(res)
 
         logging.info( "Record updates sent :{}".format(len(update_response)) )
         logging.info( "Response: {}".format(update_response) )

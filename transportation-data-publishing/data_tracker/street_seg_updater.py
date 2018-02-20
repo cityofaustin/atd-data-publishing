@@ -94,14 +94,15 @@ def main(date_time):
                 if type(record[field]) == str:
                     record[field] = record[field].strip()
             
-            response_json = knackpy.update_record(
+            res = knackpy.record(
                 record,
-                ref_obj[0],
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=ref_obj[0],
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
 
-            update_response.append(response_json)
+            update_response.append(res)
 
         if (len(unmatched_segments) > 0):
             logging.info( 'Unmatched Street Segments: {}'.format(unmatched_segments) )

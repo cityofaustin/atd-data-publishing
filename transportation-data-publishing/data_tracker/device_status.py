@@ -115,11 +115,12 @@ def main():
                 result = datautil.reduce_to_keys([result], out_fields_upload)
                 result = datautil.replace_keys(result, kn.field_map)
 
-                response_json = knackpy.update_record(
+                res = knackpy.record(
                     result[0],
-                    cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array
-                    knack_creds['app_id'],
-                    knack_creds['api_key']
+                    obj_key=cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array,
+                    app_id= knack_creds['app_id'],
+                    api_key=knack_creds['api_key'],
+                    method='update',
                 )
 
         # close the pool and wait for the work to finish 

@@ -234,13 +234,14 @@ if __name__ == '__main__':
             payload_signals = datautil.replace_keys([payload_signals], signals.field_map)
 
             #  update signal record with detection status and date
-            res = knackpy.update_record(
+            res = knackpy.record(
                 payload_signals[0],
-                config_signals['objects'][0],
-                app_id,
-                api_key
+                obj_key=config_signals['objects'][0],
+                app_id= app_id,
+                api_key=api_key,
+                method='update',
             )
-        
+
             count_sig += 1
             count_status += 1
 

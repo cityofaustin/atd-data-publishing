@@ -89,14 +89,13 @@ def main(date_time):
             count += 1
             print( 'updating record {} of {}'.format( count, len(new_data) ) )
 
-            response = knackpy.update_record(
+            res = knackpy.record(
                 record,
-                ref_obj[0],
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=ref_obj[0],
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
-
-            print(response)
            
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))

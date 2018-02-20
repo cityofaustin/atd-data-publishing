@@ -131,15 +131,15 @@ def main(date_time):
                     len(payload)
                 ))
 
-                response_json = knackpy.update_record(
+                res = knackpy.record(
                     record,
-                    obj,
-                    knack_creds['app_id'],
-                    knack_creds['api_key']
+                    obj_key=obj,
+                    app_id= knack_creds['app_id'],
+                    api_key= knack_creds['api_key'],
+                    method='update',
                 )
 
-
-                update_response.append(response_json)
+                update_response.append(res)
 
             return update_response
         else:

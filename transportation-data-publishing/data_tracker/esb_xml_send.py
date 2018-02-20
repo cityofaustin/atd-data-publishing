@@ -143,11 +143,12 @@ def main(date_time):
             ''' Update Knack Record '''
             payload = create_payload(record_id)
             
-            res = knackpy.update_record(
+            res = knackpy.record(
                 payload,
-                cfg['obj'],
-                knack_creds['app_id'],
-                knack_creds['api_key']
+                obj_key=cfg['obj'],
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
 
         logging.info('{} records transmitted.'.format(len(files)))
