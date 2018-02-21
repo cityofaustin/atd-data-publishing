@@ -81,7 +81,7 @@ def main():
             obj_key=LOG_OBJ,
             app_id= knack_creds['app_id'],
             api_key=knack_creds['api_key'],
-            method='insert',
+            method='create',
         )
 
         return True
