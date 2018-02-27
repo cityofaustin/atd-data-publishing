@@ -42,7 +42,7 @@ $BUILD_PATH/transportation-data-publishing/xml/*.xml {
 
 #  Script configuration
 CONFIG = {
-  'default_image' : 'tdp-py36',
+  'default_image' : 'atddocker/tdp',
   'scripts' : [
     {
       'args': [],
@@ -199,7 +199,7 @@ CONFIG = {
     },
     {
       'args': [],
-      'cron': '20 3 * * *',
+      'cron': '21 * * * *',
       'enabled': True,
       'image': None,
       'name': 'dms_msg_pub',
@@ -430,6 +430,26 @@ CONFIG = {
       'name': 'traffic_study_locations',
       'path': 'transportation-data-publishing/traffic_study',
       'script': 'traffic_study_locations.py'
+    },
+    {
+      'args': ['data_tracker_prod'],
+      'cron': '55 3 * * *',
+      'enabled': True,
+      'image': None,
+      'name': 'tcp_business_days',
+      'path': 'transportation-data-publishing/data_tracker',
+      'script': 'tcp_business_days.py'
     }
   ]
 }
+
+
+
+
+
+
+
+
+
+
+
