@@ -16,7 +16,7 @@ We use Docker and cron to launch scripts in individual containers on a Linux hos
 
 5. If setting up ESB inegration add certificates to `transportation-data-publishing/config/esb`
 
-6. `cd` into the repository and build the Docker image (this will take a few minutes): `docker build -t tdp-py36 -f Dockerfile-tdp-py36 .`
+6. `cd` into the repository and build the Docker image (this will take a few minutes): `docker build --no-cache -t tdp -f Dockerfile .`
 
 7. Generate the shell scripts and crontab file: `bash build.sh`.
 

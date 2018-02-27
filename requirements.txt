@@ -1,5 +1,6 @@
 feedparser
 fulcrum
 knackpy
+pandas
 pymssql
 yagmail

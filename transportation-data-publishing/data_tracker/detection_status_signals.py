@@ -253,7 +253,7 @@ if __name__ == '__main__':
         print('Failed to process data for {}'.format(arrow.now()))
         error_text = traceback.format_exc()
         email_subject = "Detection Status Update Failure"
-        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, MAIL['user'], EMAIL['password'])
+        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
         logging.error(error_text)
         print(e)
         raise e
