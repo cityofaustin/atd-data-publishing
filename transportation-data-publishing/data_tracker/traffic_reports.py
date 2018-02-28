@@ -57,7 +57,7 @@ def get_filter(field_id, field_val):
     ]
 
 
-def getRecords():
+def get_records():
      #  get "ACTIVE" traffic report records from knack
     filter_current = get_filter(knack_status_field, 'ACTIVE')
 
@@ -89,13 +89,17 @@ def getRecords():
     #  because field metadata is not avaialble in public views
     #  and we use a public view to reduce the # of private API calls
     #  of which we have a daily limit
+
+    #  TODO: as of Feb 2017, knackpy has a method to get app data
+    #  which would allow us to fetch metdata from an obect
+    #  without "costing" an API call.
     kn.fields = TRAFFIC_REPORT_META
     kn.make_field_map()
 
     return kn
 
 
-def parseFeed(feed):
+def parse_feed(feed):
     '''
     extract feed data by applying some unfortunate hardcoded parsing
     logic to feed entries
@@ -107,13 +111,13 @@ def parseFeed(feed):
     return records
 
 
-def getTimestamp(datestr):
+def get_timestamp(datestr):
     #  returns a naive millsecond timestamp in local time
     #  which is good because Knack needs a local timestamp
     return arrow.get(datestr).timestamp * 1000
 
 
-def localTimestamp():
+def local_timestamp():
     #  create a "local" timestamp, ie unix timestamp shift for local time
     #  because Knack assumes time values in local (Central) time
     return arrow.now().replace(tzinfo='UTC').timestamp * 1000
@@ -127,7 +131,7 @@ def has_match(dicts, val, key):
     return False
 
                 
-def parseTitle(title):
+def parse_title(title):
     #  parse a the feed "title" element
     #  assume feed will never have Euro sign (it is non-ascii)
     try:
@@ -149,7 +153,7 @@ def parseTitle(title):
     return address, issue
 
 
-def parseSummary(summary):
+def parse_summary(summary):
     #  feed summary is pipe-delimitted and gnarly
     summary = summary.split('|')
     summary = [thing.strip() for thing in summary]
@@ -160,21 +164,24 @@ def parseSummary(summary):
 def handleRecord(entry):
     #  turn rss feed entry into traffic report dict
     record = {}
-    timestamp = getTimestamp(entry.published_parsed)
-    status_date = localTimestamp()
+    timestamp = get_timestamp(entry.published_parsed)
+    status_date = local_timestamp()
+
     #  compose record id from entry identifier (which is not wholly unique)
-    #  and publicatin timestamp
+    #  and publication timestamp
     record_id = '{}_{}'.format( str(entry.id), str(timestamp) )
     record[primary_key] = record_id
     record[date_field] = timestamp
     record[status_date_field] = status_date
     title = entry.title
+
     #  parse title
-    title = parseTitle(title)
+    title = parse_title(title)
     record['ADDRESS'] = title[0]
     record['ISSUE_REPORTED'] = title[1]
+
     #  parse lat/lon
-    geocode = parseSummary(entry.summary)
+    geocode = parse_summary(entry.summary)
     record['LATITUDE'] =  geocode[0]
     record['LONGITUDE'] =  geocode[1]
     record['LOCATION'] = { 'latitude' : geocode[0], 'longitude' : geocode[1] }
@@ -184,12 +191,12 @@ def handleRecord(entry):
 def main(date_time):
     try:
         #  get existing traffic report records from Knack
-        kn = getRecords()
+        kn = get_records()
        
         #  get and parse feed
         feed = feedparser.parse(feed_url)
-        new_records = parseFeed(feed)
-       
+        new_records = parse_feed(feed)
+
         #  convert feed fieldnames to Knack database names
         #  prepping them for upsert 
         new_records = datautil.replace_keys(new_records, kn.field_map)
@@ -199,8 +206,8 @@ def main(date_time):
         status_date_field_raw = kn.field_map[status_date_field]
 
         records_archive = []
-        #  look for old records in new data
         
+        #  look for old records in new data
         for old_rec in kn.data:
             if has_match(
                 new_records,
@@ -211,7 +218,7 @@ def main(date_time):
 
             else:
                 old_rec[status_key_raw] = 'ARCHIVED'
-                old_rec[status_date_field_raw] = localTimestamp()
+                old_rec[status_date_field_raw] = local_timestamp()
                 records_archive.append(old_rec)
 
         records_archive = datautil.reduce_to_keys(records_archive, ['id', status_key_raw, status_date_field_raw])
