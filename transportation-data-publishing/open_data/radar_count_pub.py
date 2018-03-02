@@ -4,7 +4,6 @@ new records to City of Austin Open Data Portal.
 '''
 import argparse
 import hashlib
-import logging
 import os
 import pdb
 import sys
@@ -16,14 +15,16 @@ import _setpath
 from config.secrets import *
 from util import datautil
 from util import emailutil
+from util import logutil
 from util import kitsutil
 from util import socratautil   
 
-then = arrow.now()
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(then)))
+script = os.path.basename(__file__).replace('.py', '')
+logfile = f'{LOG_DIRECTORY}/{script}.log'
+logger = logutil.timed_rotating_log(logfile)
+
+now = arrow.now()
+logger.info('START AT {}'.format(str(now)))
 
 socrata_resource = 'i626-g7ub'
 
@@ -146,7 +147,7 @@ def main(date_time):
                 '''.format(strtime)
         
         else:
-            logging.info('No Data to export, try: count_data_pub.py -replace')
+            logger.info('No Data to export, try: count_data_pub.py -replace')
             return True
 
         kits_data = kitsutil.data_as_dict(
@@ -191,7 +192,7 @@ def main(date_time):
             kits_data
         )
 
-        logging.info(len(socrata_payload))
+        logger.info(len(socrata_payload))
 
         status_upsert_response = socratautil.upsert_data(
             SOCRATA_CREDENTIALS,
@@ -199,7 +200,7 @@ def main(date_time):
             socrata_resource
         )
 
-        logging.info(status_upsert_response)
+        logger.info(status_upsert_response)
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
@@ -235,6 +236,6 @@ if __name__ == '__main__':
     #  parse command-line arguments    
     args = cli_args()
     replace = args.replace
-    results = main(then)
+    results = main(now)
 
-logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
+logger.info('Elapsed time: {}'.format(str(arrow.now() - now)))

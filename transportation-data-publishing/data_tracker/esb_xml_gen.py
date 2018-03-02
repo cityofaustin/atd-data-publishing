@@ -3,7 +3,6 @@ Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
 '''
 import argparse
-import logging
 import os
 import pdb
 import traceback
@@ -16,6 +15,7 @@ from config.esb.config import cfg
 from config.secrets import *
 from util import datautil
 from util import emailutil
+from util import logutil
 
 
 #  invalid XLM characters to be encoded
@@ -147,7 +147,7 @@ def main(date_time):
             kn = get_data()
             
         else:
-            logging.info('No new records to process')
+            logger.info('No new records to process')
             return None
 
         #  identify date fields for conversion from mills to unix
@@ -167,15 +167,15 @@ def main(date_time):
             with open('{}/{}_{}.xml'.format(outpath, record['ATD_ACTIVITY_ID'], record['id']), 'w') as fout:
                 fout.write(payload)
         
-        logging.info('{} records processed.'.format(len(kn.data)))
+        logger.info('{} records processed.'.format(len(kn.data)))
 
         return 'GOOD JOB!'
 
     except Exception as e:
         print(f'Failed to process data for {date_time}. See logs for detail.')
         error_text = traceback.format_exc()
-        logging.error(str(e))
-        logging.error(error_text)
+        logger.error(str(e))
+        logger.error(error_text)
         
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
@@ -188,16 +188,17 @@ def main(date_time):
         raise e
 
 if __name__ == '__main__':
-    args = cli_args()
-    app_name = args.app_name
-
-    now = arrow.now()
-
-    #  init logging 
     script = os.path.basename(__file__).replace('.py', '.log')
     logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START AT {}'.format(str(now)))
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
+    args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
+    app_name = args.app_name
 
     #  config
     knack_creds = KNACK_CREDENTIALS
@@ -210,5 +211,5 @@ if __name__ == '__main__':
         os.makedirs(outpath)
 
     results = main(now)
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 

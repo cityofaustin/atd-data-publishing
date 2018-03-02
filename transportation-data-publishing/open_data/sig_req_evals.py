@@ -5,7 +5,6 @@ Your average knack_data_pub is that data from two views
 (phb request and signal requests) are merged to one payload dict
 '''
 from copy import deepcopy
-import logging
 import os
 import pdb
 import traceback
@@ -17,16 +16,18 @@ import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 from util import agolutil
-from util import socratautil
-from util import emailutil
+from util import logutil
 from util import datautil
+from util import emailutil
+from util import socratautil
+
+
+script = os.path.basename(__file__).replace('.py', '')
+logfile = f'{LOG_DIRECTORY}/{script}.log'
+logger = logutil.timed_rotating_log(logfile)
 
 now = arrow.now()
-
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
+logger.info('START AT {}'.format(str(now)))
 
 #  KNACK CONFIG
 primary_key = 'ATD_EVAL_ID'
@@ -133,13 +134,13 @@ def main(start_time):
                 lon_field='location_longitude'
                 )
 
-            logging.info(socrata_payload)
+            logger.info(socrata_payload)
 
         else:
             socrata_payload = []
         
         upsert_response = socratautil.upsert_data(SOCRATA_CREDENTIALS, socrata_payload, socrata_resource_id)
-        logging.info(upsert_response)
+        logger.info(upsert_response)
 
         if 'Errors' in upsert_response:
             if upsert_response['Errors']:
@@ -166,14 +167,14 @@ def main(start_time):
             pub_log_id
         )
 
-        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+        logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return log_payload
 
     except Exception as e:
         error_text = traceback.format_exc()
         email_subject = "Signal Requests Data Pub Failure"
         emailutil.send_email(ALERTS_DISTRIBUTION, socrata_resource_id, error_text, EMAIL['user'], EMAIL['password'])
-        logging.error(error_text)
+        logger.error(error_text)
         print(e)
         raise e
 

@@ -3,7 +3,6 @@ Download traffic study locations form ArcGIS Online
 and publish to Austin's Open Data Portal
 '''
 import csv
-import logging
 import os
 import pdb
 import traceback
@@ -12,9 +11,11 @@ import arrow
 
 import _setpath
 from config.secrets import *
-from util import emailutil
-from util import socratautil
 from util import agolutil
+from util import emailutil
+from util import logutil
+from util import socratautil
+
 
 socrata_creds = SOCRATA_CREDENTIALS
 socrata_resource_id = 'jqhg-imb3'
@@ -74,12 +75,12 @@ def main():
 
 if __name__ == '__main__':
 
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+
     now = arrow.now()
-    
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START TRAFFIC STUDY LOCATIONS AT {}'.format(str(now)))
+    logger.info('START AT {}'.format(str(now)))
 
     try:
         results = main()
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     except Exception as e:
         error_text = traceback.format_exc()
         print(error_text)
-        logging.error(error_text)
+        logger.error(error_text)
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
             'Traffic Count Locations Process Failure',
@@ -97,4 +98,4 @@ if __name__ == '__main__':
         )
         raise e
 
-    logging.info('END AT: {}'.format(arrow.now().format()))
+    logger.info('END AT: {}'.format(arrow.now().format()))

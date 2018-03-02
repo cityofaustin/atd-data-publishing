@@ -1,5 +1,5 @@
 '''
-Generate shell scripts, logrotate config and crontab for deployment of 
+Generate shell scripts config and crontab for deployment of 
 transportation-data-publishing scripts.
 '''
 import os
@@ -8,7 +8,6 @@ import sys
 from config import CONFIG
 from config import CRONTAB
 from config import DOCKER_BASE_CMD
-from config import LOGROTATE
 
 
 def check_version():
@@ -63,7 +62,6 @@ if __name__ == '__main__':
     check_version()
 
     crontab_filename = 'crontab.sh'
-    logrotate_filename = 'tdp.logrotate'
 
     #  get the absolute path of the repository
     build_path = os.getcwd()
@@ -111,7 +109,3 @@ if __name__ == '__main__':
 
     #  write crontab
     list_to_file(crontab_filename, crons, header=CRONTAB, write_mode='w')
-
-    #  write logrotate
-    logrotate = LOGROTATE.replace('$BUILD_PATH', build_path)
-    list_to_file(logrotate_filename, [], header=logrotate, write_mode='w')

@@ -3,7 +3,6 @@ Update traffic signal records with secondary signal relationships
 '''
 import argparse
 import collections
-import logging
 import os
 import pdb
 import traceback
@@ -15,6 +14,7 @@ import _setpath
 from config.secrets import *
 from util import datautil
 from util import emailutil
+from util import logutil
 
 
 def cli_args():
@@ -138,11 +138,11 @@ def main(date_time):
         update_response = []
         
         if len(payload) == 0:
-            logging.info("No new secondary signals.")
+            logger.info("No new secondary signals.")
             return "No new secondary signals."
 
-        logging.info( "{} records to update".format(len(payload)) )
-        logging.info( "{} records to update".format(payload) )
+        logger.info( "{} records to update".format(len(payload)) )
+        logger.info( "{} records to update".format(payload) )
         
         for record in payload:
             count += 1
@@ -158,8 +158,8 @@ def main(date_time):
 
             update_response.append(res)
 
-        logging.info( "Record updates sent :{}".format(len(update_response)) )
-        logging.info( "Response: {}".format(update_response) )
+        logger.info( "Record updates sent :{}".format(len(update_response)) )
+        logger.info( "Response: {}".format(update_response) )
         return update_response
 
     except Exception as e:
@@ -178,26 +178,25 @@ def main(date_time):
         raise e
 
 if __name__ == '__main__':
-    #  parse command-line arguments
+    script = os.path.basename(__file__).replace('.py', '.log')
+    logfile = f'{LOG_DIRECTORY}/{script}'
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     args = cli_args()
     app_name = args.app_name
 
-    now = arrow.now()
-
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START AT {}'.format(str(now)))
-
     update_field = 'field_1329'  # SECONDARY_SIGNALS field
-    ref_obj = ['object_12']  #  Signals object
+    ref_obj = ['object_12']  #  signals object
     scene = 'scene_73'
     view = 'view_197'
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
     results = main(now)
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
 

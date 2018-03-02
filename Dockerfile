@@ -10,6 +10,10 @@ COPY requirements.txt /app/transportation-data-publishing
 
 RUN apt-get update
 
+#  Set Timezone :(  
+ENV TZ=America/Chicago
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 #  Install cifs-utils to mount Windows network share
 RUN apt-get install -y cifs-utils
 

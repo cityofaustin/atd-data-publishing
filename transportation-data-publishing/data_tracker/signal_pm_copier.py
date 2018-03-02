@@ -3,7 +3,6 @@ check traffic signal prevent maintenance (PM) records and
 insert copies of PM records to signals' secondary signals
 '''
 import argparse
-import logging
 import os
 import pdb
 
@@ -14,7 +13,7 @@ import _setpath
 from config.secrets import *
 from util import datautil
 from util import emailutil
-
+from util import logutil
 
 def get_prim_signals(list_of_signals):
     '''
@@ -94,7 +93,7 @@ def main(date_time):
                 data_pm.append(pm)
 
         if not data_pm:
-            logging.info('No PM records to copy.')
+            logger.info('No PM records to copy.')
             return
 
         #  get signal data
@@ -153,7 +152,7 @@ def main(date_time):
         for record in payload_update:
             count += 1
             print( 'update record {} of {}'.format( count, len(payload_insert) ) )
-            logging.info('update record {} of {}'.format( count, len(payload_insert) ) )
+            logger.info('update record {} of {}'.format( count, len(payload_insert) ) )
             
             res = knackpy.record(
                 record,
@@ -163,7 +162,7 @@ def main(date_time):
                 method='update',
             )
 
-            logging.info(res)
+            logger.info(res)
             update_response.append(res)
 
         count = 0
@@ -171,7 +170,7 @@ def main(date_time):
         for record in payload_insert:
             count += 1
             print( 'insert record {} of {}'.format( count, len(payload_insert) ) )
-            logging.info('insert record {} of {}'.format( count, len(payload_insert) ) )
+            logger.info('insert record {} of {}'.format( count, len(payload_insert) ) )
             
             res = knackpy.record(
                 record,
@@ -181,32 +180,32 @@ def main(date_time):
                 method='create',
             )
 
-            logging.info(res)
+            logger.info(res)
             update_response.append(res)
 
-        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+        logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return "done"
 
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
         emailutil.send_email(ALERTS_DISTRIBUTION, 'Copy Preventative Maintenance Failure', str(e), EMAIL['user'], EMAIL['password'])
-        logging.error( str(e) )
+        logger.error( str(e) )
 
         print(e)
         raise e
 
 
 if __name__ == '__main__':
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     #  parse command-line arguments
     args = cli_args()
     app_name = args.app_name
-
-    now = arrow.now()
-
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START AT {}'.format(str(now)))
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 

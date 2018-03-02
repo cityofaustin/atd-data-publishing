@@ -2,7 +2,6 @@
 update Knack street segments with data from 
 COA ArcGIS Online Street Segment Feature Service
 '''
-import logging
 import os
 import pdb
 
@@ -14,21 +13,7 @@ from config.secrets import *
 from util import agolutil
 from util import emailutil
 from util import datautil
-
-
-now = arrow.now()
-
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
-
-#  config
-primay_key = 'SEGMENT_ID_NUMBER'
-knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
-ref_obj = ['object_7']
-scene = 'scene_424'
-view = 'view_1198'
+from util import logutil
 
 
 def main(date_time):
@@ -48,7 +33,7 @@ def main(date_time):
         unmatched_segments = []
         
         if not kn.data:
-            logging.info('No records to update.')
+            logger.info('No records to update.')
             return None
 
         for street_segment in kn.data:
@@ -105,7 +90,7 @@ def main(date_time):
             update_response.append(res)
 
         if (len(unmatched_segments) > 0):
-            logging.info( 'Unmatched Street Segments: {}'.format(unmatched_segments) )
+            logger.info( 'Unmatched Street Segments: {}'.format(unmatched_segments) )
             emailutil.send_email(ALERTS_DISTRIBUTION, 'Unmatched Street Segments', str(unmatched_segments), EMAIL['user'], EMAIL['password'])
 
         return update_response
@@ -117,10 +102,25 @@ def main(date_time):
         raise e
 
 
-results = main(now)
-logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+if __name__ == '__main__':
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
 
-print(results)
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
+    #  config
+    primay_key = 'SEGMENT_ID_NUMBER'
+    knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
+    ref_obj = ['object_7']
+    scene = 'scene_424'
+    view = 'view_1198'
+
+    results = main(now)
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
+
+    print(results)
 
 
 

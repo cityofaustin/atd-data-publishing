@@ -2,9 +2,8 @@
 Configuration file for automated deployment of transportation-data-publishing scripts.
 '''
 CRONTAB = '''
-#  Crontab File for transportation-data-publishing script deployment
-PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
-MAILTO=""
+#  Crontab entries transportation-data-publishing scripts
+
 
 '''
 
@@ -21,24 +20,6 @@ sudo docker run \\
     -c "$CMD"
 '''
 
-#  Logrotate config template
-LOGROTATE = '''
-$BUILD_PATH/transportation-data-publishing/log/*.log {
-    missingok
-    nocompress
-    nocreate
-    daily
-    rotate 7
-}
-
-$BUILD_PATH/transportation-data-publishing/xml/*.xml {
-    missingok
-    nocompress
-    nocreate
-    weekly
-    rotate 0
-}
-'''
 
 #  Script configuration
 CONFIG = {

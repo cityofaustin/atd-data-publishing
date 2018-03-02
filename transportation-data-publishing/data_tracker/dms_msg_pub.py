@@ -1,4 +1,3 @@
-import logging
 import os
 import pdb
 import sys
@@ -12,12 +11,17 @@ from util import kitsutil
 from util import datautil
 from util import emailutil
 from util import socratautil   
+from util import logutil
+
 
 then = arrow.now()
 
 script = os.path.basename(__file__).replace('.py', '.log')
 logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
+logger = logutil.timed_rotating_log(logfile)
+
+now = arrow.now()
+logger.info('START AT {}'.format(str(now)))
 
 #  config
 primay_key = 'DMS_ID'
@@ -112,4 +116,4 @@ def main(date_time):
  
 results = main(then)
 
-logging.info('Elapsed time: {}'.format(str(arrow.now() - then)))
+logger.info('Elapsed time: {}'.format(str(arrow.now() - then)))

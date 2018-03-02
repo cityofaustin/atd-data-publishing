@@ -5,7 +5,6 @@ command ex: device_status_check.py travel_sensors data_tracker_prod
 '''
 import argparse
 import json
-import logging
 from multiprocessing.dummy import Pool as ThreadPool 
 import os
 from os import system as system_call
@@ -21,6 +20,7 @@ from config.knack.config import cfg
 from config.secrets import *
 from util import datautil
 from util import emailutil
+from util import logutil
 
 
 def ping_ip(ip, timeout=3):
@@ -38,7 +38,7 @@ def ping_ip(ip, timeout=3):
 
     response = system_call("ping " + params + " " + ip)
 
-    logging.debug(str(response))
+    logger.debug(str(response))
 
     if response != 0:
         return "OFFLINE"
@@ -134,7 +134,7 @@ def main():
         error_text = traceback.format_exc()
         email_subject = "Device Status Check Failure: {}".format(device_type)
         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logging.error(error_text)
+        logger.error(error_text)
         print(e)
         raise e
 
@@ -173,20 +173,21 @@ def cli_args():
 
 
 if __name__ == '__main__':
+    
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+    
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     #  parse command-line arguments
     args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
     device_type = args.device_type
     out_json = args.json
     app_name = args.app_name
-
-    now = arrow.now()
-    
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}_{device_type}.log'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info( 'args: {}'.format( str(args) ) )
-    logging.info('START AT {}'.format(str(now)))
-        
     primary_key = cfg[device_type]['primary_key']
     ip_field = cfg[device_type]['ip_field']
 
@@ -208,6 +209,6 @@ if __name__ == '__main__':
     ]
 
     results = main()
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
