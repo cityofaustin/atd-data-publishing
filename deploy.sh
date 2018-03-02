@@ -4,6 +4,3 @@
 
 #  deploy crontab
 crontab < crontab.sh
-
-#  set logrotation
-cp tdp.logrotate /etc/logrotate.d

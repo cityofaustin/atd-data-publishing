@@ -17,6 +17,8 @@ from config.knack.config import cfg
 from config.secrets import *
 from util import emailutil
 from util import datautil
+from util import logutil
+
 
 LOG_OBJ = 'object_131'
 
@@ -91,7 +93,7 @@ def main():
         error_text = traceback.format_exc()
         email_subject = "Device Status Log Failure: {}".format(device_type)
         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logging.error(error_text)
+        logger.error(error_text)
         print(e)
         raise e
 
@@ -123,25 +125,21 @@ def cli_args():
 
 
 if __name__ == '__main__':
-    #  parse command-line arguments
-    args = cli_args()
-    device_type = args.device_type
-    app_name = args.app_name
-
-    now = arrow.now()
     
     script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}_{device_type}.log'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
     
-    logging.basicConfig(
-        filename=logfile,
-        level=logging.INFO
-    )
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
 
-    logging.info( 'args: {}'.format( str(args) ) )
-    logging.info('START AT {}'.format(str(now)))
-        
+    #  parse command-line arguments
+    args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
+    device_type = args.device_type
+    app_name = args.app_name
+    
     primary_key = cfg[device_type]['primary_key']
     status_field = cfg[device_type]['status_field']
     status_filters = cfg[device_type]['status_filter_comm_status']
@@ -149,6 +147,6 @@ if __name__ == '__main__':
     knack_creds = KNACK_CREDENTIALS[app_name]
 
     results = main()
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)

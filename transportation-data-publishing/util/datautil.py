@@ -179,7 +179,7 @@ def unix_to_iso(dicts, **options):
                         record[key] = d.format(options['out_format'])
                     
                     except ValueError:
-                        logging.info('{} not a valid unix timestamp'.format(record[key]))
+                        logger.info('{} not a valid unix timestamp'.format(record[key]))
                         continue
 
     return dicts

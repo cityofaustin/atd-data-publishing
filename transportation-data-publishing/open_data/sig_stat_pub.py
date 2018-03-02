@@ -1,4 +1,3 @@
-import logging
 import os
 import pdb
 import sys
@@ -11,6 +10,7 @@ from config.secrets import *
 from util import kitsutil
 from util import datautil
 from util import emailutil
+from util import logutil
 from util import socratautil
 
 SOCR_SIG_RES_ID = 'xwqn-2f78'
@@ -20,11 +20,14 @@ DATASET = 'Traffic Signal Status'
 FLASH_STATUSES = ['1', '2', '3']
 
 script_name = __file__.split('.')[0]
-start_time = arrow.now()
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(start_time)))
+now = arrow.now()
+
+script = os.path.basename(__file__).replace('.py', '')
+logfile = f'{LOG_DIRECTORY}/{script}.log'
+logger = logutil.timed_rotating_log(logfile)
+
+now = arrow.now()
+logger.info('START AT {}'.format(str(now)))
     
 
 def update_pub_log(upsert_response):
@@ -33,7 +36,7 @@ def update_pub_log(upsert_response):
     '''
     log_payload = socratautil.pub_log_payload(
         script_name,  #  id
-        start_time.timestamp,  #  start
+        now.timestamp,  #  start
         arrow.now().timestamp,  #  end
         resource=SOCR_SIG_STAT_RES_ID,
         dataset=DATASET
@@ -50,7 +53,7 @@ def update_pub_log(upsert_response):
     )
 
 
-def main(date_time):
+def main():
     print('starting stuff now')
 
     try:
@@ -158,7 +161,7 @@ def main(date_time):
         for change_type in cd_results.keys():
             #  log signals whose status has changed
             if len(cd_results[change_type]) > 0:
-                logging.info(
+                logger.info(
                     '{}: {}'.format(change_type, len(cd_results[change_type]))
                 )
     
@@ -206,13 +209,13 @@ def main(date_time):
         update_pub_log(upsert_res)
 
         if upsert_res.get('error') or upsert_res.get('Errors'):
-            logging.info(socrata_payload)
+            logger.info(socrata_payload)
             raise Exception(str(upsert_res))
 
         return upsert_res
     
     except Exception as e:
-        logging.info(e)
+        logger.info(e)
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
             'DATA PROCESSING ALERT: Signal Status Update Failure',
@@ -223,7 +226,7 @@ def main(date_time):
 
         raise e
  
-results = main(start_time)
+results = main()
 
 print(results)
-logging.info('Elapsed time: {}'.format(str(arrow.now() - start_time)))
+logger.info('Elapsed time: {}'.format(str(arrow.now() - now)))

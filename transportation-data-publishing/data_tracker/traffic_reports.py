@@ -7,7 +7,6 @@ extracts incident data from the public safety CAD databse and publishes
 it in the form of an RSS feed and cold fusion-powered HTML table.
 See: http://www.ci.austin.tx.us/qact/qact_rss.cfm
 '''
-import logging
 import os
 import pdb
 import traceback
@@ -19,16 +18,18 @@ import knackpy
 import _setpath
 from config.secrets import *
 from config.traffic_report.meta import *
-from util import emailutil
-from util import datautil
 from util import agolutil
+from util import datautil
+from util import emailutil
+from util import logutil
 
 #  init logging 
+script = os.path.basename(__file__).replace('.py', '')
+logfile = f'{LOG_DIRECTORY}/{script}.log'
+logger = logutil.timed_rotating_log(logfile)
+
 now = arrow.now()
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(str(now)))
+logger.info('START AT {}'.format(str(now)))
 
 #  config
 feed_url = 'http://www.ci.austin.tx.us/qact/qact_rss.cfm'
@@ -57,42 +58,22 @@ def get_filter(field_id, field_val):
     ]
 
 
-def getRecords():
-     #  get "ACTIVE" traffic report records from knack
-    filter_current = get_filter(knack_status_field, 'ACTIVE')
+def get_records(
+    view,
+    scene,
+    creds,
+    filters=None,
+    rows_per_page=1000,
+    page_limit=100):
 
-    kn = knackpy.Knack(
+    return knackpy.Knack(
         view=knack_view,
         scene=knack_scene,
-        app_id=knack_creds['app_id'],
-        filters=filter_current,
-        rows_per_page=1000,
-        page_limit=100
+        app_id=creds['app_id'],
+        filters=filters,
+        rows_per_page=rows_per_page,
+        page_limit=page_limit
     )
-
-    if not kn.data:
-        #  if there are no "old" active records
-        #  we need some data to get schema
-        #  so fetch one record from source table
-        kn = knackpy.Knack(
-            view=knack_view,
-            scene=knack_scene,
-            app_id=knack_creds['app_id'],
-            page_limit=1,
-            rows_per_page=1
-        )
-
-        #  we don't want the record, just the schema, so clear kn.data
-        kn.data = []
-
-    #  manually insert field metadata into Knackpy object
-    #  because field metadata is not avaialble in public views
-    #  and we use a public view to reduce the # of private API calls
-    #  of which we have a daily limit
-    kn.fields = TRAFFIC_REPORT_META
-    kn.make_field_map()
-
-    return kn
 
 
 def parseFeed(feed):
@@ -143,7 +124,7 @@ def parseTitle(title):
         issue = title[1].replace('-', '').strip()
         address = title[0].replace('/', '&')
     except IndexError as e:
-        logging.info(title)
+        logger.info(title)
         raise e
         
     return address, issue
@@ -183,9 +164,39 @@ def handleRecord(entry):
 
 def main(date_time):
     try:
+        #  get "ACTIVE" traffic report filter
+        filter_active = get_filter(knack_status_field, 'ACTIVE')
+
         #  get existing traffic report records from Knack
-        kn = getRecords()
-       
+        kn = get_records(
+            knack_view,
+            knack_scene,
+            knack_creds,
+            filters=filter_active
+        )
+
+        if not kn.data:
+            #  if there are no "old" active records
+            #  we need some data to get schema
+            #  so fetch one record from source table
+            kn = get_records(
+                knack_view,
+                knack_scene,
+                knack_creds,
+                page_limit=1,
+                rows_per_page=1
+            )
+
+            #  we don't want the record, just the schema, so clear kn.data
+            kn.data = []
+
+        #  manually insert field metadata into Knackpy object
+        #  because field metadata is not avaialble in public views
+        #  and we use a public view to reduce the # of private API calls
+        #  of which we have a daily limit
+        kn.fields = TRAFFIC_REPORT_META
+        kn.make_field_map()
+
         #  get and parse feed
         feed = feedparser.parse(feed_url)
         new_records = parseFeed(feed)
@@ -198,45 +209,54 @@ def main(date_time):
         date_field_raw = kn.field_map[date_field]
         status_date_field_raw = kn.field_map[status_date_field]
 
-        records_archive = []
-        #  look for old records in new data
+        records_create = []
+        records_update = []
+
+        for new_rec in new_records:
+            #  lookup current records in knack database to verify if they already exist
+            #  we do this because sometimes the feed request returns no results
+            #  only to return already-existing incidents on the next request
+            record_id = new_rec.get(id_field_raw)
+            filter_existing = get_filter(id_field_raw, record_id)
+            
+            match_records = get_records(
+                knack_view,
+                knack_scene,
+                knack_creds,
+                filters=filter_existing
+            )
         
+            if match_records.data:
+                if match_records.data[0][knack_status_field] == 'ACTIVE':
+                    logger.info( 'NO CHANGE: {}'.format(new_rec[primary_key_raw]) )
+                    continue
+
+                else:
+                    #  record exists but has been archived
+                    new_rec['id'] = match_records.data[0]['id']
+                    new_rec[status_key_raw] = 'ACTIVE'
+                    records_update.append(new_rec)
+
+        #  look for old records in new data
         for old_rec in kn.data:
-            if has_match(
+            if not has_match(
                 new_records,
                 old_rec[primary_key_raw],
                 primary_key_raw
             ):
-                continue
-
-            else:
                 old_rec[status_key_raw] = 'ARCHIVED'
                 old_rec[status_date_field_raw] = localTimestamp()
-                records_archive.append(old_rec)
+                records_update.append(old_rec)
 
-        records_archive = datautil.reduce_to_keys(records_archive, ['id', status_key_raw, status_date_field_raw])
-
-        records_insert = []
-
-        for new_rec in new_records:
-            #  compare records in current feed with existing "active" recors
-            if has_match(
-                kn.data,
-                new_rec[primary_key_raw],
-                primary_key_raw
-            ):
-                continue
-
-            else:
-                new_rec[status_key_raw] = 'ACTIVE'
-                records_insert.append(new_rec)
+        records_update = datautil.reduce_to_keys(records_update, ['id', status_key_raw, status_date_field_raw])
 
         count = 0
 
-        for record in records_archive:
+        logger.info('CREATE: {}'.format([rec['field_1826'] for rec in records_create]))
+        
+        for record in records_update:
             count += 1
-            print( 'Updating record {} of {}'.format( count, len(records_archive) ) )
-
+            print( 'Updating record {} of {}'.format( count, len(records_update) ) )
             res = knackpy.record(
                 record,
                 obj_key=knack_obj,
@@ -246,18 +266,22 @@ def main(date_time):
             )
 
         count = 0
-        for record in records_insert:
+        
+        for record in records_create:
             count += 1
-            print( 'Inserting record {} of {}'.format( count, len(records_insert) ) )
+            print( 'Inserting record {} of {}'.format( count, len(records_create) ) )
 
-            res = knackpy.record(
-                record,
-                obj_key=knack_obj,
-                app_id= knack_creds['app_id'],
-                api_key=knack_creds['api_key'],
-                method='create',
-            )
-
+            try:
+                res = knackpy.record(
+                    record,
+                    obj_key=knack_obj,
+                    app_id= knack_creds['app_id'],
+                    api_key=knack_creds['api_key'],
+                    method='create',
+                )
+            except Exception as e:
+                if 'unique' in e:
+                    logger.info('Duplicate insert: {}'.format(record))
 
         return 'Done.'
 
@@ -270,9 +294,6 @@ def main(date_time):
 
 
 results = main(now)
-logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
 print(results)
-
-
-

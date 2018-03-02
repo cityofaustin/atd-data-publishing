@@ -5,7 +5,6 @@ Refresh entire published dataset on open data portal.
 '''
 import argparse
 import csv
-import logging
 import os
 import pdb
 from shutil import copyfile
@@ -17,6 +16,7 @@ import arrow
 import _setpath
 from config.secrets import *
 from util import emailutil
+from util import logutil
 from util import socratautil
 
 
@@ -111,7 +111,7 @@ def writeData(filename, fieldnames, data, primary_key):
             row_filtered[primary_key] = counter
             writer.writerow(row_filtered)
 
-    logging.info('{} records processed'.format(counter))
+    logger.info('{} records processed'.format(counter))
     return True
 
 
@@ -145,7 +145,7 @@ def main(
 
 
     if len(records_new) == 0:  #  stop if no new records
-        logging.info('No new records.')
+        logger.info('No new records.')
         sys.exit()
     
     #  add primary key field which does not exist in new records
@@ -179,17 +179,18 @@ def main(
 
 
 if __name__ == '__main__':
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
 
     now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     now_s = now.format('YYYY_MM_DD')
     
     args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
     dataset = args.dataset.upper()
-
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START {} LOADER AT {}'.format(dataset, str(now)))
 
     source_dir = config[dataset]['source_dir']
     primary_key = config[dataset]['primary_key']
@@ -217,7 +218,7 @@ if __name__ == '__main__':
 
     except Exception as e:
         error_text = traceback.format_exc()
-        logging.error(error_text)
+        logger.error(error_text)
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
             'Traffic Count Loader Process Failure',
@@ -227,4 +228,4 @@ if __name__ == '__main__':
         )
         raise e
 
-    logging.info('END AT: {}'.format(arrow.now().format()))
+    logger.info('END AT: {}'.format(arrow.now().format()))

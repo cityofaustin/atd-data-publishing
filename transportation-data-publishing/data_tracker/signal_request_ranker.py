@@ -1,12 +1,8 @@
 '''
-  assign traffic and PHB request rankings based on evaluation score
-  dataset argument is required and must be either 'phb' or 'traffic_signal'
-
-todo:
-
+assign traffic and PHB request rankings based on evaluation score
+dataset argument is required and must be either 'phb' or 'traffic_signal'
 '''
 import argparse
-import logging
 import os
 import pdb
 
@@ -18,15 +14,7 @@ from config.secrets import *
 import traceback
 from util import datautil
 from util import emailutil
-
-
-now = arrow.now()
-
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-
-logging.info( 'START AT {}'.format(str(now)) )
+from util import logutil
 
 primary_key = 'ATD_EVAL_ID'
 status_key = 'EVAL_STATUS'
@@ -122,11 +110,11 @@ def main(date_time):
                     len(payload)
                 ))
 
-                logging.info( ' Updating record id {}'.format(
+                logger.info( ' Updating record id {}'.format(
                     record['id']
                 ))
 
-                logging.info( 'Updating record {} of {}'.format(
+                logger.info( 'Updating record {} of {}'.format(
                     count,
                     len(payload)
                 ))
@@ -143,12 +131,12 @@ def main(date_time):
 
             return update_response
         else:
-            logging.info(' No changes to upload.')
+            logger.info(' No changes to upload.')
             return "No changes to upload."
         
     except Exception as e:
         print('Failed to process data for {}'.format(date_time))
-        logging.error( str(e) )
+        logger.error( str(e) )
         error_text = traceback.format_exc()
         email_subject = "Signal Request Ranker Failure: {}".format(eval_type)
 
@@ -176,15 +164,17 @@ def cli_args():
     parser.add_argument(
         'eval_type',
         action="store",
+        choices=['phb', 'traffic_signal'],
         type=str,
-        help='The type of evaluation score to rank: \'phb\' or \'traffic_signal\'.'
+        help='The type of evaluation score to rank.'
     )
-    
+
     parser.add_argument(
         'app_name',
         action="store",
+        choices=['data_tracker_prod', 'data_tracker_test'],
         type=str,
-        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
+        help='The Data Tracker instance that will be accessed'
     )
 
     args = parser.parse_args()
@@ -193,9 +183,15 @@ def cli_args():
 
 
 if __name__ == '__main__':
-    
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     args = cli_args()
-    logging.info( 'args: {}'.format( str(args) ) )
+    logger.info( 'args: {}'.format( str(args) ) )
     
     app_name = args.app_name
     knack_creds = KNACK_CREDENTIALS[app_name]
@@ -204,7 +200,7 @@ if __name__ == '__main__':
 
     results = main(now)
     
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 
     print(results)
 
