@@ -6,7 +6,6 @@ command example:
 '''
 import argparse
 from copy import deepcopy
-import logging
 import os
 import pdb
 import traceback
@@ -20,6 +19,7 @@ from config.secrets import *
 from util import agolutil
 from util import datautil
 from util import emailutil
+from util import logutil
 from util import socratautil
 
 
@@ -102,7 +102,7 @@ def main(start_time):
                         raise KeyError
             
             except KeyError:
-                logging.info('AGOL publication failed to upload. {}'.format(add_response))
+                logger.info('AGOL publication failed to upload. {}'.format(add_response))
 
                 agol_fail += 1
                 
@@ -192,8 +192,8 @@ def main(start_time):
                 }
 
             if upsert_response.get('Errors') or upsert_response.get('error'):
-                logging.error(upsert_response)
-                logging.info(socrata_payload)
+                logger.error(upsert_response)
+                logger.info(socrata_payload)
                 emailutil.send_socrata_alert(
                     ALERTS_DISTRIBUTION,
                     resource,
@@ -213,7 +213,7 @@ def main(start_time):
 
             #  update pub log payload with data from upsert response
             log_payload = socratautil.handle_response(upsert_response, log_payload)
-            logging.info(log_payload)
+            logger.info(log_payload)
 
             #  upsert pub log payload
             pub_log_response = socratautil.upsert_data(
@@ -233,7 +233,7 @@ def main(start_time):
             file_name = '{}/{}.csv'.format(FME_DIRECTORY, dataset)
             kn_csv.to_csv(file_name, delimiter=sep)
             
-        logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+        logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
         return True
         
     except Exception as e:
@@ -249,7 +249,7 @@ def main(start_time):
             EMAIL['password']
         )
         
-        logging.error(error_text)
+        logger.error(error_text)
         print(e)
         raise e
 
@@ -301,8 +301,17 @@ def cli_args():
     return(args)
 
 if __name__ == '__main__':
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
     #  parse command-line arguments
     args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
     dataset = args.dataset
     app_name = args.app_name
     socrata_pub = args.socrata    
@@ -311,21 +320,21 @@ if __name__ == '__main__':
     script_name = __file__.split('.')[0]
     script_id = '{}_{}'.format(script_name, dataset)
     resource = cfg[dataset]['socrata_resource_id']
-    now = arrow.now()
+    
     pub_log_id = cfg['publication_log']['socrata_resource_id']
 
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}_{dataset}.log'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info( 'args: {}'.format( str(args) ) )
-    logging.info('START AT {}'.format(str(now)))
-    
     if 'fetch_locations' in cfg[dataset]:
         fetch_locations = cfg[dataset]['fetch_locations']
     else:
         fetch_locations = False
 
     results = main(now)
+
+
+
+
+
+
 
 
 

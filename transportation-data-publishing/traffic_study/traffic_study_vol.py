@@ -4,7 +4,6 @@ inserted into ArcSDE database
 '''
 import csv
 import hashlib
-import logging
 import os
 import pdb
 import traceback
@@ -14,13 +13,14 @@ import arrow
 import _setpath
 from config.secrets import *
 from util import emailutil
+from util import logutil
+
+script = os.path.basename(__file__).replace('.py', '')
+logfile = f'{LOG_DIRECTORY}/{script}.log'
+logger = logutil.timed_rotating_log(logfile)
 
 now = arrow.now()
-
-script = os.path.basename(__file__).replace('.py', '.log')
-logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START VOL AT {}'.format(str(now)))
+logger.info('START AT {}'.format(str(now)))
 
 root_dir = TRAFFIC_COUNT_TIMEMARK_DIR
 out_dir = TRAFFIC_COUNT_OUTPUT_VOL_DIR
@@ -174,16 +174,16 @@ def main():
             else:
                 continue
 
-    logging.info('{} files processed'.format(count))
+    logger.info('{} files processed'.format(count))
 
 try:
     main()
-    logging.info('END AT: {}'.format(arrow.now().format()))
+    logger.info('END AT: {}'.format(arrow.now().format()))
 
 except Exception as e:
     error_text = traceback.format_exc()
     print(error_text)
-    logging.error(error_text)
+    logger.error(error_text)
     emailutil.send_email(
         ALERTS_DISTRIBUTION,
         'Traffic Study Volume Process Failure',

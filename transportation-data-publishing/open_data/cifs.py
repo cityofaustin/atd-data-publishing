@@ -31,8 +31,8 @@ now_mills = now.timestamp * 1000
 
 script = os.path.basename(__file__).replace('.py', '.log')
 logfile = f'{LOG_DIRECTORY}/{script}'
-logging.basicConfig(filename=logfile, level=logging.INFO)
-logging.info('START AT {}'.format(now.format()))
+logger.basicConfig(filename=logfile, level=logger.INFO)
+logger.info('START AT {}'.format(now.format()))
 
 socrata_resource_id_json = 'fwsr-gb9r'
 socrata_resource_id_csv = 'aki2-nu5c'
@@ -189,12 +189,12 @@ def main():
 
     except Exception as e:
         error_text = traceback.format_exc()
-        logging.error(error_text)
+        logger.error(error_text)
         emailutil.send_email(ALERTS_DISTRIBUTION, 'CIFS Publication Failure', error_text, EMAIL['user'], EMAIL['password'])
 
 main()
 
-logging.info( 'END AT: {}'.format( arrow.now().format() ))
+logger.info( 'END AT: {}'.format( arrow.now().format() ))
 
 
 # def build_incident(feature, fieldmap):

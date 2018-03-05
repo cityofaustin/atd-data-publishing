@@ -16,6 +16,8 @@ import _setpath
 from config.secrets import *
 from util import datautil
 from util import emailutil
+from util import logutil
+
 
 def groupBySignal(detector_data):
     '''
@@ -135,15 +137,17 @@ def cli_args():
 
 if __name__ == '__main__':
 
-    now = arrow.now()
-
     #  init logging 
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START AT {}'.format(str(now)))
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
+    
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
 
     args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
     app_name = args.app_name
 
     try:
@@ -245,16 +249,16 @@ if __name__ == '__main__':
             count_sig += 1
             count_status += 1
 
-        logging.info('{} signal records updated'.format(count_sig))
-        logging.info( '{} detection status log records updated'.format(count_status) )
-        logging.info('END AT {}'.format(str( arrow.now().format()) ))
+        logger.info('{} signal records updated'.format(count_sig))
+        logger.info( '{} detection status log records updated'.format(count_status) )
+        logger.info('END AT {}'.format(str( arrow.now().format()) ))
 
     except Exception as e:
         print('Failed to process data for {}'.format(arrow.now()))
         error_text = traceback.format_exc()
         email_subject = "Detection Status Update Failure"
         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logging.error(error_text)
+        logger.error(error_text)
         print(e)
         raise e
 

@@ -1,5 +1,4 @@
 from copy import deepcopy
-import logging
 import os
 import pdb
 import sys
@@ -14,11 +13,12 @@ from config.secrets import *
 from util import kitsutil
 from util import datautil
 from util import emailutil
+from util import logutil
+
 
 kits_table_geom = "KITSDB.KITS.CameraSpatialData"
 kits_table_camera = "KITSDB.KITS.CAMERA"
 kits_table_web = "KITSDB.KITS.WEBCONFIG_MAIN"
-
 
 fieldmap = {
     # kits_field : data_tracker_field
@@ -296,7 +296,7 @@ def main(date_time):
     
     #  insert new records in asset, geo, and webconfig tables
     if data_cd['new']:
-        logging.info('new: {}'.format( len(data_cd['new']) ))    
+        logger.info('new: {}'.format( len(data_cd['new']) ))    
         max_cam_id = getMaxID(kits_table_camera, 'CAMID')
         data_cd['new'] = map_bools(data_cd['new'])
         for record in data_cd['new']:
@@ -329,7 +329,7 @@ def main(date_time):
         print(len(data_cd['change']))
         data_cd['change'] = map_bools(data_cd['change'])
         
-        logging.info('change: {}'.format( len(data_cd['change']) ))
+        logger.info('change: {}'.format( len(data_cd['change']) ))
         for record in data_cd['change']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
@@ -357,7 +357,7 @@ def main(date_time):
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geom, query_web])
             
     if data_cd['delete']:
-        logging.info('delete: {}'.format( len(data_cd['delete']) ))
+        logger.info('delete: {}'.format( len(data_cd['delete']) ))
         for record in data_cd['delete']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
@@ -377,19 +377,18 @@ def main(date_time):
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
 
     if data_cd['no_change']:
-        logging.info('no_change: {}'.format( len(data_cd['no_change']) ))
+        logger.info('no_change: {}'.format( len(data_cd['no_change']) ))
 
-    logging.info('END AT {}'.format(arrow.now().format()))
+    logger.info('END AT {}'.format(arrow.now().format()))
 
 if __name__ == '__main__':
-    now = arrow.now()
-
     #  init logging 
-    #  with one logfile per dataset per day
     script = os.path.basename(__file__).replace('.py', '.log')
     logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
-    logging.info('START AT {}'.format(arrow.now().format()))
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
     
     try:
         main(now)
@@ -397,6 +396,6 @@ if __name__ == '__main__':
     except Exception as e:
         error_text = traceback.format_exc()
         emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', error_text, EMAIL['user'], EMAIL['password'])
-        logging.warning(str(e))
+        logger.warning(str(e))
         print(e)
         raise e

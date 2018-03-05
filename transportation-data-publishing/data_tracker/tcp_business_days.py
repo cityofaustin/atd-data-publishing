@@ -5,7 +5,6 @@ Developed specifically for measuring Traffic Control Plan (TCP) permit applicati
 '''
 import argparse
 from datetime import datetime
-import logging
 import os
 import pdb
 import traceback
@@ -19,7 +18,7 @@ import _setpath
 from config.secrets import *
 from util import datautil
 from util import emailutil
-
+from util import logutil
 
 def get_calendar():
     return CustomBusinessDay(calendar=USFederalHolidayCalendar())
@@ -149,7 +148,7 @@ def main(creds):
         calendar
     )
     
-    logging.info( '{} Records to Update'.format(len(kn.data) ))
+    logger.info( '{} Records to Update'.format(len(kn.data) ))
 
     if kn.data:    
         results = []
@@ -165,17 +164,17 @@ def main(creds):
 
 
 if __name__ == '__main__':
+    #  init logging 
     script = os.path.basename(__file__).replace('.py', '')
     logfile = f'{LOG_DIRECTORY}/{script}.log'
-    
-    logging.basicConfig(
-        filename=logfile,
-        level=logging.INFO
-    )
+    logger = logutil.timed_rotating_log(logfile)
 
+    now = datetime.today()
+    logger.info('START AT {}'.format(now))
+        
     try:
         args = cli_args()
-        logging.info( 'args: {}'.format( str(args) ) )
+        logger.info( 'args: {}'.format( str(args) ) )
         
         app_name = args.app_name
         knack_creds = KNACK_CREDENTIALS[app_name]
@@ -183,7 +182,7 @@ if __name__ == '__main__':
 
     except Exception as e:
         error_text = traceback.format_exc()
-        logging.error(error_text)
+        logger.error(error_text)
 
         email_subject = "Days Elapsed Update Failure"
 

@@ -3,7 +3,6 @@ Update Data Tracker location records with council district, engineer area,
 and jurisdiction attributes from from COA ArcGIS Online feature services
 '''
 import argparse
-import logging
 import os
 import pdb
 
@@ -15,7 +14,7 @@ from config.secrets import *
 from util import agolutil
 from util import datautil
 from util import emailutil
-
+from util import logutil
 
 #  config
 knack_creds = KNACK_CREDENTIALS
@@ -225,7 +224,7 @@ def main(date_time):
         count = 0
 
         if not kn.data:
-            logging.info('No new records to process')
+            logger.info('No new records to process')
             return None
 
         '''
@@ -256,7 +255,7 @@ def main(date_time):
                     )                    
                     
                     if res.get('error'):
-                        logging.info(res)
+                        logger.info(res)
                         raise Exception
 
                     if res.get('features'):
@@ -327,7 +326,7 @@ def main(date_time):
                 EMAIL['password']
             )
 
-        logging.info('{} records updated'.format(count))
+        logger.info('{} records updated'.format(count))
         return update_response
 
     except Exception as e:
@@ -345,15 +344,16 @@ def main(date_time):
         raise e
 
 if __name__ == '__main__':
-    args = cli_args()
-    app_name = args.app_name
-
-    now = arrow.now()
-    
     #  init logging 
     script = os.path.basename(__file__).replace('.py', '.log')
     logfile = f'{LOG_DIRECTORY}/{script}'
-    logging.basicConfig(filename=logfile, level=logging.INFO)
+    logger = logutil.timed_rotating_log(logfile)
+
+    now = arrow.now()
+    logger.info('START AT {}'.format(str(now)))
+
+    args = cli_args()
+    app_name = args.app_name
 
     results = main(now)
-    logging.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
