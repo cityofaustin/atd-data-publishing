@@ -65,10 +65,12 @@ def get_records(
     filters=None,
     rows_per_page=1000,
     page_limit=100):
-
+    
+    print(filters)
+    
     return knackpy.Knack(
-        view=knack_view,
-        scene=knack_scene,
+        view=view,
+        scene=scene,
         app_id=creds['app_id'],
         filters=filters,
         rows_per_page=rows_per_page,
@@ -200,7 +202,7 @@ def main(date_time):
         #  get and parse feed
         feed = feedparser.parse(feed_url)
         new_records = parseFeed(feed)
-       
+        
         #  convert feed fieldnames to Knack database names
         #  prepping them for upsert 
         new_records = datautil.replace_keys(new_records, kn.field_map)
@@ -212,11 +214,11 @@ def main(date_time):
         records_create = []
         records_update = []
 
-        for new_rec in new_records:
+        for new_record in new_records:
             #  lookup current records in knack database to verify if they already exist
             #  we do this because sometimes the feed request returns no results
             #  only to return already-existing incidents on the next request
-            record_id = new_rec.get(id_field_raw)
+            record_id = new_record.get(id_field_raw)
             filter_existing = get_filter(id_field_raw, record_id)
             
             match_records = get_records(
@@ -225,17 +227,17 @@ def main(date_time):
                 knack_creds,
                 filters=filter_existing
             )
-        
+
             if match_records.data:
                 if match_records.data[0][knack_status_field] == 'ACTIVE':
-                    logger.info( 'NO CHANGE: {}'.format(new_rec[primary_key_raw]) )
-                    continue
-
+                    logger.info( 'NO CHANGE: {}'.format(new_record[primary_key_raw]) )
                 else:
                     #  record exists but has been archived
-                    new_rec['id'] = match_records.data[0]['id']
-                    new_rec[status_key_raw] = 'ACTIVE'
-                    records_update.append(new_rec)
+                    new_record['id'] = match_records.data[0]['id']
+                    new_record[status_key_raw] = 'ACTIVE'
+                    records_update.append(new_record)
+            else:
+                records_create.append(new_record)
 
         #  look for old records in new data
         for old_rec in kn.data:
@@ -271,17 +273,13 @@ def main(date_time):
             count += 1
             print( 'Inserting record {} of {}'.format( count, len(records_create) ) )
 
-            try:
-                res = knackpy.record(
-                    record,
-                    obj_key=knack_obj,
-                    app_id= knack_creds['app_id'],
-                    api_key=knack_creds['api_key'],
-                    method='create',
-                )
-            except Exception as e:
-                if 'unique' in e:
-                    logger.info('Duplicate insert: {}'.format(record))
+            res = knackpy.record(
+                record,
+                obj_key=knack_obj,
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='create',
+            )
 
         return 'Done.'
 

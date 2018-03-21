@@ -3,4 +3,7 @@
 #  See http://github.com/cityofaustin/transportation-data-publishing
 
 #  deploy crontab
-crontab < crontab.sh
+sudo sh -c "crontab -l > tmp"
+sudo sh -c "cat crontab.sh >> tmp"
+sudo crontab < tmp
+sudo rm tmp

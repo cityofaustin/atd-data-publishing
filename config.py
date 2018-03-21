@@ -2,9 +2,8 @@
 Configuration file for automated deployment of transportation-data-publishing scripts.
 '''
 CRONTAB = '''
-#  Crontab File for transportation-data-publishing script deployment
-PATH=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
-MAILTO=""
+#  Crontab entries transportation-data-publishing scripts
+
 
 '''
 
