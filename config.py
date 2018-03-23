@@ -36,8 +36,8 @@ CONFIG = {
     },
     {
       'args': [],
-      'cron': '',
-      'enabled': False,
+      'cron': '1 4 * * *',
+      'enabled': True,
       'image': None,
       'name': 'bcycle_kiosks',
       'path': 'transportation-data-publishing/bcycle',
@@ -45,8 +45,8 @@ CONFIG = {
     },
     {
       'args': [],
-      'cron': '',
-      'enabled': False,
+      'cron': '3 4 * * 0',
+      'enabled': True,
       'image': None,
       'name': 'bcycle_trips',
       'path': 'transportation-data-publishing/bcycle',
