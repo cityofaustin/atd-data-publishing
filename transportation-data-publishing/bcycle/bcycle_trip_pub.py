@@ -1,9 +1,12 @@
 '''
-    compare socrata and dropbox b-cycle data
-    upload latest data to socrata as needed
+Check for new b-cycle data in Dropbox share and upload to
+Open Data portal (Socrata)
+
+B-Cycle staff put new trip data in Dropbox share on a monthly basis.
 '''
 import csv
-import sys
+import os
+import pdb
 
 import arrow
 import dropbox
@@ -12,111 +15,122 @@ import requests
 import _setpath
 from config.secrets import *
 from util import emailutil
+from util import logutil
 from util import socratautil
 
 
 def max_date_socrata(resource_id):
-    url = 'https://data.austintexas.gov/resource/{}.json?$query=SELECT max(checkout_date) as date'.format(resource_id)
-
-    try:
-        res = requests.get(url, verify=False)
-
-    except requests.exceptions.HTTPError as e:
-        raise e
-
+    '''
+    Get the most recent trip date from socrata
+    '''
+    url = 'https://data.austintexas.gov/resource/{}.json?$query=SELECT checkout_date as date ORDER BY checkout_date DESC LIMIT 1'.format(resource_id)
+    res = requests.get(url)
+    res.raise_for_status()    
     return res.json()[0]['date']
 
 
-def data_exists_dropbox(path, token):
+def get_data(path, token):
     '''
-        Check if last month's trip data exists on dropbox
+    Get trip data file as string from dropbox
     '''
-    client = dropbox.client.DropboxClient(token)
+    logger.info(f'Get data for {path}')
 
-    try:
-        client.metadata(path)
-        return True
+    dbx = dropbox.Dropbox(token)
+
+    metadata, res = dbx.files_download(path)
+    res.raise_for_status()
     
-    except:
-        return False
+    return res.text
 
 
-def get_dropbox_data(path, token):
+def handle_data(data):
     '''
-    get dropbox csv and return as list of dicts
+    Convert data file string to csv dict. Source column headers are replaced
+    with database-friendly field names
     '''
-    client = dropbox.client.DropboxClient(token)
-    f, metadata = client.get_file_and_metadata(path)
+    #  assume fields in this order  :(
+    fieldnames = ('trip_id', 'membership_type', 'bicycle_id', 'checkout_date', 'checkout_time', 'checkout_kiosk_id', 'checkout_kiosk', 'return_kiosk_id', 'return_kiosk', 'trip_duration_minutes')
     
-    content = f.read()
-    
-    data_string = content.decode('utf-8')
-    data = data_string.splitlines()
-    del(data[0])  # remove header row
-
-    reader = csv.DictReader(data, fieldnames=fieldnames)
-
+    rows = data.splitlines()
+    del(rows[0])  #  remove header row
+    reader = csv.DictReader(rows, fieldnames)
     return list(reader)
 
-try:
-    socrata_creds = SOCRATA_CREDENTIALS
-    access_token = DROPBOX_BCYCLE_TOKEN
 
-    fieldnames = ('trip_id', 'membership_type', 'bicycle_id', 'checkout_date', 'checkout_time', 'checkout_kiosk_id', 'checkout_kiosk', 'return_kiosk_id', 'return_kiosk', 'trip_duration_minutes')
+if __name__ == '__main__':
 
-    one_month_ago = arrow.now().replace(months=-1)
-    dropbox_year = one_month_ago.format('YYYY')
-    dropbox_month = one_month_ago.format('MM')
+    script = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    logger = logutil.timed_rotating_log(logfile)
 
-    resource_id_query = 'cwi3-ckqi'
-    resource_id_publish = 'tyfh-5r8s'
-    resource_id_pub_log = 'n5kp-f8k4'
+    try:    
+        logger.info('START AT {}'.format( arrow.now()) )
 
-    socrata_dt = max_date_socrata(resource_id_query)
-    socrata_month = arrow.get(socrata_dt).format('MM')
+        resource_id = 'tyfh-5r8s'
+        dt_current = arrow.now().replace(months=-1)
+        dt_current_formatted = dt_current.format('MM-YYYY')
+        up_to_date = False
 
+        while not up_to_date:
+            socrata_dt = max_date_socrata(resource_id)
+            socrata_dt_formatted = arrow.get(socrata_dt).format('MM-YYYY')
 
-    if dropbox_month == socrata_month:
-        #  data is already up to date on socrata
-        print("trip data already is up to date on socrata.")
+            if dt_current_formatted == socrata_dt_formatted:
+                up_to_date = True
+
+            else:
+                #  socrata data is at least one month old
+                dropbox_month =  arrow.get(socrata_dt).replace(months=1).format('MM')
+                dropbox_year =  arrow.get(socrata_dt).replace(months=1).format('YYYY')
+
+                current_file = 'TripReport-{}{}.csv'.format(dropbox_month, dropbox_year)
+                root = 'austinbcycletripdata'  #  note the lowercase-ness 
+                path = '/{}/{}/{}'.format(root, dropbox_year, current_file)
+                
+                try:
+                    data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                
+                except dropbox.exceptions.ApiError as e:
+
+                    if 'LookupError' in str(e):
+                        #  end loop when no file can be found
+                        logger.warning(f'No data found for {path}')
+                        up_to_date = True
+                        break
+
+                    else:
+                        raise e
+                
+                data = handle_data(data)
+                logger.info( '{} records found'.format(len(data)) )
+
+                res = socratautil.upsert_data(SOCRATA_CREDENTIALS, data, resource_id)
+                logger.info(res.json())
+
+        logger.info('Finish at {}'.format( arrow.now()) )
+
+    except Exception as e:
+        logger.error(e)
         
-        #  update publication log
-        upsert_res = { 'Errors' : 0, 'message' : 'No new trip data detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
-        log_entry = socratautil.prep_pub_log(arrow.now(), 'bcycle_trip_update', upsert_res)
-        socratautil.upsert_data(socrata_creds, log_entry, resource_id_pub_log)
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'DATA PROCESSING ALERT: B-Cycle Trip Data',
+            str(e),
+            EMAIL['user'],
+            EMAIL['password']
+        )
 
-        sys.exit()
+        raise e
+        
 
-    else:
-        current_file = 'TripReport-{}{}.csv'.format(dropbox_month, dropbox_year)
-        root = 'austinbcycletripdata'  #  note the lowercase-ness 
-        path = '/{}/{}/{}'.format(root, dropbox_year, current_file)
 
-        if data_exists_dropbox(path, access_token):
-            print("getting new data")
-            data = get_dropbox_data(path, access_token)
+    
 
-            print("upserting new data to socrata")
-            upsert_res = socratautil.upsert_data(socrata_creds, data, resource_id_publish)
 
-            #  update publication log
-            log_entry = socratautil.prep_pub_log(arrow.now(), 'bcycle_trip_update', upsert_res)
-            socratautil.upsert_data(socrata_creds, log_entry, resource_id_pub_log)
-            print(upsert_res)
 
-        else:
-            # trip data for this month not yet available
-            print("trip data for last month not yet available.")
-            
-            #  update publication log
-            upsert_res = { 'Errors' : 0, 'message' : 'No new trip data detected' , 'Rows Updated' : 0, 'Rows Created' : 0, 'Rows Deleted' : 0 }
-            log_entry = socratautil.prep_pub_log(arrow.now(), 'bcycle_trip_update', upsert_res)
-            socratautil.upsert_data(socrata_creds, log_entry, resource_id_pub_log)
 
-            sys.exit()
 
-except Exception as e:
-    print('Failed to process bcycle trip data for {}'.format(arrow.now().format()))
-    print(e)
-    emailutil.send_email(ALERTS_DISTRIBUTION, 'BCycle Trip Update Failure', str(e), EMAIL['user'], EMAIL['password'])
-    raise e
+
+
+
+
