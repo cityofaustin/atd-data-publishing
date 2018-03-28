@@ -10,7 +10,8 @@ COPY requirements.txt /app/transportation-data-publishing
 
 RUN apt-get update
 
-#  Set Timezone :(  
+#  Install tzdata and set timezone
+RUN apt-get install -y tzdata
 ENV TZ=America/Chicago
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
