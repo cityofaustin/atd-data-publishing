@@ -10,18 +10,17 @@ We use Docker and cron to launch scripts in individual containers on a Linux hos
 
 2. Start Docker: `systemctl start docker`
 
-3. Clone this repository to your Docker host: `git clone https://github.com/cityofaustin/transportation-data-publishing`
+3. Pull the docker image from the cloud repository: `docker pull atddocker/tdp`.
+
+4. Clone this repository to your Docker host: `git clone https://github.com/cityofaustin/transportation-data-publishing`
  
-4. Create your `secrets.py` and drop it into `transportation-data-publishing/config` following the template in [fake-secrets.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/config/fake_secrets.py)
+5. Create your `secrets.py` and drop it into `transportation-data-publishing/config` following the template in [fake-secrets.py](https://github.com/cityofaustin/transportation-data-publishing/blob/master/config/fake_secrets.py)
 
-5. If setting up ESB inegration add certificates to `transportation-data-publishing/config/esb`
+6. If setting up ESB inegration add certificates to `transportation-data-publishing/config/esb`
 
-6. `cd` into the repository and build the Docker image (this will take a few minutes): `docker build --no-cache -t tdp -f Dockerfile .`
+7. `cd` into the repository directory and generate the shell scripts and crontab file: `bash build.sh`.
 
-7. Generate the shell scripts and crontab file: `bash build.sh`.
-
-8. **THIS WILL OVERWRITE ANY EXISTING CRONTAB ON YOUR HOST**
-To deploy the scripts, run `bash deploy.sh`. This will install a crontab file (`crontab.sh`) to run shell scripts on the schedules defined in `config.py` and establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
+8. To deploy the scripts, run `bash deploy.sh`. This will install a crontab file (`crontab.sh`) to run shell scripts on the schedules defined in `config.py` and establish log rotation on `transportation-data-publshing/logs` as defined in `tdp.logrotate`.
 
 9. If you want to modify the script configuration, edit job schedules in `config.py` as needed, remove existing cron entries from your host with `crontab -e`, then run `bash build.sh` and `bash deploy.sh` to redeploy.
 
