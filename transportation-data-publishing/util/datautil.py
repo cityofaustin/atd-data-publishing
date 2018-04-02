@@ -16,6 +16,7 @@ def filter_by_val(dicts, key, val_list):
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in dicts if d[key] in val_list]  
 
+
 def reduce_to_keys(dicts, keys):
     #  reduce a list of dictionaries by dropping entries
     #  that are not in a specified list of keys
@@ -29,10 +30,12 @@ def reduce_to_keys(dicts, keys):
         reduced.append(d_new)
     return reduced
 
+
 def filter_by_key_exists(dicts, key):
     #  return a list of dictionaries that have a specified key string
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
     return [d for d in dicts if key in d]
+
 
 def add_missing_keys(dicts, key_vals):
     #  look for keys in a list of dicts
@@ -44,25 +47,53 @@ def add_missing_keys(dicts, key_vals):
 
     return dicts
 
+
 def unique_keys(dicts):
     keys = [key for record in dicts for key in record]
     return list( set(keys) )
+
 
 def get_key_values(dicts, key):
     #  generate a list of key values from a list of dictionaries
     return [record[key] for record in dicts]
 
+
 def lower_case_list(l):
     return [e.lower() for e in l]
+
 
 def lower_case_keys(dicts):
     return [ { k.lower() : v for k,v in record.items() } for record in dicts ]
 
+
 def upper_case_keys(dicts):
     return [ { k.upper() : v for k,v in record.items() } for record in dicts ]
 
-def stringify_key_values(dicts):
-    return [ { k : str(v).strip() for k,v in record.items() } for record in dicts ] 
+
+def stringify_key_values(dicts, keys=None):
+    '''
+    Convert the dict values of a list of dicts to strings. If keys are specified, 
+    only convert specified key values to strings.
+    '''
+    if keys:
+        stringified = []
+        for _dict in dicts:
+            new_dict = {}
+
+            for k in _dict.keys():
+                if k in keys:
+                    new_dict[k] = str(_dict[k]).strip()
+                    
+                else:
+                    new_dict[k] = _dict[k]
+
+            stringified.append(new_dict)
+
+        return stringified
+
+    else:
+        return [ { k : str(v).strip() for k,v in record.items() } for record in dicts ] 
+
 
 def remove_linebreaks(dicts, keys):
     print('remove linebreaks')
@@ -79,6 +110,7 @@ def remove_linebreaks(dicts, keys):
         breakless.append(record)
 
     return breakless
+
 
 def mills_to_unix(dicts, keys):
     print('convert millesecond date to unix date')
@@ -97,6 +129,7 @@ def mills_to_unix(dicts, keys):
                         raise ValueError
 
     return dicts
+
 
 def mills_to_iso(dicts, keys, tz='US/Central'):
     print('convert millesecond date to ISO8601 date')
@@ -118,6 +151,7 @@ def mills_to_iso(dicts, keys, tz='US/Central'):
                         raise ValueError
     return dicts
 
+
 def unix_to_mills(dicts,keys):
     print('convert unix dates to milleseconds')
 
@@ -135,6 +169,7 @@ def unix_to_mills(dicts,keys):
                     else:
                         raise ValueError
     return dicts
+
 
 def iso_to_unix(dicts, keys):
     #  requires arrow
@@ -154,6 +189,7 @@ def iso_to_unix(dicts, keys):
                     else:
                         raise ValueError
     return dicts
+
 
 def unix_to_iso(dicts, **options):
     #  requires arrow
@@ -184,6 +220,7 @@ def unix_to_iso(dicts, **options):
 
     return dicts
 
+
 def replaceTimezone(dicts, keys, tz='US/Central', in_format='unix'):
     '''
     replace the timzone of a 'naive' timestamp with its timezone
@@ -205,6 +242,7 @@ def replaceTimezone(dicts, keys, tz='US/Central', in_format='unix'):
                     record[key] = d.replace(tzinfo=tz)
 
     return dicts
+
 
 def merge_dicts(source_dicts, merge_dicts, join_key, merge_keys):
     #  insert specified fields from a merge dictionary to a source dictionary
@@ -384,6 +422,7 @@ def remove_empty_entries(dicts):
                 new_d[key] = d[key]
         reduced.append(new_d)
     return reduced
+
 
 def replace_keys(dicts, lookup_dict):
     print('Replace keys')
