@@ -420,6 +420,15 @@ CONFIG = {
       'name': 'tcp_business_days',
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'tcp_business_days.py'
+    },
+    {
+      'args': [],
+      'cron': '04 4 * * *',
+      'enabled': True,
+      'image': None,
+      'name': 'metadata_updater',
+      'path': 'transportation-data-publishing/data_tracker',
+      'script': 'metadata_updater.py'
     }
   ]
 }
