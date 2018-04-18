@@ -265,11 +265,14 @@ if __name__ == '__main__':
                         
                         if diff:
                             changed.append(rec_new)
-                            pdb.set_trace()
+                            print(diff)
+                            print(len(changed))
                         else:
                             continue
 
                     payload[method] = changed
+
+                logger.info(len('{} {} record'.format(method, len(payload[method]))))
 
                 update_records(
                     payload[method],
