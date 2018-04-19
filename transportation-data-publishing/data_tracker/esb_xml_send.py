@@ -137,8 +137,6 @@ def main(date_time):
             res = send_msg(msg, ESB_ENDPOINT['prod'], cfg['path_cert'], cfg['path_key'])
 
             res.raise_for_status()
-            
-            move_file(inpath, outpath, filename)
                         
             ''' Update Knack Record '''
             payload = create_payload(record_id)
@@ -150,6 +148,8 @@ def main(date_time):
                 api_key=knack_creds['api_key'],
                 method='update',
             )
+
+            move_file(inpath, outpath, filename)
 
         logger.info('{} records transmitted.'.format(len(files)))
         
