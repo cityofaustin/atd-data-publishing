@@ -1,6 +1,7 @@
 '''
 Retrieve Knack app data and update new and changed object and field metadata records.
 '''
+import argparse
 import json
 import logging
 import os
@@ -169,8 +170,8 @@ def update_records(payload, obj, method):
         res = knackpy.record(
             record,
             obj_key=obj,
-            app_id=cfg['creds']['app_id'],
-            api_key=cfg['creds']['api_key'],
+            app_id=KNACK_CREDENTIALS[app_name]['app_id'],
+            api_key=KNACK_CREDENTIALS[app_name]['api_key'],
             method=method
         )
 
@@ -179,19 +180,43 @@ def update_records(payload, obj, method):
     return results
 
 
+def cli_args():
+    '''
+    Parse command-line arguments using argparse module.
+    '''
+    parser = argparse.ArgumentParser(
+        prog='metadata_updater.py',
+        description='Retrieve Knack app data and update new and changed object and field metadata records.'
+    )
+
+    parser.add_argument(
+        'app_name',
+        action="store",
+        type=str,
+        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
+    )
+
+    args = parser.parse_args()
+
+    return(args)
+
+
 
 if __name__ == '__main__':
     script = os.path.basename(__file__).replace('.py', '')
     logfile = f'{LOG_DIRECTORY}/{script}.log'
     logger = logutil.timed_rotating_log(logfile)
     
+    args = cli_args()
+    app_name = args.app_name
+
     try:
         now = arrow.now()
         logger.info('START AT {}'.format(str(now)))
         
         record_types = ['objects', 'fields']
 
-        app_data = get_app_data(KNACK_CREDENTIALS['data_tracker_prod']['app_id'])
+        app_data = get_app_data(KNACK_CREDENTIALS[app_name]['app_id'])
         
         for record_type in record_types:
         
@@ -205,8 +230,8 @@ if __name__ == '__main__':
                 #  because it may change when objects are processed
                 data_existing_objects = get_existing_data(
                     cfg['objects']['obj'],
-                    KNACK_CREDENTIALS['data_tracker_prod']['app_id'],
-                    KNACK_CREDENTIALS['data_tracker_prod']['api_key'],
+                    KNACK_CREDENTIALS[app_name]['app_id'],
+                    KNACK_CREDENTIALS[app_name]['api_key'],
                 )
 
                 obj_row_id_lookup = get_object_row_ids(
@@ -222,8 +247,8 @@ if __name__ == '__main__':
 
             data_existing = get_existing_data(
                 cfg[record_type]['obj'],
-                KNACK_CREDENTIALS['data_tracker_prod']['app_id'],
-                KNACK_CREDENTIALS['data_tracker_prod']['api_key'],
+                KNACK_CREDENTIALS[app_name]['app_id'],
+                KNACK_CREDENTIALS[app_name]['api_key'],
             )
 
             payload = evaluate_ids(
@@ -265,8 +290,6 @@ if __name__ == '__main__':
                         
                         if diff:
                             changed.append(rec_new)
-                            print(diff)
-                            print(len(changed))
                         else:
                             continue
 

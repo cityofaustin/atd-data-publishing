@@ -422,7 +422,7 @@ CONFIG = {
       'script': 'tcp_business_days.py'
     },
     {
-      'args': [],
+      'args': ['data_tracker_prod'],
       'cron': '04 4 * * *',
       'enabled': True,
       'image': None,
