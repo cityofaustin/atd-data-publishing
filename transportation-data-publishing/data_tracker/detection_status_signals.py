@@ -1,6 +1,9 @@
 '''
 Assign detection status to traffic signal based on status of its detectors. 
 Update detection status log when signal detection status changes.
+
+#TODO
+- only process modified signals/detectors (currently processing all detectors)
 '''
 import argparse
 from collections import defaultdict
@@ -14,8 +17,10 @@ import knackpy
 
 import _setpath
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 
 
@@ -114,51 +119,47 @@ def getMaxDate(sig, det_status):
         return arrow.now().format('MM-DD-YYYY')
 
 
-
 def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='Assign detection status to traffic signal based on status of its detectors',
-        description='Update service requests in the CSR system from Data Tracker'
-    )
 
-    parser.add_argument(
-        'app_name',
-        action="store",
-        choices=['data_tracker_prod', 'data_tracker_test'],
-        type=str,
-        help='Name of the knack application that will be accessed'
+    parser = argutil.get_parser(
+        'detection_status_signals.py',
+        'Assign detection status to traffic signal based on status of its detectors.',
+        'app_name'
     )
 
     args = parser.parse_args()
     
-    return(args)
-
+    return args
 
 
 if __name__ == '__main__':
-
-    #  init logging 
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
-    logger = logutil.timed_rotating_log(logfile)
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
     
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
 
     args = cli_args()
     logger.info( 'args: {}'.format( str(args) ))
 
     app_name = args.app_name
-
+    
     try:
-        #  field labels on detector object that provides source status and date
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
+ 
+        job.start()
+
         DET_STATUS_LABEL = 'DETECTOR_STATUS'
         DET_DATE_LABEL = 'MODIFIED_DATE'
-        #  field labels on signals object that will receive status and date
+        
         SIG_STATUS_LABEL = 'DETECTION_STATUS'
         SIG_DATE_LABEL = 'DETECTION_STATUS_DATE'
 
-        #  Knack API config
         api_key = KNACK_CREDENTIALS[app_name]['api_key']
         app_id = KNACK_CREDENTIALS[app_name]['app_id']
 
@@ -184,7 +185,6 @@ if __name__ == '__main__':
             "EVENT_DATE" : 'field_1578'
         }
 
-        #  get detector data
         detectors = knackpy.Knack(
             scene=config_detectors['scene'],
             view=config_detectors['view'],
@@ -194,7 +194,6 @@ if __name__ == '__main__':
             timeout=30
         )
 
-        #  get signal data
         signals = knackpy.Knack(
             scene=config_signals['scene'],
             view=config_signals['view'],
@@ -207,14 +206,11 @@ if __name__ == '__main__':
         signals.data = datautil.filter_by_key_exists(signals.data, 'SIGNAL_STATUS')
         signals.data = datautil.filter_by_val( signals.data, 'SIGNAL_STATUS', ['TURNED_ON'])
 
-        #  staging dict
         lookup = groupBySignal(detectors.data)
-        
-        #  record update count
+
         count_sig = 0
         count_status = 0
 
-        #  iterate through signals, get status, update record in Knack database
         for sig in signals.data:
             
             old_status = None
@@ -225,7 +221,6 @@ if __name__ == '__main__':
                 old_status = sig[SIG_STATUS_LABEL]
 
                 if old_status == new_status:
-                    #  no change in status
                     continue
 
             payload_signals = {
@@ -234,7 +229,6 @@ if __name__ == '__main__':
                 SIG_DATE_LABEL : getMaxDate(sig, lookup)
             }
             
-            #  replace field labels with database fieldnames
             payload_signals = datautil.replace_keys([payload_signals], signals.field_map)
 
             #  update signal record with detection status and date
@@ -247,18 +241,22 @@ if __name__ == '__main__':
             )
 
             count_sig += 1
-            count_status += 1
+
+        job.result(
+            'success',
+            records_processed=count_sig)
 
         logger.info('{} signal records updated'.format(count_sig))
-        logger.info( '{} detection status log records updated'.format(count_status) )
-        logger.info('END AT {}'.format(str( arrow.now().format()) ))
+        logger.info('END AT {}'.format( arrow.now() ))
 
     except Exception as e:
-        print('Failed to process data for {}'.format(arrow.now()))
         error_text = traceback.format_exc()
+        logger.error(error_text)
+
         email_subject = "Detection Status Update Failure"
         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logger.error(error_text)
-        print(e)
+        
+        job.result('error', message=str(e))
+
         raise e
 

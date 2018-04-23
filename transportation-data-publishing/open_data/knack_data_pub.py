@@ -1,8 +1,14 @@
 '''
-push data from Knack database to Socrata, ArcGIS Online, CSV
+Extract data from Knack database and publish to Socrata, ArcGIS Online, 
+or CSV.
 
-command example:
-    python knack_data_pub.py signals -socrata -agol -csv
+By default, destination data is incrementally updated based on a
+modified date field defined in the configuration file. Alternatively use
+--replace to truncate/replace the entire dataset. CSV output is always handled
+with --replace.
+
+#TODO
+- filter fetch locations by source data
 '''
 import argparse
 from copy import deepcopy
@@ -14,327 +20,317 @@ import arrow
 import knackpy
 
 import _setpath
-from config.knack.config import cfg
+from config.knack.config import cfg as CFG
 from config.secrets import *
 from util import agolutil
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
+from util import knackutil
 from util import logutil
 from util import socratautil
 
 
-def main(start_time):
+
+def socrata_pub(records, cfg, date_fields=None):
+    if cfg.get('location_fields'):            
+        lat_field = cfg['location_fields']['lat'].lower()
+        lon_field = cfg['location_fields']['lon'].lower()
+        location_field = cfg['location_fields']['location_field'].lower()
+    else:
+        lat_field = None
+        lon_field = None
+        location_field = None
+
+    return socratautil.Soda(
+        auth=SOCRATA_CREDENTIALS,
+        records=records,
+        resource=cfg['socrata_resource_id'],
+        date_fields=date_fields,
+        lat_field=lat_field,
+        lon_field=lon_field,
+        location_field=location_field,
+        replace=args.replace)
+
+
+def agol_pub(records, cfg):
+    '''
+    Upsert or replace records on arcgis online features service
+    '''
+
+    if cfg.get('location_fields'):                    
+        lat_field = cfg['location_fields']['lat']
+        lon_field = cfg['location_fields']['lon']
+    else:
+        lat_field = None
+        lon_field = None
+                
+    layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+                                service_id=cfg['service_id'])
     
-    try: 
-        #  get data from Knack object or view
-        kn = knackpy.Knack(
-            obj=cfg[dataset]['obj'],
-            scene=cfg[dataset]['scene'],
-            view=cfg[dataset]['view'],
-            ref_obj=cfg[dataset]['ref_obj'],
-            app_id=KNACK_CREDENTIALS[app_name]['app_id'],
-            api_key=KNACK_CREDENTIALS[app_name]['api_key']
-        )
+    if args.replace:
+        res = layer.manager.truncate()
+
+        if not res.get('success'):
+            raise Exception('AGOL truncate failed.') 
+
+    else:
+        '''
+        Delete objects by primary key. ArcGIS api does not currently support
+        an upsert method, although the Python api defines one via the
+        layer.append method, it is apparently still under development. So our
+        "upsert" consists of a delete by primary key then add.
+        '''
+        primary_key = cfg.get('primary_key')
+
+        delete_ids = [record[primary_key] for record in records]
+        delete_ids = ', '.join(str(x) for x in delete_ids)
+
+        #  generate a SQL-like where statement to identify records for deletion
+        where = '{} in ({})'.format(primary_key, delete_ids)
+
+        res = layer.delete_features(where=where)
+        agolutil.handle_response(res)
+
+    for i in range(0, len(records), 1000):
+        '''Chunk records like a boss'''
+        print(i)
+        adds = agolutil.feature_collection(
+            records[i:i + 1000],
+            lat_field=lat_field,
+            lon_field=lon_field)
+
+        res = layer.edit_features(adds=adds)
+        agolutil.handle_response(res)
+
+    return True
+
+
+def write_csv(knackpy_instance, cfg):
+    if cfg.get('csv_separator'):
+        sep = cfg['csv_separator']
+    else:
+        sep = ','
+
+    file_name = '{}/{}.csv'.format(FME_DIRECTORY, args.dataset)
+    knackpy_instance.to_csv(file_name, delimiter=sep)
+    
+    return True
+
+
+def knackpy_wrapper(cfg, auth, filters=None):
+    return knackpy.Knack(
+        obj=cfg['obj'],
+        scene=cfg['scene'],
+        view=cfg['view'],
+        ref_obj=cfg['ref_obj'],
+        app_id=auth['app_id'],
+        api_key=auth['api_key'],
+        filters=filters,
+        page_limit=10000
+    )
+
+
+def get_multi_source(cfg, auth, last_run_date):
+    '''
+    Return a single knackpy dataset instance from multiple knack sources. Developed
+    specifically for merging traffic and phb signal requests into a single dataset.
+
+    See note in main() about why we filter by date twice for each knackpy instance.
+    '''
+    kn = None
+
+    for source_cfg in cfg['sources']:
         
-        #  exclude records without primary key
-        kn.data = datautil.filter_by_key_exists(
+        filters = knackutil.date_filter_on_or_after(
+            last_run_date,
+            source_cfg['modified_date_field_id'])
+
+        last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
+
+        if not kn:
+            kn = knackpy_wrapper(source_cfg, auth, filters)
+
+            kn.data = filter_by_date(kn.data,
+                source_cfg['modified_date_field'], last_run_timestamp)
+        
+        else:
+            kn_temp = knackpy_wrapper(source_cfg, auth, filters)
+
+            kn_temp.data = filter_by_date(kn_temp.data,
+                source_cfg['modified_date_field'], last_run_timestamp)
+
+            kn.data = kn.data + kn_temp.data
+            kn.fields.update(kn_temp.fields)
+
+    return kn
+
+
+def filter_by_date(data, date_field, compare_date):
+    '''
+    Date field and compare date should be unix timestamps with mills
+    '''
+    return [record for record in data if record[date_field] >= compare_date]
+
+
+def main(cfg, auth, job, args):
+    
+    last_run_date = job.most_recent()
+
+    if not last_run_date or args.replace or job.destination == 'csv':
+        # replace dataset by setting the last run date to a long, long time ago
+        last_run_date = '1/1/1900'
+
+    '''
+    We include a filter in our API call to limit to records which have
+    been modified on or after the date the last time this job ran
+    successfully. The Knack API supports filter requests by date only
+    (not time), so we must apply an additional filter on the data after
+    we receive it.
+    '''
+
+
+    if cfg.get('multi_source'):
+        kn = get_multi_source(cfg, auth, last_run_date)
+
+    else:
+        
+        filters = knackutil.date_filter_on_or_after(
+            last_run_date,
+            cfg['modified_date_field_id'])
+
+
+        kn = knackpy_wrapper(cfg, auth, filters=filters)
+    
+        if kn.data:
+            # Filter data for records that have been modifed after the last 
+            # job run (see comment above)
+            last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
+            kn.data = filter_by_date(kn.data, cfg['modified_date_field'], last_run_timestamp)
+
+    if not kn.data:
+        return 0
+
+    if cfg.get('fetch_locations'):
+        '''
+        Optionally fetch location data from another knack view and merge with
+        primary dataset. We access the base CFG object to pull request info
+        from the 'locations' config.
+        '''
+        locations = knackpy_wrapper(CFG['locations'], auth)
+
+        lat_field = CFG['locations']['location_fields']['lat']
+        lon_field = CFG['locations']['location_fields']['lon']
+
+        kn.data = datautil.merge_dicts(
             kn.data,
-            cfg[dataset]['primary_key']
+            locations.data,
+            cfg['location_join_field'],
+            [lat_field, lon_field]
         )
 
-        if fetch_locations:
-            #  optionally get location data from another knack view and merge with primary dataset
-            locations = knackpy.Knack(
-                obj=cfg['locations']['obj'],
-                scene=cfg['locations']['scene'],
-                view=cfg['locations']['view'],
-                ref_obj=cfg['locations']['ref_obj'],
-                app_id=KNACK_CREDENTIALS[app_name]['app_id'],
-                api_key=KNACK_CREDENTIALS[app_name]['api_key']
-            )
-            
-            #  merge location data to primary Knack object
-            lat_field = cfg[dataset]['location_fields']['lat']
-            lon_field = cfg[dataset]['location_fields']['lon']
-            
-            kn.data = datautil.merge_dicts(
-                kn.data,
-                locations.data,
-                cfg[dataset]['location_join_field'],
-                [lat_field, lon_field]
-            )
+    date_fields = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
 
-        #  identify date fields for conversion from mills to unix
-        date_fields_kn = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
+    if job.destination == 'socrata':
+        pub = socrata_pub(kn.data, cfg, date_fields=date_fields)
+
+    if job.destination == 'agol':
+        pub = agol_pub(kn.data, cfg)
+
+    if job.destination == 'csv':
+        write_csv(kn, cfg)
         
-        if agol_pub:
-            '''
-            Delete existing AGOL features and publish current features
-            TODO: detect changes instead of total replace
-            '''
-            agol_fail = 0
-            
-            lat_field = cfg[dataset]['location_fields']['lat']
-            lon_field = cfg[dataset]['location_fields']['lon']
-
-            token = agolutil.get_token(AGOL_CREDENTIALS)
-            
-            agol_payload = agolutil.build_payload(
-                kn.data,
-                lat_field=lat_field,
-                lon_field=lon_field
-            )
-
-            del_response = agolutil.delete_features(
-                cfg[dataset]['service_url'],
-                token
-            )
+    logger.info('END AT {}'.format( arrow.now() ))
     
-            add_response = agolutil.add_features(
-                cfg[dataset]['service_url'],
-                token,
-                agol_payload
-            )
-
-            try:
-                for res in add_response['addResults']:
-                    if not res['success']:
-                        raise KeyError
-            
-            except KeyError:
-                logger.info('AGOL publication failed to upload. {}'.format(add_response))
-
-                agol_fail += 1
-                
-                if agol_fail == 1:
-                    #  alert on first failure, but continue processing
-                    emailutil.send_email(
-                        ALERTS_DISTRIBUTION,
-                        'AGOL Feature Publish Failure: {}'.format(dataset),
-                        str(add_response),
-                        EMAIL['user'],
-                        EMAIL['password']
-                    )
-
-        if socrata_pub:
-            '''
-            Create Socrata dataset instance
-            '''
-            socr = socratautil.Soda(
-                resource,
-                user=SOCRATA_CREDENTIALS['user'],
-                password=SOCRATA_CREDENTIALS['password']
-            )
-
-            socr.get_data()
-            socr.get_metadata()
-
-            fieldnames = socr.fieldnames
-
-            '''
-            Normalize socrata and knack data for comparison
-            '''
-            if 'location' in fieldnames:
-                fieldnames.remove('location') #  location field is reconstructed during publication
-            date_fields_soc = socr.date_fields
-            socr.data = datautil.iso_to_unix(socr.data, date_fields_soc)
-            socr.data = datautil.lower_case_keys(socr.data)
-            
-            kn_socr = deepcopy(kn.data)
-            kn_socr = datautil.mills_to_unix(kn_socr, date_fields_kn)
-            kn_socr = datautil.lower_case_keys(kn_socr)
-
-            '''
-            We must stringify Knack values to compare them to Socrata data
-            Socrata formats all data as strings except for timestamps
-            '''
-            kn_socr = datautil.stringify_key_values(kn_socr)
-            kn_socr = datautil.remove_empty_entries(kn_socr)
-            kn_socr = datautil.reduce_to_keys(kn_socr, fieldnames)
-
-            cd_results = datautil.detect_changes(
-                socr.data,
-                kn_socr,
-                cfg[dataset]['primary_key'].lower(),
-                keys=fieldnames
-            )
-
-            if cd_results['new'] or cd_results['change'] or cd_results['delete']:
-                
-                socrata_payload = socratautil.create_payload(
-                    cd_results,
-                    cfg[dataset]['primary_key'].lower()
-                )
-                
-                if 'location_fields' in cfg[dataset]:            
-                    lat_field = cfg[dataset]['location_fields']['lat'].lower()
-                    lon_field = cfg[dataset]['location_fields']['lon'].lower()
-                    socrata_payload = socratautil.create_location_fields(
-                        socrata_payload,
-                        lat_field=lat_field,lon_field=lon_field
-                    )
-
-                upsert_response = socratautil.upsert_data(
-                    SOCRATA_CREDENTIALS,
-                    socrata_payload,
-                    resource
-                )
-
-            else:
-                #  mock upsert response when no change detected
-                upsert_response = {
-                    'Errors': 0,
-                    'Rows Updated': 0,
-                    'By RowIdentifier': 0,
-                    'Rows Deleted': 0,
-                    'By SID': 0,
-                    'Rows Created': 0
-                }
-
-            if upsert_response.get('Errors') or upsert_response.get('error'):
-                logger.error(upsert_response)
-                logger.info(socrata_payload)
-                emailutil.send_socrata_alert(
-                    ALERTS_DISTRIBUTION,
-                    resource,
-                    upsert_response,
-                    EMAIL['user'],
-                    EMAIL['password']
-                )
-
-            #  get pub log payload
-            log_payload = socratautil.pub_log_payload(
-                script_id,  # id
-                start_time.timestamp,  # start
-                arrow.now().timestamp,  # end
-                resource=resource,
-                dataset=dataset
-            )
-
-            #  update pub log payload with data from upsert response
-            log_payload = socratautil.handle_response(upsert_response, log_payload)
-            logger.info(log_payload)
-
-            #  upsert pub log payload
-            pub_log_response = socratautil.upsert_data(
-                SOCRATA_CREDENTIALS,
-                log_payload,
-                pub_log_id
-            )
-
-        if write_csv:
-            if 'csv_separator' in cfg[dataset]:
-                sep = cfg[dataset]['csv_separator']
-            else:
-                sep = ','
-
-            kn_csv = deepcopy(kn)
-            kn_csv.data = datautil.mills_to_iso(kn_csv.data, date_fields_kn)
-            file_name = '{}/{}.csv'.format(FME_DIRECTORY, dataset)
-            kn_csv.to_csv(file_name, delimiter=sep)
-            
-        logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
-        return True
-        
-    except Exception as e:
-        print('Failed to process data for {}'.format(start_time))
-        error_text = traceback.format_exc()
-        email_subject = "Knack Data Pub Failure: {}".format(dataset)
-        
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL['user'],
-            EMAIL['password']
-        )
-        
-        logger.error(error_text)
-        print(e)
-        raise e
+    return len(kn.data)
 
 
 def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='knack_data_pub.py',
-        description='Publish Knack data to Socrata and ArcGIS Online'
-    )
 
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'knack_data_pub.py',
+        'Publish Knack data to Socrata and ArcGIS Online',
         'dataset',
-        action="store",
-        type=str,
-        help='Name of the dataset that will be published.'
-    )
-
-    parser.add_argument(
         'app_name',
-        action="store",
-        choices=['data_tracker_prod', 'data_tracker_test', 'visitor_sign_in_prod'],
-        type=str,
-        help='Name of the knack application that will be accessed'
-    )
-
-    parser.add_argument(
-        '-agol',
-        action='store_true',
-        default=False,
-        help='Publish to ArcGIS Online.'
-    )
-
-    parser.add_argument(
-        '-socrata',
-        action='store_true',
-        default=False,
-        help='Publish to Socrata, AKA City of Austin Open Data Portal.'
-    )
-    
-    parser.add_argument(
-        '-csv',
-        action='store_true',
-        default=False,
-        help='Write output to csv.'
+        '--destination',
+        '--replace'
     )
     
     args = parser.parse_args()
     
-    return(args)
+    return args
+
 
 if __name__ == '__main__':
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    
     logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
 
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
-
-    #  parse command-line arguments
     args = cli_args()
     logger.info( 'args: {}'.format( str(args) ))
 
-    dataset = args.dataset
-    app_name = args.app_name
-    socrata_pub = args.socrata    
-    agol_pub = args.agol
-    write_csv = args.csv
-    script_name = __file__.split('.')[0]
-    script_id = '{}_{}'.format(script_name, dataset)
-    resource = cfg[dataset]['socrata_resource_id']
+    cfg = CFG[args.dataset]
+
+    for dest in args.destination:    
+        '''
+        Knack data pub is a special case in which multiple "jobs" are kicked off
+        within a single script. For each specified destination, we query knack
+        based on the last_run_date and publish data accordingly. The result is
+        that each time the script runs, the source db (knack) will likely be sent
+        multiple requests for the same data, because each job will probably share
+        the same last run date (but we don't want to assume so). This isn't such
+        a big deal for incremental updates, but when the --replace option is used,
+        all the source data will be downloaded in it's entirety for each
+        destination!
+
+        The underlying issue here is that this kind of ETL process should really
+        use a staging database, so that source data is extracted once and 
+        individual process run separately to publish from the staging DB to the
+        various destination datasets. That's a task for another day, hopefully
+        soon...
+        '''
+        try:
+            script_id = '{}_{}_{}_{}'.format(
+                script_name,
+                args.dataset,
+                'knack',
+                dest)
+
+            job = jobutil.Job(
+                name=script_id,
+                url=JOB_DB_API_URL,
+                source='knack',
+                destination=dest,
+                auth=JOB_DB_API_TOKEN)
+
+            job.start()
+
+            results = main(cfg, KNACK_CREDENTIALS[args.app_name], job, args)
+
+            job.result(
+                'success',
+                records_processed=results)
     
-    pub_log_id = cfg['publication_log']['socrata_resource_id']
+        except Exception as e:
+            error_text = traceback.format_exc()
 
-    if 'fetch_locations' in cfg[dataset]:
-        fetch_locations = cfg[dataset]['fetch_locations']
-    else:
-        fetch_locations = False
+            logger.error(error_text)
+            
+            email_subject = "Knack Data Pub Failure: {}".format(args.dataset)
+            
+            emailutil.send_email(
+                ALERTS_DISTRIBUTION,
+                email_subject,
+                error_text,
+                EMAIL['user'],
+                EMAIL['password']
+            )
+            
+            job.result('error', message=str(e))
 
-    results = main(now)
-
-
-
-
-
-
-
-
+            continue
+        
 

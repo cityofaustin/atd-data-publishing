@@ -3,6 +3,7 @@ Generate shell scripts config and crontab for deployment of
 transportation-data-publishing scripts.
 '''
 import os
+import pdb
 import sys
 
 from config import CONFIG
@@ -23,7 +24,7 @@ def check_version():
     return
 
 
-def shellScript(build_path, path, script, args, image):
+def shell_script(build_path, path, script, args, image):
     '''
     Build a shell script which will launch python script in Docker container
     '''
@@ -80,7 +81,7 @@ if __name__ == '__main__':
             script['image'] = CONFIG['default_image']
 
         #  generate shell script and write to /shell_scripts
-        sh = shellScript(
+        sh = shell_script(
             build_path,
             script['path'],
             script['script'],

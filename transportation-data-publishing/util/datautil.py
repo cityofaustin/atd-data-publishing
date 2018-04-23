@@ -12,23 +12,14 @@ import requests
 
 def filter_by_val(dicts, key, val_list):
     #  filter a list of dictionaries by a list of key values
-    #  assumes input dicts contain relevant keys
     #  http://stackoverflow.com/questions/29051573/python-filter-list-of-dictionaries-based-on-key-value
-    return [d for d in dicts if d[key] in val_list]  
+    return [d for d in dicts if d.get(key) in val_list]  
 
 
 def reduce_to_keys(dicts, keys):
     #  reduce a list of dictionaries by dropping entries
     #  that are not in a specified list of keys
-    reduced = []
-    for d in dicts:
-        d_new = {}
-        for key in d.keys():
-            if key in keys:
-                d_new[key] = d[key]
-
-        reduced.append(d_new)
-    return reduced
+    return [ { key : d.get(key) for key in d.keys() if key in keys } for d in dicts]
 
 
 def filter_by_key_exists(dicts, key):
@@ -53,13 +44,9 @@ def unique_keys(dicts):
     return list( set(keys) )
 
 
-def get_key_values(dicts, key):
-    #  generate a list of key values from a list of dictionaries
+def get_values(dicts, key):
+    #  generate a list of values from a list of dictionaries
     return [record[key] for record in dicts]
-
-
-def lower_case_list(l):
-    return [e.lower() for e in l]
 
 
 def lower_case_keys(dicts):
@@ -172,8 +159,6 @@ def unix_to_mills(dicts,keys):
 
 
 def iso_to_unix(dicts, keys):
-    #  requires arrow
-    #  convert ISO datetimes to unix
     print('convert ISO dates to unix')
     
     for record in dicts:
@@ -190,38 +175,17 @@ def iso_to_unix(dicts, keys):
                         raise ValueError
     return dicts
 
-
-def unix_to_iso(dicts, **options):
-    #  requires arrow
-    #  convert timestamps to unix
-    #  ignores timestamps that cannot be converted to floats
-    print('convert unix dates to ISO')
-
-    if not 'out_format' in options:
-        options['out_format'] = 'YYYY-MM-DDTHH:mm:ss'
-
-    for record in dicts:
-        for key in record:
-            if '_DATE' in key.upper():
-                if record[key]:
-
-                    try:
-                        timestamp = float(record[key])
-                        #  we can't just use arrow.get(timestamp) here
-                        #  because negative timestamps will fail in windows
-                        #  so instead we shift from epoch by the timestamp value
-                        d = arrow.get(0).shift(seconds=timestamp)
-                                        
-                        record[key] = d.format(options['out_format'])
-                    
-                    except ValueError:
-                        logger.info('{} not a valid unix timestamp'.format(record[key]))
-                        continue
-
-    return dicts
+def local_timestamp():
+    '''
+    Create a "local" timestamp (in milliseconds), ie local time represented as a unix timestamp.
+    Used to set datetimes when writing Knack records, because Knack assumes input
+    time values are in local time. Note that when extracing records from Knack,
+    timestamps are standard unix timestamps in millesconds (timezone=UTC).
+    '''
+    return arrow.now().replace(tzinfo='UTC').timestamp * 1000
 
 
-def replaceTimezone(dicts, keys, tz='US/Central', in_format='unix'):
+def replace_timezone(dicts, keys, tz='US/Central', in_format='unix'):
     '''
     replace the timzone of a 'naive' timestamp with its timezone
     '''
@@ -245,9 +209,11 @@ def replaceTimezone(dicts, keys, tz='US/Central', in_format='unix'):
 
 
 def merge_dicts(source_dicts, merge_dicts, join_key, merge_keys):
-    #  insert specified fields from a merge dictionary to a source dictionary
-    #  based on a matching key/val
-    #  join field must exist in both source and merge dictionaries
+    '''
+    Insert specified fields from a merge dictionary to a source dictionary
+    based on a matching key/val. Join field must exist in both source and
+    merge dictionaries
+    '''
     print('merge dicts')
 
     merged = []
@@ -288,7 +254,7 @@ def detect_changes(old_data, new_data, join_key, **options):
     if new_data:        
 
         #  get all 'old' primary keys
-        old_values = get_key_values(old_data, join_key)
+        old_values = get_values(old_data, join_key)
         
         for old_record in old_data:  
             #  verify old records exist in new data

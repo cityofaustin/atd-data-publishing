@@ -13,8 +13,10 @@ import knackpy
 import _setpath
 from config.esb.config import cfg
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 
 
@@ -117,62 +119,91 @@ def format_activity_details(record):
 
 
 def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='csr updater',
-        description='Update service requests in the CSR system from Data Tracker'
-    )
-
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'esb_xml_gen.py',
+        'Generate XML message to update 311 Service Reqeusts via Enterprise Service Bus.',
         'app_name',
-        action="store",
-        choices=['data_tracker_prod', 'data_tracker_test'],
-        type=str,
-        help='Name of the knack application that will be accessed'
     )
-
+    
     args = parser.parse_args()
     
-    return(args)
+    return args
 
 
-def main(date_time):
-    print('starting stuff now')
+def main():
 
-    try:
-        #  check for data at public endpoint
-        data = check_for_data()
+    #  check for data at public endpoint
+    data = check_for_data()
 
-        if data:
-            #  get data at private enpoint
-            kn = get_data()
-            
-        else:
-            logger.info('No new records to process')
-            return None
-
-        #  identify date fields for conversion from mills to unix
-        date_fields_kn = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
-        kn.data = datautil.mills_to_iso(kn.data, date_fields_kn)
-
-        for record in kn.data:            
-            payload = build_xml_payload(record)
-            '''
-            XML messages are formatted with incremental ATD_ACTIVITY_ID as well as
-            database record id. 
-
-            If for some reason this record already has an XML message in queue
-            (e.g. the ESB is down), the previous message will be overwritten
-            don't change the message format without considering esb_xml_send.py
-            '''
-            with open('{}/{}_{}.xml'.format(outpath, record['ATD_ACTIVITY_ID'], record['id']), 'w') as fout:
-                fout.write(payload)
+    if data:
+        #  get data at private enpoint
+        kn = get_data()
         
-        logger.info('{} records processed.'.format(len(kn.data)))
+    else:
+        logger.info('No new records to process')
+        return 0
 
-        return 'GOOD JOB!'
+    #  identify date fields for conversion from mills to unix
+    date_fields_kn = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
+    kn.data = datautil.mills_to_iso(kn.data, date_fields_kn)
+
+    for record in kn.data:            
+        payload = build_xml_payload(record)
+        '''
+        XML messages are formatted with incremental ATD_ACTIVITY_ID as well as
+        database record id. 
+
+        If for some reason this record already has an XML message in queue
+        (e.g. the ESB is down), the previous message will be overwritten
+        don't change the message format without considering esb_xml_send.py
+        '''
+        with open('{}/{}_{}.xml'.format(outpath, record['ATD_ACTIVITY_ID'], record['id']), 'w') as fout:
+            fout.write(payload)
+    
+    logger.info('{} records processed.'.format(len(kn.data)))
+
+    return len(kn.data)
+
+
+
+if __name__ == '__main__':
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}'
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
+
+    args = cli_args()
+    logger.info( 'args: {}'.format( str(args) ))
+
+    app_name = args.app_name
+    
+    try:
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='XML',
+            auth=JOB_DB_API_TOKEN)
+
+        #  config
+        knack_creds = KNACK_CREDENTIALS
+        cfg = cfg['tmc_activities']
+        
+        #  template output path
+        outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
+        
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
+
+        job.start()
+
+        results = main()
+
+        job.result('success', records_processed=results)
+
+        logger.info('END AT {}'.format( arrow.now() ))
 
     except Exception as e:
-        print(f'Failed to process data for {date_time}. See logs for detail.')
         error_text = traceback.format_exc()
         logger.error(str(e))
         logger.error(error_text)
@@ -182,34 +213,9 @@ def main(date_time):
             'ESB XML Generate Failure',
             error_text,
             EMAIL['user'],
-            EMAIL['password']
-        )
+            EMAIL['password'])
+
+        job.result('error')
 
         raise e
-
-if __name__ == '__main__':
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logger = logutil.timed_rotating_log(logfile)
-
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
-
-    args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
-
-    app_name = args.app_name
-
-    #  config
-    knack_creds = KNACK_CREDENTIALS
-    cfg = cfg['tmc_activities']
-    
-    #  template output path
-    outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
-    
-    if not os.path.exists(outpath):
-        os.makedirs(outpath)
-
-    results = main(now)
-    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
 

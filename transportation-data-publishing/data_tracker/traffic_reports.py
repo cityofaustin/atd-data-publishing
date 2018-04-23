@@ -18,33 +18,10 @@ import knackpy
 import _setpath
 from config.secrets import *
 from config.traffic_report.meta import *
-from util import agolutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
-
-#  init logging 
-script = os.path.basename(__file__).replace('.py', '')
-logfile = f'{LOG_DIRECTORY}/{script}.log'
-logger = logutil.timed_rotating_log(logfile)
-
-now = arrow.now()
-logger.info('START AT {}'.format(str(now)))
-
-#  config
-feed_url = 'http://www.ci.austin.tx.us/qact/qact_rss.cfm'
-primary_key = 'TRAFFIC_REPORT_ID'
-status_key = 'TRAFFIC_REPORT_STATUS'
-date_field = 'PUBLISHED_DATE'
-status_date_field = 'TRAFFIC_REPORT_STATUS_DATE_TIME'
-knack_obj = 'object_121'
-knack_scene = 'scene_514'
-knack_view = 'view_1624'
-id_field_raw = 'field_1826'
-knack_status_field = 'field_1843'
-
-knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
-agol_creds = AGOL_CREDENTIALS
 
 
 def get_filter(field_id, field_val):
@@ -78,28 +55,22 @@ def get_records(
     )
 
 
-def parseFeed(feed):
+def parse_feed(feed):
     '''
     extract feed data by applying some unfortunate hardcoded parsing
     logic to feed entries
     '''
     records = []
     for entry in feed.entries:
-        record = handleRecord(entry)
+        record = handle_record(entry)
         records.append(record)
     return records
 
 
-def getTimestamp(datestr):
+def get_timestamp(datestr):
     #  returns a naive millsecond timestamp in local time
     #  which is good because Knack needs a local timestamp
     return arrow.get(datestr).timestamp * 1000
-
-
-def localTimestamp():
-    #  create a "local" timestamp, ie unix timestamp shift for local time
-    #  because Knack assumes time values in local (Central) time
-    return arrow.now().replace(tzinfo='UTC').timestamp * 1000
 
 
 def has_match(dicts, val, key):
@@ -110,13 +81,13 @@ def has_match(dicts, val, key):
     return False
 
                 
-def parseTitle(title):
-    #  parse a the feed "title" element
+def parse_title(title):
+    #  parse a feed "title" element
     #  assume feed will never have Euro sign (it is non-ascii)
     try:
         title = title.replace('    ', '€')
         #  remove remaining whitespace clumps like so: 
-        title = " ".join(title.split())
+        title = ' '.join(title.split())
         #  split into list on
         title = title.split('€')
         #  remove empty strings reducing to twoelements
@@ -132,7 +103,7 @@ def parseTitle(title):
     return address, issue
 
 
-def parseSummary(summary):
+def parse_summary(summary):
     #  feed summary is pipe-delimitted and gnarly
     summary = summary.split('|')
     summary = [thing.strip() for thing in summary]
@@ -140,11 +111,12 @@ def parseSummary(summary):
     return summary[1:3]
 
 
-def handleRecord(entry):
+def handle_record(entry):
     #  turn rss feed entry into traffic report dict
     record = {}
-    timestamp = getTimestamp(entry.published_parsed)
-    status_date = localTimestamp()
+    timestamp = get_timestamp(entry.published_parsed)
+    status_date = datautil.local_timestamp()
+    
     #  compose record id from entry identifier (which is not wholly unique)
     #  and publicatin timestamp
     record_id = '{}_{}'.format( str(entry.id), str(timestamp) )
@@ -153,145 +125,186 @@ def handleRecord(entry):
     record[status_date_field] = status_date
     title = entry.title
     #  parse title
-    title = parseTitle(title)
+    title = parse_title(title)
     record['ADDRESS'] = title[0]
     record['ISSUE_REPORTED'] = title[1]
     #  parse lat/lon
-    geocode = parseSummary(entry.summary)
+    geocode = parse_summary(entry.summary)
     record['LATITUDE'] =  geocode[0]
     record['LONGITUDE'] =  geocode[1]
     record['LOCATION'] = { 'latitude' : geocode[0], 'longitude' : geocode[1] }
     return record
 
 
-def main(date_time):
-    try:
-        #  get "ACTIVE" traffic report filter
-        filter_active = get_filter(knack_status_field, 'ACTIVE')
+def main():
+    #  get "ACTIVE" traffic report filter
+    filter_active = get_filter(knack_status_field, 'ACTIVE')
 
-        #  get existing traffic report records from Knack
+    #  get existing traffic report records from Knack
+    kn = get_records(
+        knack_view,
+        knack_scene,
+        knack_creds,
+        filters=filter_active
+    )
+
+    if not kn.data:
+        #  if there are no "old" active records
+        #  we need some data to get schema
+        #  so fetch one record from source table
         kn = get_records(
             knack_view,
             knack_scene,
             knack_creds,
-            filters=filter_active
+            page_limit=1,
+            rows_per_page=1
         )
 
-        if not kn.data:
-            #  if there are no "old" active records
-            #  we need some data to get schema
-            #  so fetch one record from source table
-            kn = get_records(
-                knack_view,
-                knack_scene,
-                knack_creds,
-                page_limit=1,
-                rows_per_page=1
-            )
+        #  we don't want the record, just the schema, so clear kn.data
+        kn.data = []
 
-            #  we don't want the record, just the schema, so clear kn.data
-            kn.data = []
+    #  manually insert field metadata into Knackpy object
+    #  because field metadata is not avaialble in public views
+    #  and we use a public view to reduce the # of private API calls
+    #  of which we have a daily limit
+    kn.fields = TRAFFIC_REPORT_META
+    kn.make_field_map()
 
-        #  manually insert field metadata into Knackpy object
-        #  because field metadata is not avaialble in public views
-        #  and we use a public view to reduce the # of private API calls
-        #  of which we have a daily limit
-        kn.fields = TRAFFIC_REPORT_META
-        kn.make_field_map()
+    #  get and parse feed
+    feed = feedparser.parse(feed_url)
+    new_records = parse_feed(feed)
+    
+    #  convert feed fieldnames to Knack database names
+    #  prepping them for upsert 
+    new_records = datautil.replace_keys(new_records, kn.field_map)
+    primary_key_raw = kn.field_map[primary_key]
+    status_key_raw = kn.field_map[status_key]
+    date_field_raw = kn.field_map[date_field]
+    status_date_field_raw = kn.field_map[status_date_field]
 
-        #  get and parse feed
-        feed = feedparser.parse(feed_url)
-        new_records = parseFeed(feed)
+    records_create = []
+    records_update = []
+
+    for new_record in new_records:
+        #  lookup current records in knack database to verify if they already exist
+        #  we do this because sometimes the feed request returns no results
+        #  only to return already-existing incidents on the next request
+        record_id = new_record.get(id_field_raw)
+        filter_existing = get_filter(id_field_raw, record_id)
         
-        #  convert feed fieldnames to Knack database names
-        #  prepping them for upsert 
-        new_records = datautil.replace_keys(new_records, kn.field_map)
-        primary_key_raw = kn.field_map[primary_key]
-        status_key_raw = kn.field_map[status_key]
-        date_field_raw = kn.field_map[date_field]
-        status_date_field_raw = kn.field_map[status_date_field]
+        match_records = get_records(
+            knack_view,
+            knack_scene,
+            knack_creds,
+            filters=filter_existing
+        )
 
-        records_create = []
-        records_update = []
-
-        for new_record in new_records:
-            #  lookup current records in knack database to verify if they already exist
-            #  we do this because sometimes the feed request returns no results
-            #  only to return already-existing incidents on the next request
-            record_id = new_record.get(id_field_raw)
-            filter_existing = get_filter(id_field_raw, record_id)
-            
-            match_records = get_records(
-                knack_view,
-                knack_scene,
-                knack_creds,
-                filters=filter_existing
-            )
-
-            if match_records.data:
-                if match_records.data[0][knack_status_field] == 'ACTIVE':
-                    logger.info( 'NO CHANGE: {}'.format(new_record[primary_key_raw]) )
-                else:
-                    #  record exists but has been archived
-                    new_record['id'] = match_records.data[0]['id']
-                    new_record[status_key_raw] = 'ACTIVE'
-                    records_update.append(new_record)
+        if match_records.data:
+            if match_records.data[0][knack_status_field] == 'ACTIVE':
+                logger.info( 'NO CHANGE: {}'.format(new_record[primary_key_raw]) )
             else:
-                records_create.append(new_record)
+                #  record exists but has been archived
+                new_record['id'] = match_records.data[0]['id']
+                new_record[status_key_raw] = 'ACTIVE'
+                records_update.append(new_record)
+        else:
+            records_create.append(new_record)
 
-        #  look for old records in new data
-        for old_rec in kn.data:
-            if not has_match(
-                new_records,
-                old_rec[primary_key_raw],
-                primary_key_raw
-            ):
-                old_rec[status_key_raw] = 'ARCHIVED'
-                old_rec[status_date_field_raw] = localTimestamp()
-                records_update.append(old_rec)
+    #  look for old records in new data
+    for old_rec in kn.data:
+        if not has_match(
+            new_records,
+            old_rec[primary_key_raw],
+            primary_key_raw
+        ):
+            old_rec[status_key_raw] = 'ARCHIVED'
+            old_rec[status_date_field_raw] = datautil.local_timestamp()
+            records_update.append(old_rec)
 
-        records_update = datautil.reduce_to_keys(records_update, ['id', status_key_raw, status_date_field_raw])
+    records_update = datautil.reduce_to_keys(records_update, ['id', status_key_raw, status_date_field_raw])
 
-        count = 0
+    count = 0
 
-        logger.info('CREATE: {}'.format([rec['field_1826'] for rec in records_create]))
+    logger.info('CREATE: {}'.format([rec['field_1826'] for rec in records_create]))
+    
+    for record in records_update:
         
-        for record in records_update:
-            count += 1
-            print( 'Updating record {} of {}'.format( count, len(records_update) ) )
-            res = knackpy.record(
-                record,
-                obj_key=knack_obj,
-                app_id= knack_creds['app_id'],
-                api_key=knack_creds['api_key'],
-                method='update',
-            )
+        res = knackpy.record(
+            record,
+            obj_key=knack_obj,
+            app_id= knack_creds['app_id'],
+            api_key=knack_creds['api_key'],
+            method='update',
+        )
 
-        count = 0
+        count += 1
+    
+    for record in records_create:
         
-        for record in records_create:
-            count += 1
-            print( 'Inserting record {} of {}'.format( count, len(records_create) ) )
+        print( 'Inserting record {} of {}'.format( count, len(records_create) ) )
 
-            res = knackpy.record(
-                record,
-                obj_key=knack_obj,
-                app_id= knack_creds['app_id'],
-                api_key=knack_creds['api_key'],
-                method='create',
-            )
+        res = knackpy.record(
+            record,
+            obj_key=knack_obj,
+            app_id= knack_creds['app_id'],
+            api_key=knack_creds['api_key'],
+            method='create',
+        )
 
-        return 'Done.'
+        count += 1
+
+    return count
+
+if __name__=='__main__':
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
+
+    #  config
+    feed_url = 'http://www.ci.austin.tx.us/qact/qact_rss.cfm'
+    primary_key = 'TRAFFIC_REPORT_ID'
+    status_key = 'TRAFFIC_REPORT_STATUS'
+    date_field = 'PUBLISHED_DATE'
+    status_date_field = 'TRAFFIC_REPORT_STATUS_DATE_TIME'
+    knack_obj = 'object_121'
+    knack_scene = 'scene_514'
+    knack_view = 'view_1624'
+    id_field_raw = 'field_1826'
+    knack_status_field = 'field_1843'
+
+    knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
+
+    try:
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
+
+        job.start()
+
+        results = main()
+
+        job.result('success', records_processed=results)
+
+        logger.info('END AT {}'.format( arrow.now() ))
+
 
     except Exception as e:
-        print('Failed to process data for {}'.format(date_time))
-        print(e)
         error_text = traceback.format_exc()
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'Traffic Report Process Failure', str(error_text), EMAIL['user'], EMAIL['password'])
+        logger.error(error_text)
+
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Traffic Report Process Failure',
+            str(error_text),
+            EMAIL['user'],
+            EMAIL['password'])
+
+        job.result( 'error', str(e) )
+
         raise e
 
-
-results = main(now)
-logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
-
-print(results)

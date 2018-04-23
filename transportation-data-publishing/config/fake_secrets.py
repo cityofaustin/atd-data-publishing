@@ -10,10 +10,7 @@ KITS_CREDENTIALS = {
 	'database': ''
 }
 
-SOCRATA_CREDENTIALS = {
-	'user': '',
-	'password': ''
-}
+SOCRATA_CREDENTIALS = ('user','password')
 
 
 EMAIL = {

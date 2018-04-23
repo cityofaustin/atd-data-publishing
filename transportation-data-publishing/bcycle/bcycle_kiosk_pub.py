@@ -1,5 +1,5 @@
 '''
-Get latest b-cycle kiosk data from Dropbox and upload to Socrata
+Get latest b-cycle kiosk data from Dropbox and upload to Socrata, ArcGIS Online
 '''
 import csv
 import os
@@ -14,6 +14,7 @@ from config.secrets import *
 from util import agolutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 from util import socratautil
 
@@ -42,37 +43,75 @@ def handle_data(data):
 
 
 if __name__ == '__main__':
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+
     logger = logutil.timed_rotating_log(logfile)
 
     try:
-        #  config
         logger.info('START AT {}'.format( arrow.now()) )
 
-        agol_service_url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/bcycle_kiosks/FeatureServer/0/'
+        service_id = '7d4d0b1369504383a42b943bd9c03f9a'
         socrata_resource_id = 'qd73-bsdg'
-        dropbox_path = '/austinbcycletripdata/50StationPlusOld-LongLatInfo.csv'
+        dropbox_path = '/austinbcycletripdata/kiosks.csv'
 
-        #  get latest kiosk data from B-cycle dropbox
+        job_agol = jobutil.Job(
+            name=f'{script_name}_agol',
+            url=JOB_DB_API_URL,
+            source='dropbox',
+            destination='agol',
+            auth=JOB_DB_API_TOKEN)
+
+        job_agol.start()
+
+        job_socrata = jobutil.Job(
+            name=f'{script_name}_socrata',
+            url=JOB_DB_API_URL,
+            source='dropbox',
+            destination='socrata',
+            auth=JOB_DB_API_TOKEN)
+        
+        job_socrata.start()
+
         data = get_data(dropbox_path, DROPBOX_BCYCLE_TOKEN)
         data = handle_data(data)
         data = datautil.upper_case_keys(data)
-        data = socratautil.create_location_fields(data)
 
-        token = agolutil.get_token(AGOL_CREDENTIALS)
         data = datautil.replace_keys(data, {'STATUS' : 'KIOSK_STATUS'} )
-        data = datautil.filter_by_key_exists(data, 'LATITUDE')
         
-        #  replace arcgis online features
-        agol_payload = agolutil.build_payload(data)
-        del_response = agolutil.delete_features(agol_service_url, token)
-        add_response = agolutil.add_features(agol_service_url, token, agol_payload)
+        try:
+            layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+                                    service_id=service_id)
         
-        #  reformat for socrata and upsert
-        data = datautil.lower_case_keys(data)
-        upsert_res = socratautil.upsert_data(SOCRATA_CREDENTIALS, data, socrata_resource_id)
+            res = layer.manager.truncate()
+            agolutil.handle_response(res)
 
+            adds = agolutil.feature_collection(data)
+            
+            res = layer.edit_features(adds=adds)
+            agolutil.handle_response(res)
+
+            job_agol.result('success', records_processed=len(data))
+
+        except Exception as e:
+            job_agol.result('error', message=str(e))
+            pass
+
+        try:
+            socratautil.Soda(
+                auth=SOCRATA_CREDENTIALS,
+                records=data,
+                resource=socrata_resource_id,
+                lat_field='latitude',
+                lon_field='longitude',
+                location_field='location',
+                replace=True)
+            
+            job_socrata.result('success', records_processed=len(data))
+        
+        except Exception as e:
+            job_socrata.result('error', message=str(e))
+            pass
 
     except Exception as e:
         logger.error(e)
@@ -85,7 +124,14 @@ if __name__ == '__main__':
             EMAIL['password']
         )
 
+        job_agol.result('error', message=str(e))
+        job_socrata.result('error', message=str(e))
+
         raise e
+
+
+
+
 
 
 

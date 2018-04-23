@@ -15,6 +15,7 @@ import requests
 import _setpath
 from config.secrets import *
 from util import emailutil
+from util import jobutil
 from util import logutil
 from util import socratautil
 
@@ -59,12 +60,21 @@ def handle_data(data):
 
 if __name__ == '__main__':
 
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
     logger = logutil.timed_rotating_log(logfile)
 
     try:    
         logger.info('START AT {}'.format( arrow.now()) )
+        
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='dropbox',
+            destination='socrata',
+            auth=JOB_DB_API_TOKEN)
+
+        job.start()
 
         resource_id = 'tyfh-5r8s'
         dt_current = arrow.now().replace(months=-1)
@@ -77,6 +87,7 @@ if __name__ == '__main__':
 
             if dt_current_formatted == socrata_dt_formatted:
                 up_to_date = True
+                job.result('success', records_processed=0)
 
             else:
                 #  socrata data is at least one month old
@@ -96,16 +107,25 @@ if __name__ == '__main__':
                         #  end loop when no file can be found
                         logger.warning(f'No data found for {path}')
                         up_to_date = True
+                        job.result('success')
                         break
 
                     else:
+                        job.result('error', message=str(e))
                         raise e
                 
                 data = handle_data(data)
                 logger.info( '{} records found'.format(len(data)) )
 
-                res = socratautil.upsert_data(SOCRATA_CREDENTIALS, data, resource_id)
+                socratautil.Soda(
+                    auth=SOCRATA_CREDENTIALS,
+                    records=data,
+                    resource=socrata_resource_id,
+                    location_field=None)
+
                 logger.info(res.json())
+
+                job.result('success', records_processed=len(data))
 
         logger.info('Finish at {}'.format( arrow.now()) )
 
@@ -119,6 +139,8 @@ if __name__ == '__main__':
             EMAIL['user'],
             EMAIL['password']
         )
+
+        job.result('error', message=str(e))
 
         raise e
         

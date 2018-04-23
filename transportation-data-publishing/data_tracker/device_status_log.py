@@ -1,5 +1,6 @@
 '''
-Get number of device online/offline/no communication and write to log table in Knack.
+Get number of device online/offline/no communication and write to log table
+in Data Tracker.
 '''
 
 import argparse
@@ -15,7 +16,10 @@ import knackpy
 import _setpath
 from config.knack.config import cfg
 from config.secrets import *
+
+from util import argutil
 from util import emailutil
+from util import jobutil
 from util import datautil
 from util import logutil
 
@@ -50,103 +54,108 @@ def build_payload(data):
         }
 
 
-def main():
-    try:
-        #  get device data from Knack application
-        kn = knackpy.Knack(
-            obj=cfg[device_type]['obj'],
-            scene=cfg[device_type]['scene'],
-            view=cfg[device_type]['view'],
-            ref_obj=cfg[device_type]['ref_obj'],
-            app_id=knack_creds['app_id'],
-            api_key=knack_creds['api_key']
-        )
-        
-        #  get log file metadata
-        kn_log = get_log_data()
+def main(job):
 
-        stats = defaultdict(int)
+    job.start()
 
-        stats['DEVICE_TYPE'] = device_type
-
-        for device in kn.data:
-            #  count stats only for devices that are TURNED_ON
-            if device[status_field] in status_filters:
-                status = device['IP_COMM_STATUS']
-                stats[status] += 1
-
-        payload = build_payload(stats)
-        payload = datautil.replace_keys([payload], kn_log.field_map)
-
-        res = knackpy.record(
-            payload[0],
-            obj_key=LOG_OBJ,
-            app_id= knack_creds['app_id'],
-            api_key=knack_creds['api_key'],
-            method='create',
-        )
-
-        return True
+    kn = knackpy.Knack(
+        obj=cfg[device_type]['obj'],
+        scene=cfg[device_type]['scene'],
+        view=cfg[device_type]['view'],
+        ref_obj=cfg[device_type]['ref_obj'],
+        app_id=knack_creds['app_id'],
+        api_key=knack_creds['api_key']
+    )
     
-    except Exception as e:
-        print('Failed to process data for {}'.format(str(now)) )
-        error_text = traceback.format_exc()
-        email_subject = "Device Status Log Failure: {}".format(device_type)
-        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logger.error(error_text)
-        print(e)
-        raise e
+    kn_log = get_log_data()
+
+    stats = defaultdict(int)
+
+    stats['DEVICE_TYPE'] = device_type
+
+    for device in kn.data:
+        #  count stats only for devices that are TURNED_ON
+        if device[status_field] in status_filters:
+            status = device['IP_COMM_STATUS']
+            stats[status] += 1
+
+    payload = build_payload(stats)
+    payload = datautil.replace_keys([payload], kn_log.field_map)
+
+    res = knackpy.record(
+        payload[0],
+        obj_key=LOG_OBJ,
+        app_id= knack_creds['app_id'],
+        api_key=knack_creds['api_key'],
+        method='create',
+    )
+
+    return len(payload)
 
 
 def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='device_status_log.py',
-        description='Generate connectivity statistics and upload to Knack application.'
-    )
 
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'device_status_log.py',
+        'Generate connectivity statistics and upload to Knack application.',
         'device_type',
-        action="store",
-        type=str,
-        choices=['signals', 'travel_sensors', 'cameras', 'gridsmart'],
-        help='Type of device to calculate.'
+        'app_name'
     )
-
-    parser.add_argument(
-        'app_name',
-        action="store",
-        type=str,
-        choices=['data_tracker_prod', 'data_tracker_test'],
-        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
-    )
-
+    
     args = parser.parse_args()
-    return(args)
+    
+    return args
 
 
 if __name__ == '__main__':
     
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
-    logger = logutil.timed_rotating_log(logfile)
-    
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
 
-    #  parse command-line arguments
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
+
     args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
 
     device_type = args.device_type
     app_name = args.app_name
-    
+
+    script_id = f'{script_name}_{device_type}'
+
     primary_key = cfg[device_type]['primary_key']
     status_field = cfg[device_type]['status_field']
     status_filters = cfg[device_type]['status_filter_comm_status']
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    results = main()
-    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    try:
+        job = jobutil.Job(
+            name=script_id,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
 
-print(results)
+        results = main(job)
+
+        job.result('success', records_processed=results)
+        logger.info('END AT {}'.format( arrow.now() ))
+    
+    except Exception as e:
+        error_text = traceback.format_exc()
+        email_subject = "Device Status Log Failure: {}".format(device_type)
+        
+        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
+        logger.error(error_text)
+
+        job.result('error')
+        raise e
+
+
+
+
+
+
+
+
+
