@@ -1,3 +1,7 @@
+'''
+Copy CCTV records from Data Tracker to KITS traffic management system.
+'''
+
 from copy import deepcopy
 import os
 import pdb
@@ -10,9 +14,11 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from util import kitsutil
+
 from util import datautil
 from util import emailutil
+from util import jobutil
+from util import kitsutil
 from util import logutil
 
 
@@ -145,7 +151,8 @@ def map_bools(dicts):
 
     return dicts
 
-def createCameraQuery(table_name):
+
+def create_camera_query(table_name):
     return "SELECT * FROM {}".format(table_name)
 
 
@@ -177,13 +184,13 @@ def setDefaults(dicts, fieldmap):
     return dicts
 
 
-def createCAMCOMMENT(dicts):
+def create_cam_comment(dicts):
     for row in dicts:
-        row['CAMCOMMENT'] = 'Updated via API on {}'.format(now.format());
+        row['CAMCOMMENT'] = 'Updated via API on {}'.format( arrow.now().format() );
     return dicts
 
 
-def getMaxID(table, id_field):
+def get_max_id(table, id_field):
     print('get max ID for table {} col {}'.format(table, id_field))
     query = '''
         SELECT MAX({}) AS max_id FROM {}
@@ -193,7 +200,7 @@ def getMaxID(table, id_field):
     return int(max_id[0]['max_id'])
 
 
-def createInsertQuery(table, row):
+def create_insert_query(table, row):
     cols = str(tuple([key for key in row])).replace("'","")
     vals = str(tuple([row[key] for key in row]))
     
@@ -203,7 +210,7 @@ def createInsertQuery(table, row):
     '''.format(table, cols, vals)
 
 
-def createUpdateQuery(table, row, where_key):
+def create_update_query(table, row, where_key):
     mod_row = deepcopy(row)
 
     where = "{} = {}".format(where_key, row[where_key])
@@ -225,7 +232,7 @@ def createUpdateQuery(table, row, where_key):
         )
 
 
-def createMatchQuery(table, return_key, match_key, match_val):
+def create_match_query(table, return_key, match_key, match_val):
     return '''
         SELECT {}
         FROM {}
@@ -233,17 +240,15 @@ def createMatchQuery(table, return_key, match_key, match_val):
     '''.format(return_key, table, match_key, match_val)
 
 
-def createDeleteQuery(table, match_key, match_val):
+def create_delete_query(table, match_key, match_val):
     return'''
     DELETE FROM {}
     WHERE {} = {}
     '''.format(table, match_key, match_val)
 
 
-def main(date_time):
-    print('starting stuff now')
+def main():
     
-    # get knack data
     kn = knackpy.Knack(
         scene=knack_scene,
         view=knack_view,
@@ -259,143 +264,156 @@ def main(date_time):
         if fieldmap[x]['knack_id'] != None
     }
 
-    #  remove entries that do not have filter key 
     for key in filters.keys():  
         knack_data_filtered = datautil.filter_by_key_exists(kn.data, key)
 
-    #  remove entries that do not have filter key/value
     for key in filters.keys():
         knack_data_filtered = datautil.filter_by_val(
             knack_data_filtered, key,
             filters[key]
         )
         
-    #  replace knack fieldames with kits fieldnames
     knack_data_repl = datautil.replace_keys(
         knack_data_filtered,
         fieldmap_knack_kits
     )
     
-    #  drop record keys that are not in fieldmap
     knack_data_repl = datautil.reduce_to_keys(
         knack_data_repl,
         fieldmap_knack_kits.values()
     )
 
     knack_data_def = setDefaults(knack_data_repl, fieldmap)
-    knack_data_repl = createCAMCOMMENT(knack_data_repl)
+    knack_data_repl = create_cam_comment(knack_data_repl)
     
-    #  get kits data
-    camera_query = createCameraQuery(kits_table_camera)
+    camera_query = create_camera_query(kits_table_camera)
     kits_data = kitsutil.data_as_dict(kits_creds, camera_query)
     kits_data_conv = convert_data(kits_data, fieldmap)
 
-    #  compile list of keys to compare and run change detection
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]['detect_changes'] ]
     data_cd = datautil.detect_changes(kits_data_conv, knack_data_repl, 'CAMNUMBER', keys=compare_keys)
     
-    #  insert new records in asset, geo, and webconfig tables
+    
     if data_cd['new']:
         logger.info('new: {}'.format( len(data_cd['new']) ))    
-        max_cam_id = getMaxID(kits_table_camera, 'CAMID')
+        
+        max_cam_id = get_max_id(kits_table_camera, 'CAMID')
         data_cd['new'] = map_bools(data_cd['new'])
+        
         for record in data_cd['new']:
-            time.sleep(1) #  connection will fail if queried are pushed too frequently
-            #  insert camera query
+            time.sleep(1) #  connection will fail if queries are pushed too frequently
+            
             max_cam_id += 1
             record['CAMID'] = max_cam_id
-            query_camera = createInsertQuery(kits_table_camera, record)
+            query_camera = create_insert_query(kits_table_camera, record)
 
-            #  insert geometry query
             record_geom = {} 
             geometry = "geometry::Point({}, {}, 4326)".format(record['LONGITUDE'], record['LATITUDE'])
             record_geom['GeometryItem'] = geometry
             record_geom['CamID'] = max_cam_id
-            query_geom = createInsertQuery(kits_table_geom, record_geom)
+            query_geom = create_insert_query(kits_table_geom, record_geom)
             query_geom = query_geom.replace("'", "")  #  strip single quotes from geometry value
 
-            #  insert webconfig query
             record_web = {}
             record_web['WebType'] = 2
             record_web['WebComments'] = ''
             record_web['WebID'] = max_cam_id
             record_web['WebURL'] = 'http://{}'.format(record['VIDEOIP'])
-            query_web = createInsertQuery(kits_table_web, record_web)
+            query_web = create_insert_query(kits_table_web, record_web)
             
-            #  execute queries
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geom, query_web])
     
     if data_cd['change']:
-        print(len(data_cd['change']))
+        
         data_cd['change'] = map_bools(data_cd['change'])
         
         logger.info('change: {}'.format( len(data_cd['change']) ))
+
         for record in data_cd['change']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
-            match_query = createMatchQuery(kits_table_camera, 'CAMID', 'CAMNUMBER', record['CAMNUMBER'])
+            match_query = create_match_query(kits_table_camera, 'CAMID', 'CAMNUMBER', record['CAMNUMBER'])
             match_id = kitsutil.data_as_dict(kits_creds, match_query)
             match_id = int(match_id[0]['CAMID'])
 
-            #  update camera query
-            query_camera = createUpdateQuery(kits_table_camera, record, 'CAMNUMBER')
+            query_camera = create_update_query(kits_table_camera, record, 'CAMNUMBER')
 
-            #  update geometry query
             record_geom = {}
             geometry = "geometry::Point({}, {}, 4326)".format(record['LONGITUDE'], record['LATITUDE'])
             record_geom['GeometryItem'] = geometry
             record_geom['CamID'] = match_id
-            query_geom = createUpdateQuery(kits_table_geom, record_geom, 'CamID')
+            query_geom = create_update_query(kits_table_geom, record_geom, 'CamID')
 
-            #  update webconfig query
             record_web = {}
             record_web['WebType'] = 2
             record_web['WebID'] = match_id
             record_web['WebURL'] = 'http://{}'.format(record['VIDEOIP'])
-            query_web = createUpdateQuery(kits_table_web, record_web, 'WebID')
-            #  execute queries
+            query_web = create_update_query(kits_table_web, record_web, 'WebID')
+
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geom, query_web])
             
     if data_cd['delete']:
+
         logger.info('delete: {}'.format( len(data_cd['delete']) ))
+        
         for record in data_cd['delete']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
-            match_query = createMatchQuery(kits_table_camera, 'CAMID', 'CAMNUMBER', record['CAMNUMBER'])
+            match_query = create_match_query(kits_table_camera, 'CAMID', 'CAMNUMBER', record['CAMNUMBER'])
             match_id = kitsutil.data_as_dict(kits_creds, match_query)
             match_id = int(match_id[0]['CAMID'])
 
-            #  update camera query
-            query_camera = createDeleteQuery(kits_table_camera, 'CAMID', match_id)
+            query_camera = create_delete_query(kits_table_camera, 'CAMID', match_id)
 
-            #  update geometry query
-            query_geo = createDeleteQuery(kits_table_geom, 'CamID', match_id)
+            query_geo = create_delete_query(kits_table_geom, 'CamID', match_id)
 
-            #  update webconfig query
-            query_web = createDeleteQuery(kits_table_web, 'WebID', match_id)
-            #  execute queries
+            query_web = create_delete_query(kits_table_web, 'WebID', match_id)
+
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
 
     if data_cd['no_change']:
         logger.info('no_change: {}'.format( len(data_cd['no_change']) ))
 
-    logger.info('END AT {}'.format(arrow.now().format()))
+    logger.info('END AT {}'.format( arrow.now().format() ))
+
+    results = {'total' : 0}
+    
+    for result in ['new', 'change', 'no_change', 'delete']:
+        results['total'] += len(data_cd[result])
+        results[result] = len(data_cd[result])
+
+    return results
 
 if __name__ == '__main__':
-    #  init logging 
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logger = logutil.timed_rotating_log(logfile)
 
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
     
     try:
-        main(now)
+        
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='KITS',
+            auth=JOB_DB_API_TOKEN)
+     
+        job.start()
+
+        results = main()
+        
+        job.result('success', message=str(results), records_processed=results['total'])
 
     except Exception as e:
         error_text = traceback.format_exc()
+        logger.error(str(e))
         emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', error_text, EMAIL['user'], EMAIL['password'])
-        logger.warning(str(e))
-        print(e)
+        
+        job.result('error')
+
         raise e
+
+

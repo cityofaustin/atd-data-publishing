@@ -1,5 +1,6 @@
 '''
-Retrieve Knack app data and update new and changed object and field metadata records.
+Retrieve Knack app data and update new and changed object
+and field metadata records.
 '''
 import argparse
 import json
@@ -15,8 +16,10 @@ import requests
 import _setpath
 from config.metadata.config import cfg
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 
 
@@ -181,39 +184,39 @@ def update_records(payload, obj, method):
 
 
 def cli_args():
-    '''
-    Parse command-line arguments using argparse module.
-    '''
-    parser = argparse.ArgumentParser(
-        prog='metadata_updater.py',
-        description='Retrieve Knack app data and update new and changed object and field metadata records.'
-    )
-
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'metadata_updater.py',
+        'Retrieve Knack app data and update new and changed object and field metadata records.',
         'app_name',
-        action="store",
-        type=str,
-        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
     )
-
+    
     args = parser.parse_args()
-
-    return(args)
+    
+    return args
 
 
 
 if __name__ == '__main__':
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+
     logger = logutil.timed_rotating_log(logfile)
-    
+    logger.info('START AT {}'.format( arrow.now() ))
+
     args = cli_args()
     app_name = args.app_name
 
     try:
-        now = arrow.now()
-        logger.info('START AT {}'.format(str(now)))
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
         
+        job.start()
+        results = []
+
         record_types = ['objects', 'fields']
 
         app_data = get_app_data(KNACK_CREDENTIALS[app_name]['app_id'])
@@ -221,9 +224,6 @@ if __name__ == '__main__':
         for record_type in record_types:
         
             data_new = app_data['objects']
-
-            # if record_type == 'objects':
-            #     continue
 
             if record_type == 'fields':
                 #  we get latest object data within this for loop
@@ -302,11 +302,24 @@ if __name__ == '__main__':
                     cfg[record_type]['obj'],
                     method
                 )
+            
+            message = '{}: create: {}; update: {}; delete: {}'.format(
+                record_type,
+                len(payload['create']),
+                len(payload['update']),
+                len(payload['delete'])
+            )
 
-        logger.info('END AT {}'.format(str(arrow.now())))
+            results.append(message)
+            
+        logger.info('END AT {}'.format( arrow.now() ))
+
+        job.result('success', message=' | '.join(results) )
 
     except Exception as e:
         error_text = traceback.format_exc()
+        logger.error(error_text)
+
         email_subject = "Metadata Update Failure"
         
         emailutil.send_email(
@@ -317,8 +330,8 @@ if __name__ == '__main__':
             EMAIL['password']
         )
 
-        logger.error(error_text)
-        print(e)
+        job.result('error')
+
         raise e
 
 

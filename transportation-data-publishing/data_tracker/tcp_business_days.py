@@ -1,7 +1,8 @@
 '''
 Calculate # of business days elapsed and update records accordingly.
 
-Developed specifically for measuring Traffic Control Plan (TCP) permit application reviews in the Right-of-Way Management division. 
+Developed specifically for measuring Traffic Control Plan (TCP) permit
+application reviews in the Right-of-Way Management division. 
 '''
 import argparse
 from datetime import datetime
@@ -16,9 +17,12 @@ from pandas.tseries.offsets import CustomBusinessDay
 
 import _setpath
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
+
 
 def get_calendar():
     return CustomBusinessDay(calendar=USFederalHolidayCalendar())
@@ -87,21 +91,15 @@ def cli_args():
     '''
     Parse command-line arguments using argparse module.
     '''
-    parser = argparse.ArgumentParser(
-        prog='tcp_business_days.py',
-        description='Calculate # of business days elapsed and update records accordingly.'
-    )
-
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'tcp_business_days.py',
+        'Calculate # of business days elapsed and update records accordingly.',
         'app_name',
-        action="store",
-        type=str,
-        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
     )
-
+    
     args = parser.parse_args()
-
-    return(args)
+    
+    return args
 
 
 def update_record(record, obj_key, creds):
@@ -118,7 +116,6 @@ def update_record(record, obj_key, creds):
 
 
 def main(creds):
-    #  config
     scene = 'scene_754'
     view = 'view_1987' 
     obj = 'object_147'
@@ -127,8 +124,6 @@ def main(creds):
     elapsed_key = 'DAYS_ELAPSED'
 
     update_fields = [ 'DAYS_ELAPSED', 'id' ]
-
-    calendar = get_calendar();
 
     kn = knackpy.Knack(
         scene=scene,
@@ -151,26 +146,22 @@ def main(creds):
     logger.info( '{} Records to Update'.format(len(kn.data) ))
 
     if kn.data:    
-        results = []
         kn.data = datautil.reduce_to_keys(kn.data, update_fields)
         kn.data = datautil.replace_keys(kn.data, kn.field_map)
 
         for i, record in enumerate(kn.data):
             print('Update record {} of {}'.format( i, len(kn.data) ))
-            result = update_record(record, obj, creds)
-            results.append(result)
+            update_record(record, obj, creds)
 
-    return kn.data
+    return len(kn.data)
 
 
 if __name__ == '__main__':
-    #  init logging 
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
-    logger = logutil.timed_rotating_log(logfile)
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
 
-    now = datetime.today()
-    logger.info('START AT {}'.format(now))
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( datetime.today() ))
         
     try:
         args = cli_args()
@@ -178,7 +169,19 @@ if __name__ == '__main__':
         
         app_name = args.app_name
         knack_creds = KNACK_CREDENTIALS[app_name]
+
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
+
+        job.start()
+
         results = main(knack_creds)
+
+        job.result('success', records_processed=results)
 
     except Exception as e:
         error_text = traceback.format_exc()
@@ -193,6 +196,8 @@ if __name__ == '__main__':
             EMAIL['user'],
             EMAIL['password']
         )
+
+        job.result('error', message=str(e))
 
         raise e
 

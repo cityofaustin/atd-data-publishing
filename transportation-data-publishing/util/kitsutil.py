@@ -58,9 +58,12 @@ def data_as_dict(creds, query, max_tries=5):
     return data
 
 
-def check_for_stale(dataset, time_field, minute_tolerance):
-    print('check for stale data')
-
+def check_for_stale(dataset, time_field, tolerance_minutes=15):
+    '''
+    Verify if KITS data is current. Sometimes the KITS status service breaks, in which case status
+    data does not update in the KITSDB. We can expect an update to the status table at least every
+    15 minutes.
+    '''
     stale = False
 
     status_times = []
@@ -74,19 +77,16 @@ def check_for_stale(dataset, time_field, minute_tolerance):
 
     delta = arrow.now() - oldest_record
 
-    delta_minutes = delta.seconds/60
+    delta_minutes = ( delta.seconds + (delta.days * 86400 ) ) / 60
 
-    print(str(delta_minutes))
+    if delta_minutes > tolerance_minutes:
 
-    if delta_minutes > minute_tolerance:  #  if more than 15 minutes have passed since a status update
+        raise Exception(f'KITS Status Data is {delta_minutes} minutes old')
 
-        stale = True
-
-    return {'stale': stale, 'delta_minutes' : int(delta_minutes) }
+    return
 
 
 def insert_multi_table(creds, query_array, max_tries=5):
-    print('multi-table insert in kits')
     
     conn = get_conn(creds, max_tries=max_tries)
     

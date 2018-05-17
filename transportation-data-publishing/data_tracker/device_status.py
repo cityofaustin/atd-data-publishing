@@ -2,6 +2,9 @@
 Ping network devices and update ip comm status in Knack database.
 
 command ex: device_status_check.py travel_sensors data_tracker_prod
+
+#TODO
+- move write to JSON to a separate script. it doesn't belong here.
 '''
 import argparse
 import json
@@ -10,6 +13,7 @@ import os
 from os import system as system_call
 import pdb
 from platform import system as system_name  
+import socket
 import traceback
 
 import arrow
@@ -18,8 +22,10 @@ import knackpy
 import _setpath
 from config.knack.config import cfg
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 
 
@@ -41,10 +47,21 @@ def ping_ip(ip, timeout=3):
     logger.debug(str(response))
 
     if response != 0:
-        return "OFFLINE"
+        return 'OFFLINE'
     else:
-        return "ONLINE"
+        return 'ONLINE'
 
+
+def open_socket(ip, port, timeout=3):
+    with socket.socket() as s:
+        print(ip)
+        try:
+            s.settimeout(timeout)
+            s.connect((ip, port))
+            return 'ONLINE'
+        except OSError:
+            return 'OFFLINE'
+            
 
 def get_status(device):
     
@@ -54,7 +71,14 @@ def get_status(device):
     ip = device.get(ip_field)
 
     if ip:
-        state_new = ping_ip(device[ip_field])
+        if args.device_type != 'gridsmart':
+            state_new = ping_ip(device[ip_field])
+        
+        else:
+            '''
+            Gridsmart default port is 8902
+            '''
+            state_new = open_socket(device[ip_field], port=8902)
     
     else:
         #  set to NO COMMUINICATION if no IP address
@@ -76,7 +100,7 @@ def get_status(device):
 
 
 def main():
-    try:
+
         #  get device data from Knack application
         kn = knackpy.Knack(
             obj=cfg[device_type]['obj'],
@@ -129,61 +153,35 @@ def main():
         
         return True
     
-    except Exception as e:
-        print('Failed to process data for {}'.format(str(now)) )
-        error_text = traceback.format_exc()
-        email_subject = "Device Status Check Failure: {}".format(device_type)
-        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-        logger.error(error_text)
-        print(e)
-        raise e
 
 
 def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='device_status_check.py',
-        description='Ping network devices to verify connenectivity.'
-    )
 
-    parser.add_argument(
+    parser = argutil.get_parser(
+        'device_status_check.py',
+        'Ping network devices to verify connenectivity.',
         'device_type',
-        action="store",
-        type=str,
-        choices=['signals', 'travel_sensors', 'cameras', 'gridsmart'],
-        help='Type of device to ping.'
-    )
-
-    parser.add_argument(
         'app_name',
-        action="store",
-        type=str,
-        choices=['data_tracker_prod', 'data_tracker_test'],
-        help='Name of the knack application that will be accessed. e.g. \'data_tracker_prod\''
+        '--json',
+        '--replace'
     )
-
-    parser.add_argument(
-        '-json',
-        action='store_true',
-        default=False,
-        help='Write device data to JSON.'
-    )
-
+    
     args = parser.parse_args()
-    return(args)
+    
+    return args
 
 
 if __name__ == '__main__':
     
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
-    logger = logutil.timed_rotating_log(logfile)
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
     
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
 
     #  parse command-line arguments
     args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
+    logger.info( 'args: {}'.format( args ))
 
     device_type = args.device_type
     out_json = args.json
@@ -191,24 +189,54 @@ if __name__ == '__main__':
     primary_key = cfg[device_type]['primary_key']
     ip_field = cfg[device_type]['ip_field']
 
-    knack_creds = KNACK_CREDENTIALS[app_name]
-    
-    out_fields_upload = [
-        'id',
-        ip_field,
-        'IP_COMM_STATUS',
-        'COMM_STATUS_DATETIME_UTC'
-    ]
+    script_id = '{}_{}'.format(
+        script_name,
+        args.device_type)
 
-    out_fields_json = [
-        'id',
-        ip_field,
-        'IP_COMM_STATUS',
-        'COMM_STATUS_DATETIME_UTC',
-        primary_key
-    ]
+    try:
+        job = jobutil.Job(
+            name=script_id,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
+     
+        job.start()
 
-    results = main()
-    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
+        knack_creds = KNACK_CREDENTIALS[app_name]
+        
+        out_fields_upload = [
+            'id',
+            ip_field,
+            'IP_COMM_STATUS',
+            'COMM_STATUS_DATETIME_UTC'
+        ]
+
+        out_fields_json = [
+            'id',
+            ip_field,
+            'IP_COMM_STATUS',
+            'COMM_STATUS_DATETIME_UTC',
+            primary_key
+        ]
+
+        results = main()
+
+        if (results):
+            job.result('success')
+
+        logger.info('END AT {}'.format( arrow.now() ))
+
+    except Exception as e:
+        error_text = traceback.format_exc()
+        logger.error(error_text)
+
+        email_subject = "Device Status Check Failure: {}".format(device_type)
+        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
+        
+        job.result('error', message=str(e))
+
+        raise e
+
 
 print(results)

@@ -12,26 +12,23 @@ import knackpy
 
 import _setpath
 from config.secrets import *
+from util import argutil
 from util import datautil
 from util import emailutil
+from util import jobutil
 from util import logutil
 
 
-def cli_args():
-    parser = argparse.ArgumentParser(
-        prog='secondary_signals_updater.py',
-        description='Update traffic signal records with secondary signal relationships'
+def cli_args(): 
+    parser = argutil.get_parser(
+        'secondary_signals_updater.py',
+        'Update traffic signal records with secondary signal relationships.',
+        'app_name'
     )
-
-    parser.add_argument(
-        'app_name',
-        action="store",
-        type=str,
-        help='Name of the knack application that will be accessed'
-    )
-
-    args = parser.parse_args()    
-    return(args)
+    
+    args = parser.parse_args()
+    
+    return args
 
 
 def get_new_prim_signals(signals):
@@ -88,102 +85,77 @@ def get_old_prim_signals(signals):
 
 
 
-def main(date_time):
-    print('starting stuff now')
+def main():
 
-    try:       
-        kn = knackpy.Knack(
-            scene=scene,
-            view=view,
-            ref_obj=ref_obj,
-            app_id=knack_creds['app_id'],
-            api_key=knack_creds['api_key'],
-            raw_connections=True
-        )
+    kn = knackpy.Knack(
+        scene=scene,
+        view=view,
+        ref_obj=ref_obj,
+        app_id=knack_creds['app_id'],
+        api_key=knack_creds['api_key'],
+        raw_connections=True
+    )
 
-        primary_signals_old = get_old_prim_signals(kn.data)
-        primary_signals_new = get_new_prim_signals(kn.data)
-        
-        payload = []
-        
-        for signal_id in primary_signals_new:
-            '''
-            identify new and changed primary-secondary relationships
-            '''
-            if signal_id in primary_signals_old:
-                new_secondaries = collections.Counter(primary_signals_new[signal_id])
-                old_secondaries = collections.Counter(primary_signals_old[signal_id])
+    primary_signals_old = get_old_prim_signals(kn.data)
+    primary_signals_new = get_new_prim_signals(kn.data)
+    
+    payload = []
+    
+    for signal_id in primary_signals_new:
+        '''
+        identify new and changed primary-secondary relationships
+        '''
+        if signal_id in primary_signals_old:
+            new_secondaries = collections.Counter(primary_signals_new[signal_id])
+            old_secondaries = collections.Counter(primary_signals_old[signal_id])
+            
+            if old_secondaries != new_secondaries:
                 
-                if old_secondaries != new_secondaries:
-                    
-                    payload.append({
-                        'id' : signal_id,
-                        update_field : primary_signals_new[signal_id]
-                    })
-
-            else:
-                 payload.append({
+                payload.append({
                     'id' : signal_id,
                     update_field : primary_signals_new[signal_id]
                 })
 
-        for signal_id in primary_signals_old:
-            '''
-            identify primary-secondary relationships that have been removed
-            '''
-            if signal_id not in primary_signals_new:
-                payload.append({ 'id' : signal_id, update_field : [] })
+        else:
+             payload.append({
+                'id' : signal_id,
+                update_field : primary_signals_new[signal_id]
+            })
 
-        count = 0
-        update_response = []
-        
-        if len(payload) == 0:
-            logger.info("No new secondary signals.")
-            return "No new secondary signals."
+    for signal_id in primary_signals_old:
+        '''
+        identify primary-secondary relationships that have been removed
+        '''
+        if signal_id not in primary_signals_new:
+            payload.append({ 'id' : signal_id, update_field : [] })
 
-        logger.info( "{} records to update".format(len(payload)) )
-        logger.info( "{} records to update".format(payload) )
-        
-        for record in payload:
-            count += 1
-            print( 'updating record {} of {}'.format( count, len(payload) ) )
+    if len(payload) == 0:
+        logger.info("No new secondary signals.")
+        return 0
 
-            res = knackpy.record(
-                record,
-                obj_key=ref_obj[0], 
-                app_id= knack_creds['app_id'],
-                api_key=knack_creds['api_key'],
-                method='update',
-            )
+    logger.info( "{} records to update".format(len(payload)) )
+    
+    for record in payload:
 
-            update_response.append(res)
-
-        logger.info( "Record updates sent :{}".format(len(update_response)) )
-        logger.info( "Response: {}".format(update_response) )
-        return update_response
-
-    except Exception as e:
-        print('Failed to process data for {}'.format(date_time))
-        error_text = traceback.format_exc()
-        
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            'Update Secondary Signals Failure',
-            error_text,
-            EMAIL['user'],
-            EMAIL['password']
+        res = knackpy.record(
+            record,
+            obj_key=ref_obj[0], 
+            app_id= knack_creds['app_id'],
+            api_key=knack_creds['api_key'],
+            method='update',
         )
 
-        print(e)
-        raise e
+    logger.info( "{} records processed".format( len(payload)) )
+    
+    return len(payload)
+
 
 if __name__ == '__main__':
-    script = os.path.basename(__file__).replace('.py', '.log')
-    logfile = f'{LOG_DIRECTORY}/{script}'
-    logger = logutil.timed_rotating_log(logfile)
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
 
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    logger = logutil.timed_rotating_log(logfile)
+    logger.info('START AT {}'.format( arrow.now() ))
 
     args = cli_args()
     app_name = args.app_name
@@ -195,10 +167,37 @@ if __name__ == '__main__':
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    results = main(now)
-    logger.info('END AT {}'.format(str( arrow.now().timestamp) ))
+    try:
+        
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='knack',
+            destination='knack',
+            auth=JOB_DB_API_TOKEN)
+     
+        job.start()
 
-print(results)
+        results = main()
+
+        job.result('success', records_processed=results)
+
+        logger.info('END AT {}'.format( arrow.now() ))
+
+    except Exception as e:
+        error_text = traceback.format_exc()
+        
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            'Update Secondary Signals Failure',
+            error_text,
+            EMAIL['user'],
+            EMAIL['password']
+        )
+
+        job.result('error', message=str(e))
+
+        raise e
 
 
 

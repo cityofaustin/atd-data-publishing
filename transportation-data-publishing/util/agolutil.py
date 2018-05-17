@@ -1,173 +1,44 @@
+'''
+ elper methods to work with ArcGIS for Python API, mixed
+in with a few manual ArcGIS REST API requests.
+
+changelog:
+- no require locations
+- build_payload >> feature_collection
+- switching to named arguments everywhere
+
+#TODO
+- use arcgis library api instead of custom functions
+'''
 import json
 import pdb
+import urllib
 
-import arrow
+from arcgis.gis import GIS
+from arcgis.features import FeatureLayerCollection
 import requests
 
+def get_token(auth, base_url='https://austin.maps.arcgis.com'):
+    url = f'{base_url}/sharing/rest/generateToken'
 
-def get_token(creds):
-    print("Generate token")
-    url = 'https://austin.maps.arcgis.com/sharing/rest/generateToken'
     params = {
-        'username' : creds['user'],
-        'password' : creds['password'],
+        'username' : auth['user'],
+        'password' : auth['password'],
         'referer' : 'http://www.arcgis.com',
         'f' : 'pjson'
     }
 
     res = requests.post(url, params=params)
-    res = res.json()
-    token = res['token']
-    return token
-
-
-def geocode(url, address):
-    
-    params = {
-        'f' : 'json',
-        'street': address,
-        'outSR' : '4326'
-    }
-
-    res = requests.post(url, params=params)
-    res = res.json()
-    return res
-
-
-def query_all_features(url, token):
-    print('Query all features')
-    url = url + 'query'
-    where = 'OBJECTID>0'
-    params = {
-        'f' : 'json',
-        'where': where,
-        'outFields' : '*',
-        'token' : token,
-        'returnGeometry':False
-    }
-
-    res = requests.post(url, params=params)
-    res = res.json()
-    return res
-
-
-def query_layer(url, params):
-    print('Query layer')
-    url = url + 'query'
-    res = requests.post(url, params=params)
-    res = res.json()
-    return res
-
-
-def add_features(url, token, payload):
-    print('add {} features'.format( len(payload)) )
-    url = url + 'addFeatures'
-
-    params = {
-        'f':'json',
-        'features': json.dumps(payload),
-        'token':token
-    }
-
-    res = requests.post(url, data=params)
     res.raise_for_status()
     res = res.json()
-    return res
-
-
-def delete_features(url, token):
-    '''
-    delete all features from feature service
-    '''
-    print('Delete features')
-    url = url + 'deleteFeatures'
-    where = '1=1'
-    params = {
-        'f' : 'json',
-        'where': where,
-        'outFields' : '*',
-        'token' : token,
-        'returnGeometry':False
-    }
-
-    res = requests.post(url, params=params)
-    res = res.json()
-    success = 0
-    fail = 0
-
-    if 'deleteResults' in res:
-        for feature in res['deleteResults']:
-            if feature['success'] == True:
-                success += 1
-
-            else:
-                fail += 1
-        
-    print('''
-            {} features deleted and {} features failed to delete
-        '''.format( success, fail ))
-
-    return res
-
-
-def build_payload(data, lat_field='latitude', lon_field='longitude', **options):
-    #  assemble an ArcREST feature object dictionary
-    #  spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
-    #  records without 'LATITUDE' field are ignored
-    print('Build data payload')
-    
-    if 'require_locations' not in options:
-        options['require_locations'] = False
-
-    payload = []
-
-    count = 0
-
-    for record in data:
-        new_record = {
-            'attributes': {},
-            'geometry': {
-                'spatialReference': {
-                    'wkid': 4326
-                }
-            }
-        }
-
-        if options['require_locations']:
-
-            if not lat_field in record and lon_field in record:
-                continue
-
-        for attribute in record:
-            
-            if attribute == lat_field:
-                    new_record['geometry']['y'] = record[attribute]
-
-            elif attribute == lon_field:
-                    new_record['geometry']['x'] = record[attribute]
-
-            new_record['attributes'][attribute] = record[attribute]
-               
-        payload.append(new_record)
-    
-    return payload
-
-
-def parse_attributes(query_results):
-    print('Parse feature attributes')
-    results = []
-
-    for record in query_results['features']:
-        results.append(record['attributes'])
-
-    return results
+    return res.get('token')
 
 
 def query_atx_street(segment_id, token):
-    print('Query atx street segment {}'.format(segment_id))
-
     url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/TRANSPORTATION_street_segment/FeatureServer/0/query'
+
     where = 'SEGMENT_ID={}'.format(segment_id)
+
     params = {
         'f' : 'json',
         'where' : where,
@@ -184,13 +55,12 @@ def query_atx_street(segment_id, token):
 
 def point_in_poly(service_name, layer_id, params):
     '''
-    check if point is within polygon feature
-    return attributes of containing feature 
-    assume input geometry spatial reference is WGS84
+    Check if point is within polygon feature and return attributes of containing
+    feature. Assume input geometry spatial reference is WGS84.
     docs: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
+
+    #TODO: replace with arcgis library api
     '''
-    print('Point in poly: {}'.format(service_name))
-    
     query_url = 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/{}/FeatureServer/{}/query'.format(service_name, layer_id)
     
     if 'spatialRel' not in params:
@@ -202,21 +72,105 @@ def point_in_poly(service_name, layer_id, params):
     return res.json()
 
 
-def parse_response(res_msg, req_type):
-    print('Parse response')
-    success = 0
-    fail = 0
+def get_layer(auth=None, layer_id=0, service_id=None):
+    if not service_id:
+        raise Exception('Service ID is required')
 
-    for record in res_msg[ '{}Results'.format(req_type) ]:
-        if 'success' in record:
-            if record['success']:
-                success += 1
-            else:
-                fail += 1
-        else:
-            fail += 1
+    gis = GIS('http://austin.maps.arcgis.com',
+              username=auth['user'],
+              password=auth['password'])
 
-    return {
-        "success" : success,
-        "fail" : fail
+    item = gis.content.get(service_id)
+    
+    return item.layers[layer_id]
+
+
+def query(layer, where='1=1', out_fields='*'):
+    print('Query feature data...')
+    
+    features = layer.query(
+        where=where, 
+        out_fields=out_fields
+    )
+
+    return features
+
+
+def feature_collection(data,
+                       lat_field='latitude',
+                       lon_field='longitude',
+                       spatial_ref=4326):
+    '''
+    Assemble an ArcREST featureCollection object
+    spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
+    records without 'LATITUDE' field are ignored
+    '''
+    features = []
+
+    for record in data:
+
+        new_record = {
+            'attributes': {},
+            'geometry': {
+                'spatialReference': {
+                    'wkid': spatial_ref
+                }
+            }
+        }
+
+        for attribute in record:
+            
+            new_record['attributes'][attribute] = record[attribute]
+        
+        if record.get(lat_field) and record.get(lon_field):
+            
+            new_record['geometry'] = { 
+                'x' : record.get(lon_field),
+                'y' : record.get(lat_field) }
+
+
+        features.append(new_record)
+    
+    return features
+
+
+def handle_response(agol_response, raise_exception=True):
+    '''
+    Inspect an AGOL API POST response for errors
+    '''
+
+    results = {
+        'success' : 0,
+        'fail' : 0
     }
+
+    for result_type in agol_response.keys():
+        if 'Result' not in result_type:
+            '''
+            Response is a dict with 'sucess' or 'fail' keys
+            '''
+            if agol_response.get('success'):
+                results['success'] = 1
+            else:
+                results['fail'] = 1
+        else:
+            '''
+            Response is a dict with addResults, deleteResults etc. arrays
+            '''
+            success = [record for record in agol_response[result_type] if 'success' in record ]
+            fail = [record for record in agol_response[result_type] if 'success' not in record ]
+        
+            results['success'] += len(success)
+            results['fail'] += len(fail)
+
+        if raise_exception and results['fail'] > 0:
+
+           raise Exception(str(agol_response))
+
+        else:
+            return results
+
+
+
+
+

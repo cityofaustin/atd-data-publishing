@@ -14,18 +14,28 @@ from config.secrets import *
 from util import agolutil
 from util import emailutil
 from util import logutil
+from util import jobutil
 from util import socratautil
 
 
-socrata_creds = SOCRATA_CREDENTIALS
-socrata_resource_id = 'jqhg-imb3'
-agol_creds = AGOL_CREDENTIALS
+SOCRATA_RESOURCE_ID = 'jqhg-imb3'
 
-fieldnames = ['COMMENT_FIELD2', 'START_DATE', 'SITE_CODE', 'COMMENT_FIELD1', 'GLOBALID', 'DATA_FILE', 'COMMENT_FIELD4', 'COMMENT_FIELD3', 'LATITUDE', 'LONGITUDE']
+FIELDNAMES = [
+    'COMMENT_FIELD2',
+    'START_DATE',
+    'SITE_CODE',
+    'COMMENT_FIELD1',
+    'GLOBALID',
+    'DATA_FILE',
+    'COMMENT_FIELD4',
+    'COMMENT_FIELD3',
+    'LATITUDE',
+    'LONGITUDE']
 
-agol_config = {
+CONFIG = {
     'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/Traffic_Count_Location/FeatureServer/0/',
-    'query_params' : {
+    'service_id' : '3c56025e645045998ee499c0725dfebb',
+    'params' : {
         'f' : 'json',
         'where' : '1=1',
         'outFields' : '*',
@@ -35,7 +45,7 @@ agol_config = {
 }
 
 
-def parseMills(d):
+def parse_mills(d):
     dt = arrow.get(d/1000)
     tz = 'US/Central'
     dt = dt.replace(tzinfo=tz)
@@ -44,51 +54,63 @@ def parseMills(d):
 
 
 def main():
-    agol_config['query_params']['token'] = agolutil.get_token(agol_creds)
-    data = agolutil.query_layer(agol_config['service_url'], agol_config['query_params'])
 
-    features = []
-    if data['features']:
-        for feature in data['features']:
-            add_feature = {a.upper():feature['attributes'][a] for a in feature['attributes'] if a.upper() in fieldnames}
-            add_feature['LONGITUDE'] = float(str(feature['geometry']['x'])[:10])  #  truncate coordinate
-            add_feature['LATITUDE'] = float(str(feature['geometry']['y'])[:10])
-            if add_feature['START_DATE']:
-                add_feature['START_DATE'] = parseMills(add_feature['START_DATE'])
+    layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+                        service_id=CONFIG['service_id'])
 
-            features.append(add_feature)
+    features = layer.query(**CONFIG['params'])
     
-    features = socratautil.create_location_fields(
-        features,
+    features_add = []
+
+    for feature in features:
+        feature_add = {key.upper() : value for key, value in feature.attributes.items() if key.upper() in FIELDNAMES}
+        feature_add['LONGITUDE'] = float(str(feature.geometry['x'])[:10])  #  truncate coordinate
+        feature_add['LATITUDE'] = float(str(feature.geometry['y'])[:10])
+        
+        if feature_add.get('START_DATE'):
+            feature_add['START_DATE'] = parse_mills(feature_add['START_DATE'])
+
+        features_add.append(feature_add)
+        
+    socratautil.Soda(
+        auth=SOCRATA_CREDENTIALS,
+        resource=SOCRATA_RESOURCE_ID,
+        records=features_add,
         lat_field='LATITUDE',
-        lon_field='LONGITUDE'
-    )
+        lon_field='LONGITUDE',
+        location_field='location',
+        replace=True
+        )
 
-    upsert_response = socratautil.replace_resource(
-        socrata_creds,
-        socrata_resource_id,
-        features
-    )
-
-    return 'Done'
+    return len(features_add)
 
 
 if __name__ == '__main__':
 
-    script = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script}.log'
+    script_name = os.path.basename(__file__).replace('.py', '')
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
     logger = logutil.timed_rotating_log(logfile)
 
-    now = arrow.now()
-    logger.info('START AT {}'.format(str(now)))
+    logger.info('START AT {}'.format( arrow.now() ))
 
     try:
+        job = jobutil.Job(
+            name=script_name,
+            url=JOB_DB_API_URL,
+            source='agol',
+            destination='socrata',
+            auth=JOB_DB_API_TOKEN)
+
+        job.start()
+
         results = main()
+
+        job.result('success', records_processed=results)
 
     except Exception as e:
         error_text = traceback.format_exc()
-        print(error_text)
         logger.error(error_text)
+
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
             'Traffic Count Locations Process Failure',
@@ -96,6 +118,12 @@ if __name__ == '__main__':
             EMAIL['user'],
             EMAIL['password']
         )
+
+        job.result('error', message=error_text)
+
         raise e
 
-    logger.info('END AT: {}'.format(arrow.now().format()))
+    logger.info('END AT: {}'.format( arrow.now() ))
+
+
+
