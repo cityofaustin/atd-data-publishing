@@ -4,7 +4,6 @@ Configuration file for automated deployment of transportation-data-publishing sc
 CRONTAB = '''
 #  Crontab entries transportation-data-publishing scripts
 
-
 '''
 
 #  Shell script template
@@ -349,10 +348,10 @@ CONFIG = {
       'script': 'knack_data_pub.py'
     },
     {
-      'args': ['work_orders', 'data_tracker_prod', '-d socrata'],
+      'args': ['work_orders_signals', 'data_tracker_prod', '-d socrata'],
       'cron': '50 * * * *',
       'enabled': True,
-      'name': 'work_orders',
+      'name': 'work_orders_signals',
       'path': 'transportation-data-publishing/open_data',
       'script': 'knack_data_pub.py'
     },
@@ -379,7 +378,15 @@ CONFIG = {
       'name': 'metadata_updater',
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'metadata_updater.py'
-    }
+    },
+    {
+      'args': ['data_tracker_prod'],
+      'cron': '51 * * * *',
+      'enabled': True,
+      'name': 'markings_agol',
+      'path': 'transportation-data-publishing/data_tracker',
+      'script': 'markings_agol.py'
+    },
   ]
 }
 

@@ -55,7 +55,7 @@ def parse_mills(d):
 
 def main():
 
-    layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+    layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
                         service_id=CONFIG['service_id'])
 
     features = layer.query(**CONFIG['params'])

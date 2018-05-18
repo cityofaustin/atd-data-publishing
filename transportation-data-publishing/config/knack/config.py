@@ -228,6 +228,14 @@ cfg = {
             }
         ]
     },
+    'task_orders' : {
+        'primary_key' : 'TASK_ORDER',
+        'ref_obj' : ['object_86'],
+        'obj' : None,
+        'scene' : 'scene_861',
+        'view' : 'view_2229',
+        'include_ids' : True
+    },   
     'traffic_reports' : {
         'primary_key' : 'TRAFFIC_REPORT_ID',
         'modified_date_field' : 'TRAFFIC_REPORT_STATUS_DATE_TIME',
@@ -236,8 +244,7 @@ cfg = {
         'obj' : None,
         'scene' : 'scene_614',
         'view' : 'view_1626',
-        'service_url' : 'http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/traffic_reports/FeatureServer/0/',
-        'service_id' : 'bd7d8465ce2d4b11b632139594d887fc',
+        'service_id' : '444c8a2b4388485283c2968bd99ddf6c',
         'include_ids' : True,
         'socrata_resource_id' : 'dx9v-zd7x',
         'ip_field' : None,
@@ -299,7 +306,7 @@ cfg = {
             'location_field' : 'location'
         }    
     },
-    'work_orders' : {
+    'work_orders_signals' : {
         'primary_key' : 'ATD_WORK_ORDER_ID',
         'modified_date_field' : 'MODIFIED_DATE',
         'modified_date_field_id' : 'field_1074',
@@ -315,4 +322,19 @@ cfg = {
             'location_field' : 'location'
         }
     },
+    'work_orders_signs_markings' : {
+        'primary_key' : 'ATD_WORK_ORDER_ID',
+        'modified_date_field' : 'MODIFIED_DATE',
+        'modified_date_field_id' : 'field_2150',
+        'obj' : None,
+        'scene' : 'scene_774',
+        'view' : 'view_2226',
+        'ref_obj' : ['object_140', 'object_11', 'object_7'],
+        'socrata_resource_id' : '',
+        'pub_log_id' : '',
+        'status_field' : 'WORK_ORDER_STATUS'
+    }
 }
+
+
+

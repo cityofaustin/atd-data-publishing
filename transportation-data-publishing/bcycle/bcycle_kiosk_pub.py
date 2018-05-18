@@ -80,7 +80,7 @@ if __name__ == '__main__':
         data = datautil.replace_keys(data, {'STATUS' : 'KIOSK_STATUS'} )
         
         try:
-            layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+            layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
                                     service_id=service_id)
         
             res = layer.manager.truncate()

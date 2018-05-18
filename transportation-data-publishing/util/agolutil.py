@@ -1,11 +1,6 @@
 '''
- elper methods to work with ArcGIS for Python API, mixed
+Helper methods to work with ArcGIS for Python API, mixed
 in with a few manual ArcGIS REST API requests.
-
-changelog:
-- no require locations
-- build_payload >> feature_collection
-- switching to named arguments everywhere
 
 #TODO
 - use arcgis library api instead of custom functions
@@ -72,7 +67,7 @@ def point_in_poly(service_name, layer_id, params):
     return res.json()
 
 
-def get_layer(auth=None, layer_id=0, service_id=None):
+def get_item(auth=None, item_type='layer', layer_id=0, service_id=None):
     if not service_id:
         raise Exception('Service ID is required')
 
@@ -82,18 +77,14 @@ def get_layer(auth=None, layer_id=0, service_id=None):
 
     item = gis.content.get(service_id)
     
-    return item.layers[layer_id]
-
-
-def query(layer, where='1=1', out_fields='*'):
-    print('Query feature data...')
+    if item_type=='layer':
+        return item.layers[layer_id]
     
-    features = layer.query(
-        where=where, 
-        out_fields=out_fields
-    )
-
-    return features
+    elif item_type=='table':
+        return item.tables[layer_id]
+    
+    else:
+        raise Exception('Unknown item type requested.')
 
 
 def feature_collection(data,
@@ -103,12 +94,13 @@ def feature_collection(data,
     '''
     Assemble an ArcREST featureCollection object
     spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
-    records without 'LATITUDE' field are ignored
+    
+    TODO: Make more 
     '''
     features = []
 
     for record in data:
-
+        
         new_record = {
             'attributes': {},
             'geometry': {
@@ -117,17 +109,21 @@ def feature_collection(data,
                 }
             }
         }
-
-        for attribute in record:
-            
-            new_record['attributes'][attribute] = record[attribute]
         
-        if record.get(lat_field) and record.get(lon_field):
-            
-            new_record['geometry'] = { 
-                'x' : record.get(lon_field),
-                'y' : record.get(lat_field) }
+        new_record['attributes'] = record
 
+        if record.get('paths'):
+            # Handle polyline geometry
+            new_record['geometry']['paths'] = record.pop('paths')
+
+        elif record.get(lat_field) and record.get(lon_field):
+            # Handle point geometry
+            new_record['geometry']['x'] = record.get(lon_field)
+            new_record['geometry']['y'] = record.get(lat_field)
+
+        else:
+            #  strip geometry from records with missing/unkown geometry data
+            new_record.pop('geometry')
 
         features.append(new_record)
     
@@ -157,8 +153,8 @@ def handle_response(agol_response, raise_exception=True):
             '''
             Response is a dict with addResults, deleteResults etc. arrays
             '''
-            success = [record for record in agol_response[result_type] if 'success' in record ]
-            fail = [record for record in agol_response[result_type] if 'success' not in record ]
+            success = [record for record in agol_response[result_type] if record.setdefault('success', False) ]
+            fail = [record for record in agol_response[result_type] if not record.get('success') ]
         
             results['success'] += len(success)
             results['fail'] += len(fail)
@@ -169,7 +165,6 @@ def handle_response(agol_response, raise_exception=True):
 
         else:
             return results
-
 
 
 

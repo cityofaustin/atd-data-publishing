@@ -58,7 +58,6 @@ def agol_pub(records, cfg):
     '''
     Upsert or replace records on arcgis online features service
     '''
-
     if cfg.get('location_fields'):                    
         lat_field = cfg['location_fields']['lat']
         lon_field = cfg['location_fields']['lon']
@@ -66,7 +65,7 @@ def agol_pub(records, cfg):
         lat_field = None
         lon_field = None
                 
-    layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+    layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
                                 service_id=cfg['service_id'])
     
     if args.replace:
@@ -85,22 +84,17 @@ def agol_pub(records, cfg):
         primary_key = cfg.get('primary_key')
 
         delete_ids = [record[primary_key] for record in records]
-        delete_ids = ', '.join(str(x) for x in delete_ids)
+
+        delete_ids = ', '.join(f'\'{x}\'' for x in delete_ids)
 
         #  generate a SQL-like where statement to identify records for deletion
         where = '{} in ({})'.format(primary_key, delete_ids)
-
         res = layer.delete_features(where=where)
         agolutil.handle_response(res)
 
     for i in range(0, len(records), 1000):
-        '''Chunk records like a boss'''
         print(i)
-        adds = agolutil.feature_collection(
-            records[i:i + 1000],
-            lat_field=lat_field,
-            lon_field=lon_field)
-
+        adds = agolutil.feature_collection(records[i:i + 1000],lat_field=lat_field,lon_field=lon_field)
         res = layer.edit_features(adds=adds)
         agolutil.handle_response(res)
 
@@ -152,15 +146,23 @@ def get_multi_source(cfg, auth, last_run_date):
         if not kn:
             kn = knackpy_wrapper(source_cfg, auth, filters)
 
-            kn.data = filter_by_date(kn.data,
-                source_cfg['modified_date_field'], last_run_timestamp)
-        
+            if kn.data:
+                kn.data = filter_by_date(kn.data,
+                    source_cfg['modified_date_field'], last_run_timestamp)
+            else:
+                #  Replace None with empty list
+                kn.data = []
+
         else:
             kn_temp = knackpy_wrapper(source_cfg, auth, filters)
 
-            kn_temp.data = filter_by_date(kn_temp.data,
-                source_cfg['modified_date_field'], last_run_timestamp)
+            if kn_temp.data:
+                kn_temp.data = filter_by_date(kn_temp.data,
+                    source_cfg['modified_date_field'], last_run_timestamp)
 
+            else:
+                kn_temp.data = []
+            
             kn.data = kn.data + kn_temp.data
             kn.fields.update(kn_temp.fields)
 
@@ -181,7 +183,7 @@ def main(cfg, auth, job, args):
     if not last_run_date or args.replace or job.destination == 'csv':
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = '1/1/1900'
-
+        
     '''
     We include a filter in our API call to limit to records which have
     been modified on or after the date the last time this job ran
@@ -189,7 +191,6 @@ def main(cfg, auth, job, args):
     (not time), so we must apply an additional filter on the data after
     we receive it.
     '''
-
 
     if cfg.get('multi_source'):
         kn = get_multi_source(cfg, auth, last_run_date)
@@ -333,4 +334,3 @@ if __name__ == '__main__':
 
             continue
         
-
