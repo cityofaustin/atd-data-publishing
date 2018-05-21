@@ -379,7 +379,7 @@ CONFIG = {
       'name': 'metadata_updater',
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'metadata_updater.py'
-    }
+    },
     {
       'args': [],
       'cron': '07 */6 * * *',
