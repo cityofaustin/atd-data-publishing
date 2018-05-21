@@ -380,6 +380,16 @@ CONFIG = {
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'metadata_updater.py'
     }
+    {
+      'args': [],
+      'cron': '07 */6 * * *',
+      'enabled': True,  #  will ignore if false
+      'image': 'atddocker/tdp',  #  exclude this entirely for default
+      'name': 'task_orders',  #  must be unique to config
+      'path': 'transportation-data-publishing/data_tracker',  #  relative to repo root
+      'script': 'task_orders.py',
+      'comment' : ''  #  optional comments are ignored everywhere
+    },
   ]
 }
 
