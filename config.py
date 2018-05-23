@@ -235,13 +235,13 @@ CONFIG = {
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'secondary_signals_updater.py'
     },
-    {
-      'args': [],
+    { 
+      'args': ['signal_request_evals', 'data_tracker_prod', '-d socrata'],
       'cron': '10 * * * *',
       'enabled': True,
-      'name': 'sig_req_evals',
+      'name': 'signal_request_evals',
       'path': 'transportation-data-publishing/open_data',
-      'script': 'sig_req_evals.py'
+      'script': 'knack_data_pub.py'
     },
     {
       'args': [],
@@ -276,7 +276,7 @@ CONFIG = {
       'script': 'signal_request_ranker.py'
     },
     {
-      'args': ['signal_requests', 'data_tracker_prod', '-agol'],
+      'args': ['signal_requests', 'data_tracker_prod', '-d agol'],
       'cron': '40 * * * *',
       'enabled': True,
       'name': 'signal_requests',
