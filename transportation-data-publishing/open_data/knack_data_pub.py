@@ -152,15 +152,23 @@ def get_multi_source(cfg, auth, last_run_date):
         if not kn:
             kn = knackpy_wrapper(source_cfg, auth, filters)
 
-            kn.data = filter_by_date(kn.data,
-                source_cfg['modified_date_field'], last_run_timestamp)
-        
+            if kn.data:
+                kn.data = filter_by_date(kn.data,
+                    source_cfg['modified_date_field'], last_run_timestamp)
+            else:
+                #  Replace None with empty list
+                kn.data = []
+
         else:
             kn_temp = knackpy_wrapper(source_cfg, auth, filters)
 
-            kn_temp.data = filter_by_date(kn_temp.data,
-                source_cfg['modified_date_field'], last_run_timestamp)
+            if kn_temp.data:
+                kn_temp.data = filter_by_date(kn_temp.data,
+                    source_cfg['modified_date_field'], last_run_timestamp)
 
+            else:
+                kn_temp.data = []
+            
             kn.data = kn.data + kn_temp.data
             kn.fields.update(kn_temp.fields)
 
