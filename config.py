@@ -301,7 +301,7 @@ CONFIG = {
     },
     {
       'args': [],
-      'cron': '45 * * * *',
+      'cron': '*/15 * * * *',
       'enabled': True,
       'name': 'street_seg_updater',
       'path': 'transportation-data-publishing/data_tracker',
