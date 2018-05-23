@@ -326,7 +326,7 @@ CONFIG = {
     },
     {
       'args': ['traffic_reports', 'data_tracker_prod', '-d socrata', '-d agol'],
-      'cron': '50 2 * * *',
+      'cron': '4-59/5 * * * *',
       'enabled': True,
       'name': 'traffic_reports_pub',
       'path': 'transportation-data-publishing/open_data',
