@@ -6,6 +6,7 @@ import hashlib
 import os
 import pdb
 import sys
+import traceback
 
 import arrow
 import knackpy
@@ -17,7 +18,7 @@ from util import datautil
 from util import emailutil
 from util import jobutil
 from util import logutil
-# from util import kitsutil
+from util import kitsutil
 from util import socratautil   
 
 
@@ -59,12 +60,14 @@ def main():
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
-        socrata_resource,
+        resource=socrata_resource,
         soql = {
             '$order':'curdatetime desc',
             '$limit':1
         }
     )
+
+    socrata_data = socrata_data.data
 
     kits_query_recent =   '''
         SELECT TOP (1) DETID as det_id
@@ -160,7 +163,7 @@ def main():
         row['timebin'] = get_timebin(row['minute'], row['hour'])
         row['direction'] = get_direction( row['detname'].upper() )
     
-    kits_data = datautil.replaceTimezone(kits_data,'curdatetime')
+    kits_data = datautil.replace_timezone(kits_data,'curdatetime')
     kits_data = datautil.iso_to_unix(kits_data,['curdatetime'])
     kits_data = datautil.stringify_key_values(kits_data)
     
@@ -178,7 +181,7 @@ def main():
         kits_data
     )
 
-    status_upsert_response = socratautil.upsert_data(
+    status_upsert_response = socratautil.Soda(
         auth=SOCRATA_CREDENTIALS,
         records=socrata_payload,
         resource=socrata_resource,
@@ -220,15 +223,17 @@ if __name__ == '__main__':
             destination='knack',
             auth=JOB_DB_API_TOKEN)
 
+        job.start()
+        
         results = main()
 
-        job.result('success', records_processed(results))
+        job.result('success', records_processed=results)
 
         logger.info('END AT {}'.format( arrow.now() ))
 
     except Exception as e:
-
-        logger.error(str(e))
+        error_text = traceback.format_exc()
+        logger.error(str(error_text))
 
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
