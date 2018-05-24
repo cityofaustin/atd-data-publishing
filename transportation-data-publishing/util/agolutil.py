@@ -1,5 +1,5 @@
 '''
- elper methods to work with ArcGIS for Python API, mixed
+Helper methods to work with ArcGIS for Python API, mixed
 in with a few manual ArcGIS REST API requests.
 
 changelog:
@@ -108,7 +108,7 @@ def feature_collection(data,
     features = []
 
     for record in data:
-
+        
         new_record = {
             'attributes': {},
             'geometry': {
@@ -117,17 +117,13 @@ def feature_collection(data,
                 }
             }
         }
-
-        for attribute in record:
-            
-            new_record['attributes'][attribute] = record[attribute]
+    
+        new_record['attributes'] = record
         
         if record.get(lat_field) and record.get(lon_field):
             
-            new_record['geometry'] = { 
-                'x' : record.get(lon_field),
-                'y' : record.get(lat_field) }
-
+            new_record['geometry']['x'] = record.get(lon_field)
+            new_record['geometry']['y'] = record.get(lat_field)
 
         features.append(new_record)
     
