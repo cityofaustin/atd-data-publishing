@@ -24,6 +24,7 @@ class Soda(object):
                  lat_field='locaiton_latitude',
                  lon_field='location_longitude',
                  location_field='location',
+                 source='knack',
                  replace=False):
             
         self.auth = auth
@@ -35,7 +36,8 @@ class Soda(object):
         self.records = records
         self.replace = replace
         self.soql = soql
-        
+        self.source = source
+
         if not resource:
             raise Exception('Socrata resouce ID is required.')
 
@@ -62,7 +64,10 @@ class Soda(object):
 
     def _handle_records(self):
         if self.date_fields:
-            self.records = datautil.mills_to_unix(self.records, self.date_fields)
+            if self.source == 'knack':
+                self.records = datautil.mills_to_unix(self.records, self.date_fields)
+            elif self.source == 'postgrest':
+                self.records = datautil.iso_to_unix(self.records, self.date_fields)
 
         self.records = datautil.lower_case_keys(self.records)
         
@@ -99,7 +104,6 @@ class Soda(object):
 
 
     def _upload(self):
-
         if self.replace:
             res = requests.put(
                 self.url,

@@ -14,7 +14,6 @@ import requests
 
 import _setpath
 from config.secrets import *
-from config.traffic_report.meta import *
 from util import datautil
 from util import emailutil
 from util import jobutil
@@ -66,10 +65,6 @@ def parse_feed(feed, config):
     return records
 
 
-def get_timestamp(datestr):
-    return arrow.get(datestr).replace(tzinfo="US/Central").format()
-
-
 def parse_title(title):
     #  Aassume feed will never have Euro sign (it is non-ascii)
     #  TODO: use regex
@@ -99,14 +94,14 @@ def extract_geocode(summary):
 def handle_record(entry, config):
     #  turn rss feed entry into traffic report dict
     record = {}
-    timestamp = get_timestamp(entry.published_parsed)
+    publushed_date = arrow.get(entry.published_parsed).replace(tzinfo="US/Central")
     status_date = arrow.now().format()
 
     #  compose record id from entry identifier (which is not wholly unique) and
     #  publication timestamp
-    record_id = "{}_{}".format(str(entry.id), str(timestamp))
+    record_id = "{}_{}".format(entry.id, publushed_date.timestamp)
     record[config["primary_key"]] = record_id
-    record[config["date_field"]] = timestamp
+    record[config["date_field"]] = publushed_date.format()
     record[config["status_field"]] = "ACTIVE"
     record[config["status_date_field"]] = status_date
     title = entry.title
@@ -180,7 +175,7 @@ if __name__ == "__main__":
             name=script_name,
             url=JOB_DB_API_URL,
             source="rss",
-            destination="knack",
+            destination="postgrest",
             auth=JOB_DB_API_TOKEN,
         )
 
