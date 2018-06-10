@@ -387,16 +387,15 @@ CONFIG = {
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'markings_agol.py'
     },
+    {
+      'args': [],
+      'cron': '07 */6 * * *',
+      'enabled': True,
+      'image': 'atddocker/tdp',
+      'name': 'task_orders',
+      'path': 'transportation-data-publishing/data_tracker',
+      'script': 'task_orders.py',
+      'comment' : '' 
+    }
   ]
 }
-
-
-
-
-
-
-
-
-
-
-

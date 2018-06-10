@@ -2,8 +2,7 @@
 Helper methods to work with ArcGIS for Python API, mixed
 in with a few manual ArcGIS REST API requests.
 
-#TODO
-- use arcgis library api instead of custom functions
+#TODO: use arcgis library api instead of custom functions
 '''
 import json
 import pdb
@@ -94,8 +93,6 @@ def feature_collection(data,
     '''
     Assemble an ArcREST featureCollection object
     spec: http://resources.arcgis.com/en/help/arcgis-rest-api/#/Feature_object/02r3000000n8000000/
-    
-    TODO: Make more 
     '''
     features = []
 
@@ -165,7 +162,3 @@ def handle_response(agol_response, raise_exception=True):
 
         else:
             return results
-
-
-
-
