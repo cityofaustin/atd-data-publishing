@@ -46,7 +46,8 @@ def query(url, method, data=None, auth=JOB_DB_API_TOKEN):
 
 
 def eq_filter(url, field_name, field_val):
-    return f"{url}?{field_name}.eq.{field_val}"
+    return f"{url}?{field_name}=eq.{field_val}"
+
 
 
 def in_filter(url, field_name, val_list):
@@ -118,6 +119,12 @@ def handle_record(entry, config):
     return record
 
 
+def apply_status(records, field='traffic_report_status', status="ARCHIVED"):
+    for record in records:
+        record[field] = status
+    return records
+
+
 def main(config):
 
     active_records_endpoint = eq_filter(
@@ -135,15 +142,19 @@ def main(config):
         for record in feed_records
         if record[config["primary_key"]] not in active_records_ids
     ]
+
     archive_records = [
         record
         for record in active_records
         if record[config["primary_key"]] not in feed_record_ids
     ]
 
+    archive_records = apply_status(archive_records)
+
     payload = new_records + archive_records
 
-    res = query(config["endpoint"], "UPSERT", data=payload)
+    if payload:
+        res = query(config["endpoint"], "UPSERT", data=payload)
 
     return len(payload)
 
