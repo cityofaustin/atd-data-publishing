@@ -4,7 +4,6 @@ Configuration file for automated deployment of transportation-data-publishing sc
 CRONTAB = '''
 #  Crontab entries transportation-data-publishing scripts
 
-
 '''
 
 #  Shell script template
@@ -235,13 +234,13 @@ CONFIG = {
       'path': 'transportation-data-publishing/data_tracker',
       'script': 'secondary_signals_updater.py'
     },
-    { 
-      'args': ['signal_request_evals', 'data_tracker_prod', '-d socrata'],
+    {
+      'args': [],
       'cron': '10 * * * *',
       'enabled': True,
-      'name': 'signal_request_evals',
+      'name': 'sig_req_evals',
       'path': 'transportation-data-publishing/open_data',
-      'script': 'knack_data_pub.py'
+      'script': 'sig_req_evals.py'
     },
     {
       'args': [],
@@ -276,7 +275,7 @@ CONFIG = {
       'script': 'signal_request_ranker.py'
     },
     {
-      'args': ['signal_requests', 'data_tracker_prod', '-d agol'],
+      'args': ['signal_requests', 'data_tracker_prod', '-agol'],
       'cron': '40 * * * *',
       'enabled': True,
       'name': 'signal_requests',
@@ -301,7 +300,7 @@ CONFIG = {
     },
     {
       'args': [],
-      'cron': '*/15 * * * *',
+      'cron': '45 * * * *',
       'enabled': True,
       'name': 'street_seg_updater',
       'path': 'transportation-data-publishing/data_tracker',
@@ -326,7 +325,7 @@ CONFIG = {
     },
     {
       'args': ['traffic_reports', 'data_tracker_prod', '-d socrata', '-d agol'],
-      'cron': '4-59/5 * * * *',
+      'cron': '50 2 * * *',
       'enabled': True,
       'name': 'traffic_reports_pub',
       'path': 'transportation-data-publishing/open_data',
@@ -349,10 +348,10 @@ CONFIG = {
       'script': 'knack_data_pub.py'
     },
     {
-      'args': ['work_orders', 'data_tracker_prod', '-d socrata'],
+      'args': ['work_orders_signals', 'data_tracker_prod', '-d socrata'],
       'cron': '50 * * * *',
       'enabled': True,
-      'name': 'work_orders',
+      'name': 'work_orders_signals',
       'path': 'transportation-data-publishing/open_data',
       'script': 'knack_data_pub.py'
     },
@@ -381,25 +380,22 @@ CONFIG = {
       'script': 'metadata_updater.py'
     },
     {
+      'args': ['data_tracker_prod'],
+      'cron': '51 * * * *',
+      'enabled': True,
+      'name': 'markings_agol',
+      'path': 'transportation-data-publishing/data_tracker',
+      'script': 'markings_agol.py'
+    },
+    {
       'args': [],
       'cron': '07 */6 * * *',
-      'enabled': True,  #  will ignore if false
-      'image': 'atddocker/tdp',  #  exclude this entirely for default
-      'name': 'task_orders',  #  must be unique to config
-      'path': 'transportation-data-publishing/data_tracker',  #  relative to repo root
+      'enabled': True,
+      'image': 'atddocker/tdp',
+      'name': 'task_orders',
+      'path': 'transportation-data-publishing/data_tracker',
       'script': 'task_orders.py',
-      'comment' : ''  #  optional comments are ignored everywhere
-    },
+      'comment' : '' 
+    }
   ]
 }
-
-
-
-
-
-
-
-
-
-
-

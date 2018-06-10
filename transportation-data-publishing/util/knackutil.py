@@ -32,3 +32,23 @@ def date_filter_on_or_after(date_str, date_field):
 
             ]
     }
+
+
+
+def attachment_url(records, in_fieldname='ATTACHMENT', out_fieldname='ATTACHMENT_URL'):
+    for record in records:
+        attachment = record.get(in_fieldname)
+        
+        if attachment:
+            record[out_fieldname] = attachment.get('url')
+
+    return records
+
+
+
+
+
+
+
+
+

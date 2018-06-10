@@ -44,6 +44,20 @@ def unique_keys(dicts):
     return list( set(keys) )
 
 
+def unique_from_list_field(records, list_field=None):
+    '''
+    Return a list of unique values contained within a list of dicts containing
+    a list field.
+    '''
+    values = []
+    
+    for record in records:
+        if record.get(list_field):
+            values = values + record[list_field]
+    
+    return list(set(values))
+
+
 def get_values(dicts, key):
     #  generate a list of values from a list of dictionaries
     return [record[key] for record in dicts]

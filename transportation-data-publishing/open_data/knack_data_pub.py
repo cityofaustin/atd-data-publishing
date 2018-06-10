@@ -65,7 +65,7 @@ def agol_pub(records, cfg):
         lat_field = None
         lon_field = None
                 
-    layer = agolutil.get_layer(auth=AGOL_CREDENTIALS, 
+    layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
                                 service_id=cfg['service_id'])
     
     if args.replace:
@@ -334,4 +334,3 @@ if __name__ == '__main__':
 
             continue
         
-

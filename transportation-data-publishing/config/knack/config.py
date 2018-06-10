@@ -306,7 +306,7 @@ cfg = {
             'location_field' : 'location'
         }    
     },
-    'work_orders' : {
+    'work_orders_signals' : {
         'primary_key' : 'ATD_WORK_ORDER_ID',
         'modified_date_field' : 'MODIFIED_DATE',
         'modified_date_field_id' : 'field_1074',
@@ -322,4 +322,19 @@ cfg = {
             'location_field' : 'location'
         }
     },
+    'work_orders_signs_markings' : {
+        'primary_key' : 'ATD_WORK_ORDER_ID',
+        'modified_date_field' : 'MODIFIED_DATE',
+        'modified_date_field_id' : 'field_2150',
+        'obj' : None,
+        'scene' : 'scene_774',
+        'view' : 'view_2226',
+        'ref_obj' : ['object_140', 'object_11', 'object_7'],
+        'socrata_resource_id' : '',
+        'pub_log_id' : '',
+        'status_field' : 'WORK_ORDER_STATUS'
+    }
 }
+
+
+
