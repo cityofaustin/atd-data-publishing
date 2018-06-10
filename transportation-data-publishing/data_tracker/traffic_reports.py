@@ -46,7 +46,8 @@ def query(url, method, data=None, auth=JOB_DB_API_TOKEN):
 
 
 def eq_filter(url, field_name, field_val):
-    return f"{url}?{field_name}.eq.{field_val}"
+    return f"{url}?{field_name}=eq.{field_val}"
+
 
 
 def in_filter(url, field_name, val_list):
