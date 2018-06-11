@@ -1,7 +1,5 @@
 """
 Helper methods to work with PostgREST.
-
-#TODO: prevent bulk delete/update
 """
 import pdb
 
@@ -22,17 +20,15 @@ class Postgrest(object):
         url = f"{self.base_url}?{query_string}"
         return self._query("SELECT", url, limit=limit)
 
-    def insert(self, query_string, data=None):
-        url = f"{self.base_url}?{query_string}"
-        return self._query("INSERT", url, data=data)
+    def insert(self, data=None):
+        return self._query("INSERT", self.base_url, data=data)
 
     def update(self, query_string, data=None):
         url = f"{self.base_url}?{query_string}"
         return self._query("UPDATE", url, data=data)
 
-    def upsert(self, query_string, data=None):
-        url = f"{self.base_url}?{query_string}"
-        return self._query("UPSERT", url, data=data)
+    def upsert(self, data=None):
+        return self._query("UPSERT", self.base_url, data=data)
 
     def delete(self, query_string, data=None):
         url = f"{self.base_url}?{query_string}"
@@ -40,8 +36,8 @@ class Postgrest(object):
 
     def _query(self, method, url, data=None, limit=None):
         """
-        This method is dangerous! It will delete and modify records en masse without
-        warning. Read the PostgREST docs!
+        This method is dangerous! It is possible to delete and modify records
+        en masse. Read the PostgREST docs.
         """
         headers = {
             "Content-Type": "text/csv",
@@ -52,17 +48,17 @@ class Postgrest(object):
             headers["Authorization"] = f"Bearer {self.auth}"
 
         if method.upper() == "INSERT":
-            res = requests.post(query_url, headers=headers, data=data)
+            res = requests.post(url, headers=headers, json=data)
 
         elif method.upper() == "UPDATE":
-            res = requests.patch(query_url, headers=headers, json=data)
+            res = requests.patch(url, headers=headers, json=data)
 
         elif method.upper() == "UPSERT":
             headers["Prefer"] += ", resolution=merge-duplicates"
-            res = requests.patch(query_url, headers=headers, json=data)
+            res = requests.patch(url, headers=headers, json=data)
 
         elif method.upper() == "DELETE":
-            res = requests.delete(query_url, headers=headers)
+            res = requests.delete(url, headers=headers)
 
         elif method.upper() == "SELECT":
             """Offset pagination for SELECT requests"""
