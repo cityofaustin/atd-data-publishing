@@ -324,12 +324,12 @@ CONFIG = {
       'script': 'traffic_reports.py'
     },
     {
-      'args': ['traffic_reports', 'data_tracker_prod', '-d socrata', '-d agol'],
-      'cron': '50 2 * * *',
+      'args': ['traffic_reports', 'data_tracker_prod', '-d socrata'],
+      'cron': '6-59/5 * * * *',
       'enabled': True,
       'name': 'traffic_reports_pub',
       'path': 'transportation-data-publishing/open_data',
-      'script': 'knack_data_pub.py'
+      'script': 'pgrest_data_pub.py'
     },
     {
       'args': ['travel_sensors', 'data_tracker_prod', '-d socrata', '-d agol'],
