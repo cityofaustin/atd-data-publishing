@@ -14,6 +14,7 @@ from copy import deepcopy
 import os
 import pdb
 import traceback
+import urllib.parse
 
 import arrow
 
@@ -63,6 +64,8 @@ def main(cfg, job, args):
     if not last_run_date or args.replace or job.destination == "csv":
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1/1/1900"
+    
+    last_run_date = urllib.parse.quote_plus( arrow.get(last_run_date).format() )
 
     pgrest = pgrestutil.Postgrest(cfg["base_url"], auth=JOB_DB_API_TOKEN)
 
