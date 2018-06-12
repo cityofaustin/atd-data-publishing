@@ -114,7 +114,7 @@ def append_paths(
 
                 record[output_field] = paths
 
-            if not record[output_field]:
+            if not record.get(output_field):
                 unmatched += f'{path_id_field}: {path_id}\n'
 
     if unmatched:
