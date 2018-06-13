@@ -1,3 +1,6 @@
+knackpy.egg-info
+build/
+dist/
 changelog
 crontab.sh
 device_data_cameras.json

@@ -48,7 +48,6 @@ def eq_filter(url, field_name, field_val):
     return f"{url}?{field_name}=eq.{field_val}"
 
 
-
 def in_filter(url, field_name, val_list):
     vals = ",".join(val_list)
     return f"{url}?{field_name}=in.({vals})"
@@ -94,14 +93,14 @@ def extract_geocode(summary):
 def handle_record(entry, config):
     #  turn rss feed entry into traffic report dict
     record = {}
-    publushed_date = arrow.get(entry.published_parsed).replace(tzinfo="US/Central")
+    published_date = arrow.get(entry.published_parsed).replace(tzinfo="US/Central")
     status_date = arrow.now().format()
 
     #  compose record id from entry identifier (which is not wholly unique) and
     #  publication timestamp
-    record_id = "{}_{}".format(entry.id, publushed_date.timestamp)
+    record_id = "{}_{}".format(entry.id, published_date.timestamp)
     record[config["primary_key"]] = record_id
-    record[config["date_field"]] = publushed_date.format()
+    record[config["date_field"]] = published_date.format()
     record[config["status_field"]] = "ACTIVE"
     record[config["status_date_field"]] = status_date
     title = entry.title
@@ -114,9 +113,15 @@ def handle_record(entry, config):
     return record
 
 
-def apply_status(records, field='traffic_report_status', status="ARCHIVED"):
+def apply_status(records, field="traffic_report_status", status="ARCHIVED"):
     for record in records:
         record[field] = status
+    return records
+
+
+def timestamp(records, field="traffic_report_status_date_time"):
+    for record in records:
+        record[field] = arrow.now().format()
     return records
 
 
@@ -144,7 +149,8 @@ def main(config):
         if record[config["primary_key"]] not in feed_record_ids
     ]
 
-    archive_records = apply_status(archive_records)
+    archive_records = apply_status(archive_records, field=config["status_field"])
+    archive_records = timestamp(archive_records, field=config["status_date_field"])
 
     payload = new_records + archive_records
 

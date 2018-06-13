@@ -33,7 +33,6 @@ from util import socratautil
 def after_date_query(date_field, date):
     return f"{date_field}=gte.{date}"
 
-
 def socrata_pub(records, cfg, date_fields=None):
     if cfg.get("location_fields"):
         lat_field = cfg["location_fields"]["lat"].lower()
@@ -63,8 +62,8 @@ def main(cfg, job, args):
 
     if not last_run_date or args.replace or job.destination == "csv":
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1/1/1900"
-    
+        last_run_date = "1900-01-01"
+
     last_run_date = urllib.parse.quote_plus( arrow.get(last_run_date).format() )
 
     pgrest = pgrestutil.Postgrest(cfg["base_url"], auth=JOB_DB_API_TOKEN)

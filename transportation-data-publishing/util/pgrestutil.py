@@ -16,16 +16,24 @@ class Postgrest(object):
         self.auth = auth
         self.base_url = base_url
 
+        headers = {
+            "Content-Type": "text/csv",
+            "Prefer": "return=representation",  # return entire record json in response
+        }
+
+        if self.auth:
+            headers["Authorization"] = f"Bearer {self.auth}"
+
     def select(self, query_string, limit=None):
         url = f"{self.base_url}?{query_string}"
         return self._query("SELECT", url, limit=limit)
 
     def insert(self, data=None):
-        return self._query("INSERT", self.base_url, data=data)
+        res = requests.post(self.base_url, headers=headers, json=data)
 
     def update(self, query_string, data=None):
         url = f"{self.base_url}?{query_string}"
-        return self._query("UPDATE", url, data=data)
+        res = requests.patch(url, headers=headers, json=data)
 
     def upsert(self, data=None):
         return self._query("UPSERT", self.base_url, data=data)
@@ -43,9 +51,6 @@ class Postgrest(object):
             "Content-Type": "text/csv",
             "Prefer": "return=representation",  # return entire record json in response
         }
-
-        if self.auth:
-            headers["Authorization"] = f"Bearer {self.auth}"
 
         if method.upper() == "INSERT":
             res = requests.post(url, headers=headers, json=data)
