@@ -16,6 +16,5 @@ __pycache__
 *.zip
 transportation-data-publishing/data/*
 transportation-data-publishing/log/*
-transportation-data-publishing/shell_scripts/*
 transportation-data-publishing/xml/*
 !*.md
