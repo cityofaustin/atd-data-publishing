@@ -10,9 +10,9 @@ import arrow
 
 import _setpath
 from config.secrets import *
-from util import agolutil
-from util import emailutil
-from util import socratautil
+from tdutils import agolutil
+from tdutils import emailutil
+from tdutils import socratautil
 
 
 socrata_creds = SOCRATA_CREDENTIALS

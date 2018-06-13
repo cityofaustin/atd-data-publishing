@@ -11,11 +11,11 @@ import arrow
 
 import _setpath
 from config.secrets import *
-from util import agolutil
-from util import emailutil
-from util import logutil
-from util import jobutil
-from util import socratautil
+from tdutils import agolutil
+from tdutils import emailutil
+from tdutils import logutil
+from tdutils import jobutil
+from tdutils import socratautil
 
 
 SOCRATA_RESOURCE_ID = 'jqhg-imb3'

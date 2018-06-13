@@ -14,11 +14,11 @@ import requests
 import _setpath
 from config.esb.config import cfg
 from config.secrets import *
-from util import argutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import logutil
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
 
 
 def get_record_id_from_file(directory, file):
