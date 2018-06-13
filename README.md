@@ -10,7 +10,7 @@ This repo houses ETL scripts for Austin Transportation's data integration projec
 
 3. If setting up ESB inegration add certificates to `transportation-data-publishing/config/esb`
 
-4. Run scripts as needed, or deploy to a Docker host with [transportation-data-deploy](github.com/cityofaustin/transportation-data-deploy)
+4. Run scripts as needed, or deploy to a Docker host with [transportation-data-deploy](http://github.com/cityofaustin/transportation-data-deploy)
 
 ## About the Repo Structure
 
