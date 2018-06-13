@@ -6,4 +6,5 @@ fulcrum
 knackpy
 pandas
 pymssql
+tdutils
 yagmail

@@ -11,11 +11,11 @@ import knackpy
 import _setpath
 from config.secrets import *
 
-from util import agolutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import logutil
+from tdutils import agolutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
 
 
 def main():

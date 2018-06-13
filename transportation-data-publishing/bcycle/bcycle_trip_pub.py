@@ -14,10 +14,10 @@ import requests
 
 import _setpath
 from config.secrets import *
-from util import emailutil
-from util import jobutil
-from util import logutil
-from util import socratautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
+from tdutils import socratautil
 
 
 def max_date_socrata(resource_id):

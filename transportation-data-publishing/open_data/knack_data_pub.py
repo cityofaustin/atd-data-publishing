@@ -22,14 +22,14 @@ import knackpy
 import _setpath
 from config.knack.config import cfg as CFG
 from config.secrets import *
-from util import agolutil
-from util import argutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import knackutil
-from util import logutil
-from util import socratautil
+from tdutils import agolutil
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import knackutil
+from tdutils import logutil
+from tdutils import socratautil
 
 
 

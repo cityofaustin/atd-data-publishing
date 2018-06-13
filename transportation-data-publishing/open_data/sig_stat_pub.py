@@ -7,12 +7,12 @@ import arrow
 import _setpath
 from config.knack.config import cfg
 from config.secrets import *
-from util import kitsutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import logutil
-from util import socratautil
+from tdutils import kitsutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
+from tdutils import socratautil
 
 # test data
 # KITS_DATA = [{'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 2, 'PLAN_ID':0, 'SIGNAL_ID': 617}, {'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 1, 'PLAN_ID':0, 'SIGNAL_ID': 110}]

@@ -21,13 +21,13 @@ import arrow
 import _setpath
 from config.postgrest.config import cfg as CFG
 from config.secrets import *
-from util import argutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import logutil
-from util import pgrestutil
-from util import socratautil
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
+from tdutils import pgrestutil
+from tdutils import socratautil
 
 
 def after_date_query(date_field, date):

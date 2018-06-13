@@ -15,9 +15,9 @@ import arrow
 
 import _setpath
 from config.secrets import *
-from util import emailutil
-from util import logutil
-from util import socratautil
+from tdutils import emailutil
+from tdutils import logutil
+from tdutils import socratautil
 
 
 config = {

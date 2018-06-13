@@ -50,10 +50,6 @@ This is where we maintain the various shell scripts that instruct our VMs to run
 
 These are the dedicated files for publishing traffic study data, as described [in the wiki](https://github.com/cityofaustin/transportation-data-publishing/wiki/Traffic-Count-Data-Publishing).
 
-#### [util]()
-
-We maintain general-purpose util scripts in the `util` folder. They store useful routines such as connecting to databases, publishing to specific applications, or converting between date formats.
-
 ## Contributing
 
 Public contributions are welcome! Assign pull requests to [@johnclary](http://github.com/johnclary).

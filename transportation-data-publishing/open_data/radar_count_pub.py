@@ -13,13 +13,13 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from util import argutil
-from util import datautil
-from util import emailutil
-from util import jobutil
-from util import logutil
-from util import kitsutil
-from util import socratautil   
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import emailutil
+from tdutils import jobutil
+from tdutils import logutil
+from tdutils import kitsutil
+from tdutils import socratautil   
 
 
 def my_round(x, base=15):

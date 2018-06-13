@@ -19,7 +19,7 @@ import knackpy
 import _setpath
 from config.config import *
 from config.secrets import *
-from util import fulcutil
+from tdutils import fulcutil
 
 
 def cli_args():
