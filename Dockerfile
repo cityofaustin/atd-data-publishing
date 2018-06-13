@@ -1,10 +1,10 @@
 FROM python
 
 #  Set the working directory
-WORKDIR /app/transportation-data-publishing
+WORKDIR /app
 
 #  Copy package requirements
-COPY requirements.txt /app/transportation-data-publishing
+COPY requirements.txt /app
 
 RUN apt-get update
 
