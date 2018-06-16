@@ -20,9 +20,9 @@ from tdutils import logutil
 
 
 config = [
-    #  Knack and AGOL source object defintions.
-    #  Order of config elements matters! Work orders must be processed before
-    #  jobs and attachments because work orders are the parent record to both.
+     # Knack and AGOL source object defintions.
+     # Order of config elements matters! Work orders must be processed before
+     # jobs and attachments because work orders are the parent record to both.
     {
         "name": "signs_markings_work_orders",
         "scene": "scene_774",
@@ -70,6 +70,31 @@ config = [
         "layer_id": 0,
         "item_type": "table",
         "extract_attachment_url": True,
+    },
+    {
+        "name": ",specifications",
+        "scene": "scene_774",
+        "view": "view_2272",
+        "ref_obj": ["object_143","object_140", "object_141"],
+        "modified_date_field_id": "field_2567",
+        "modified_date_field": "MODIFIED_DATE",
+        "primary_key": "SPECIFICATION_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 2,
+        "item_type": "table",
+    },
+
+    {
+        "name": ",materials",
+        "scene": "scene_774",
+        "view": "view_2273",
+        "ref_obj": ["object_36", "object_140", "object_141"],
+        "modified_date_field_id": "field_771",
+        "modified_date_field": "MODIFIED_DATE",
+        "primary_key": "TRANSACTION_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 2,
+        "item_type": "table",
     },
 ]
 
@@ -243,10 +268,8 @@ def main(config, job):
         )
 
         if args.replace:
-            res = update_layer.manager.truncate()
-
-            if not res.get("success"):
-                raise Exception("Truncate failed.")
+            res = update_layer.delete_features(where="1=1")
+            agolutil.handle_response(res)
 
         else:
             """
