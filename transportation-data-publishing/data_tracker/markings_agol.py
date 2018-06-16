@@ -80,7 +80,7 @@ config = [
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "SPECIFICATION_ID",
         "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 2,
+        "layer_id": 1,
         "item_type": "table",
     },
 
