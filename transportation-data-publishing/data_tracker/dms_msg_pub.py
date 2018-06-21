@@ -45,6 +45,11 @@ def main():
             api_key=KNACK_CREDS['api_key']
     )
 
+    #  hack to avoid ref_obj field meta replacing primary obj modified date
+    #  this is a knackpy issue
+    #  TODO: fix knackpy field meta handling
+    kn.field_map[ CONFIG['modified_date_field'] ] = CONFIG['modified_date_field_id']
+
     knack_data = kn.data
     
     if kits_data:
@@ -67,6 +72,7 @@ def main():
         record['DMS_MESSAGE'] = record['DMS_MESSAGE'].replace('[pt30]','')
 
         record[ CONFIG['modified_date_field'] ] = datautil.local_timestamp()
+
 
     new_data = datautil.reduce_to_keys(
         new_data,
