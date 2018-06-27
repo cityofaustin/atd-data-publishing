@@ -17,6 +17,20 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+params_pm = {
+        'field_obj' : ['object_84', 'object_12'],
+        'scene' : 'scene_416',
+        'view' : 'view_1182'
+    }
+
+params_signal = {
+    'field_obj' : ['object_12'],
+    'scene' : 'scene_73',
+    'view' : 'view_197'
+}
+
+copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
+
 def get_prim_signals(list_of_signals):
     '''
     Create a dict of primary signals with and the secondary signals they control
@@ -192,20 +206,6 @@ if __name__ == '__main__':
     app_name = args.app_name
 
     knack_creds = KNACK_CREDENTIALS[app_name]
-
-    params_pm = {  
-        'field_obj' : ['object_84', 'object_12'],
-        'scene' : 'scene_416',
-        'view' : 'view_1182'
-    }
-
-    params_signal = {  
-        'field_obj' : ['object_12'],
-        'scene' : 'scene_73',
-        'view' : 'view_197'
-    }
-
-    copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
 
     try:
         job = jobutil.Job(

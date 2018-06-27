@@ -22,6 +22,7 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+record_types = ['objects', 'fields']
 
 def get_app_data(app_id):
     return knackpy.get_app_data(app_id)
@@ -194,6 +195,109 @@ def cli_args():
     
     return args
 
+def main(job):
+
+    results = []
+    app_data = get_app_data(KNACK_CREDENTIALS[app_name]['app_id'])
+
+    for record_type in record_types:
+
+        data_new = app_data['objects']
+
+        if record_type == 'fields':
+            #  we get latest object data within this for loop
+            #  because it may change when objects are processed
+            data_existing_objects = get_existing_data(
+                cfg['objects']['obj'],
+                KNACK_CREDENTIALS[app_name]['app_id'],
+                KNACK_CREDENTIALS[app_name]['api_key'],
+            )
+
+            obj_row_id_lookup = get_object_row_ids(
+                data_existing_objects.data_raw,
+                cfg['objects']['id_field_key']
+            )
+
+            data_new = parse_fields(
+                data_new,
+                cfg[record_type]['object_connection_field'],
+                obj_row_id_lookup
+            )
+
+        data_existing = get_existing_data(
+            cfg[record_type]['obj'],
+            KNACK_CREDENTIALS[app_name]['app_id'],
+            KNACK_CREDENTIALS[app_name]['api_key'],
+        )
+
+        payload = evaluate_ids(
+            data_new,
+            data_existing.data_raw,
+            cfg[record_type]['id_field_key']
+        )
+
+        for method in payload.keys():
+
+            if record_type == 'fields':
+                data_existing.data_raw = format_connections(
+                    data_existing.data_raw,
+                    cfg[record_type]['object_connection_field']
+                )
+
+            payload[method] = convert_bools_nones_arrays(payload[method])
+            data_existing.data_raw = convert_bools_nones_arrays(
+                data_existing.data_raw)
+
+            payload[method] = datautil.stringify_key_values(payload[method],
+                                                            cfg[record_type][
+                                                                'stringify_keys'])
+
+            payload[method] = datautil.replace_keys(
+                payload[method],
+                data_existing.field_map
+            )
+
+            if method == 'update':
+                # verify if data has changed
+                changed = []
+
+                for rec_new in payload[method]:
+                    rec_old = [record for record in data_existing.data_raw if
+                               record['id'] == rec_new['id']][0]
+
+                    # format connection fields
+
+                    # identify fields whose contents don't match
+                    diff = [k for k in rec_new.keys() if
+                            rec_old[k] != rec_new[k]]
+
+                    if diff:
+                        changed.append(rec_new)
+                    else:
+                        continue
+
+                payload[method] = changed
+
+            logger.info(
+                len('{} {} record'.format(method, len(payload[method]))))
+
+            update_records(
+                payload[method],
+                cfg[record_type]['obj'],
+                method
+            )
+
+        message = '{}: create: {}; update: {}; delete: {}'.format(
+            record_type,
+            len(payload['create']),
+            len(payload['update']),
+            len(payload['delete'])
+        )
+
+        results.append(message)
+
+    return results
+
 
 
 if __name__ == '__main__':
@@ -215,103 +319,9 @@ if __name__ == '__main__':
             auth=JOB_DB_API_TOKEN)
         
         job.start()
-        results = []
 
-        record_types = ['objects', 'fields']
+        results = main(job)
 
-        app_data = get_app_data(KNACK_CREDENTIALS[app_name]['app_id'])
-        
-        for record_type in record_types:
-        
-            data_new = app_data['objects']
-
-            if record_type == 'fields':
-                #  we get latest object data within this for loop
-                #  because it may change when objects are processed
-                data_existing_objects = get_existing_data(
-                    cfg['objects']['obj'],
-                    KNACK_CREDENTIALS[app_name]['app_id'],
-                    KNACK_CREDENTIALS[app_name]['api_key'],
-                )
-
-                obj_row_id_lookup = get_object_row_ids(
-                    data_existing_objects.data_raw,
-                    cfg['objects']['id_field_key']
-                )
-
-                data_new = parse_fields(
-                    data_new,
-                    cfg[record_type]['object_connection_field'],
-                    obj_row_id_lookup
-                )
-
-            data_existing = get_existing_data(
-                cfg[record_type]['obj'],
-                KNACK_CREDENTIALS[app_name]['app_id'],
-                KNACK_CREDENTIALS[app_name]['api_key'],
-            )
-
-            payload = evaluate_ids(
-                data_new,
-                data_existing.data_raw,
-                cfg[record_type]['id_field_key']
-            )
-
-            for method in payload.keys():
-                
-                if record_type == 'fields':
-                    
-                    data_existing.data_raw = format_connections(
-                        data_existing.data_raw,
-                        cfg[record_type]['object_connection_field']
-                    )
-
-                payload[method] = convert_bools_nones_arrays(payload[method])
-                data_existing.data_raw = convert_bools_nones_arrays(data_existing.data_raw)
-
-                payload[method] = datautil.stringify_key_values(payload[method],cfg[record_type]['stringify_keys'])
-
-                payload[method] = datautil.replace_keys(
-                    payload[method],
-                    data_existing.field_map
-                )
-                
-                if method=='update':
-                    # verify if data has changed
-                    changed = []
-
-                    for rec_new in payload[method]:
-                        rec_old = [record for record in data_existing.data_raw if record['id'] == rec_new['id']][0]
-                        
-                        # format connection fields
-
-                        # identify fields whose contents don't match
-                        diff = [k for k in rec_new.keys() if rec_old[k] != rec_new[k]]
-                        
-                        if diff:
-                            changed.append(rec_new)
-                        else:
-                            continue
-
-                    payload[method] = changed
-
-                logger.info(len('{} {} record'.format(method, len(payload[method]))))
-
-                update_records(
-                    payload[method],
-                    cfg[record_type]['obj'],
-                    method
-                )
-            
-            message = '{}: create: {}; update: {}; delete: {}'.format(
-                record_type,
-                len(payload['create']),
-                len(payload['update']),
-                len(payload['delete'])
-            )
-
-            results.append(message)
-            
         logger.info('END AT {}'.format( arrow.now() ))
 
         job.result('success', message=' | '.join(results) )
@@ -319,12 +329,10 @@ if __name__ == '__main__':
     except Exception as e:
         error_text = traceback.format_exc()
         logger.error(error_text)
-
-        email_subject = "Metadata Update Failure"
         
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
-            email_subject,
+            "Metadata Update Failure",
             error_text,
             EMAIL['user'],
             EMAIL['password']

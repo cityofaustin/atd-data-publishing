@@ -1,15 +1,15 @@
-from tdutils import argutil
-
-def cli_args(): 
-    parser = argutil.get_parser(
-        'secondary_signals_updater.py',
-        'Update traffic signal records with secondary signal relationships.',
-        'app_name'
-    )
-    
-    args = parser.parse_args()
-    
-    return args
+# from tdutils import argutil
+#
+# def cli_args():
+#     parser = argutil.get_parser(
+#         'secondary_signals_updater.py',
+#         'Update traffic signal records with secondary signal relationships.',
+#         'app_name'
+#     )
+#
+#     args = parser.parse_args()
+#
+#     return args
 
 
 # KNACK_CREDENTIALS = {   
@@ -38,4 +38,6 @@ def cli_args():
 #          'cheese': ['swiss', 'cheddar', 'brie']}
 
 # print(mydict['fruits'][0])
+from utils import testutils
 
+testutils.dummyfunc()

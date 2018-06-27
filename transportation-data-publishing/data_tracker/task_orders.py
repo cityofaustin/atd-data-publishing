@@ -22,6 +22,9 @@ from tdutils import jobutil
 from tdutils import logutil
 
 
+CONFIG = cfg['task_orders']
+KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
+
 def get_html(url):
     form_data = {'DeptNumber' : 2400, 'Search': 'Search', 'TaskOrderName': ''}
     res = requests.post(url, data=form_data)
@@ -97,9 +100,6 @@ if __name__=='__main__':
 
         logger = logutil.timed_rotating_log(logfile)
         logger.info('START AT {}'.format( arrow.now() ))
-
-        CONFIG = cfg['task_orders']
-        KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
         
         job = jobutil.Job(
             name=script_name,

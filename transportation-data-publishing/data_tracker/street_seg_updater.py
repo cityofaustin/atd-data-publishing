@@ -17,6 +17,11 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+primay_key = 'SEGMENT_ID_NUMBER'
+knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
+ref_obj = ['object_7']
+scene = 'scene_424'
+view = 'view_1198'
 
 def main():
 
@@ -96,12 +101,6 @@ if __name__ == '__main__':
 
     logger = logutil.timed_rotating_log(logfile)
     logger.info('START AT {}'.format( arrow.now() ))
-
-    primay_key = 'SEGMENT_ID_NUMBER'
-    knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
-    ref_obj = ['object_7']
-    scene = 'scene_424'
-    view = 'view_1198'
 
     try:
         
