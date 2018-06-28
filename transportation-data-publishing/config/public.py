@@ -4,6 +4,7 @@ SCRIPTINFO = {
     "backup":
         {
             "arguments": None,
+            "argdescription": "",
             "objects": ['object_87', 'object_93', 'object_77', 'object_53',
                         'object_96', 'object_83', 'object_95', 'object_21',
                         'object_14', 'object_109', 'object_73', 'object_110',
@@ -30,6 +31,7 @@ SCRIPTINFO = {
     "detection_status_signals":
         {
             "arguments": ["app_name"],
+            "argdescription": "Assign detection status to traffic signal based on status of its detectors.",
             "objects": [],
             "source": "knack",
             "destination":"knack",
@@ -40,6 +42,7 @@ SCRIPTINFO = {
     "device_status":
         {
             "arguments": ["device_type", "app_name"],
+            "argdescription": "",
             "objects": [],
             "source": "knack",
             "destination": "knack",
@@ -50,6 +53,7 @@ SCRIPTINFO = {
     "device_status_log":
         {
             "arguments": ["device_type", "app_name"],
+            "argdescription": "",
             "objects":[],
             "source": "knack",
             "destination": "knack"

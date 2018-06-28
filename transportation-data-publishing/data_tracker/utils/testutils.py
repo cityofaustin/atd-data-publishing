@@ -7,6 +7,7 @@ from config.public import *
 from tdutils import logutil
 from tdutils import jobutil
 from tdutils import emailutil
+from tdutils import argutil
 
 import arrow
 
@@ -14,24 +15,64 @@ import arrow
 def getscriptname():
     return os.path.basename(__file__).replace('.py', '')
 
+
+def cli_args(scriptname):
+    arglist = []
+
+    for arg in SCRIPTINFO[scriptname]["arguments"]:
+        arglist.append(arg)
+
+    parser = argutil.get_parser(
+        '{}.py'.format(str(scriptname)),
+        SCRIPTINFO[scriptname]["argdescription"],
+        *arglist)
+
+
+    # '{}.py'
+    # format(str(scriptname)),
+    # 'Assign detection status to traffic signal based on status of its detectors.',
+    # 'app_name'
+
+    args = parser.parse_args()
+
+    return args
+
 def createlogger(scriptname):
 
     logfile = f'{LOG_DIRECTORY}/{scriptname}'
     logger = logutil.timed_rotating_log(logfile)
 
-    if scriptname == "backup":
-        logger.info('START AT {}'.format( arrow.now() ))
+    logger.info('START AT {}'.format(arrow.now()))
 
-    elif scriptname == "detection_status_signals":
-        logger.info('{} signal records updated'.format(result))
-        logger.info('END AT {}'.format(arrow.now()))
-
+    # if scriptname == "backup":
+    #
+    #     pass
+    #
+    # elif scriptname == "detection_status_signals":
+    #
+    #     logger.info('{} signal records updated'.format(results))
+    #     logger.info('END AT {}'.format(arrow.now()))
 
     return logger
 
+
 def runcatch(func, scriptname):
 
+    #print(scriptname)
+
     logger = createlogger(scriptname)
+
+    # find out # of required argument
+
+    if SCRIPTINFO[scriptname]['arguments'] is not None:
+        args = cli_args(scriptname)
+        argsdict = {}
+
+        for arg in SCRIPTINFO[scriptname]['arguments']:
+            argsdict[arg] = args.__dict__[arg]
+    print(argsdict)
+
+    # Job creation
 
     job = jobutil.Job(
         name=scriptname,
@@ -40,15 +81,17 @@ def runcatch(func, scriptname):
         destination=SCRIPTINFO[scriptname]["destination"],
         auth=JOB_DB_API_TOKEN)
 
+    #print(type(job))
+
     try:
 
-    	job.strat()	
+        job.start()
 
         results = func(job)
 
         if results:
 
-            job.result('success', records_processed=result)
+            job.result('success', records_processed=results)
 
             logger.info(SCRIPTINFO[scriptname]["loggerresult"].format(results))
             logger.info('END AT {}'.format(arrow.now()))

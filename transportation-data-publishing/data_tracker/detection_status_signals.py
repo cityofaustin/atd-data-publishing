@@ -227,44 +227,13 @@ def main(job):
 if __name__ == '__main__':
 
 
-    script_name = testutils.getscriptname()
+    scriptname = os.path.basename(__file__).replace('.py', '')
 
-    args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
+    testutils.runcatch(main, scriptname)
 
-    app_name = args.app_name
 
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source='knack',
-            destination='knack',
-            auth=JOB_DB_API_TOKEN)
 
-        job.start()
 
-        result = main(job)
 
-        job.result(
-            'success',
-            records_processed=result)
 
-        logger.info('{} signal records updated'.format(result))
-        logger.info('END AT {}'.format( arrow.now() ))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        email_subject = "Detection Status Update Failure"
-        emailutil.send_email(ALERTS_DISTRIBUTION,
-                             email_subject,
-                             error_text,
-                             EMAIL['user'],
-                             EMAIL['password'])
-
-        job.result('error', message=str(e))
-
-        raise e
 

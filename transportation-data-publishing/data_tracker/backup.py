@@ -78,7 +78,7 @@ def main(job):
 
 if __name__ == '__main__':
 
-    scriptname = testutils.getscriptname()
+    scriptname = os.path.basename(__file__).replace('.py', '')
 
     testutils.runcatch(main, scriptname)
 

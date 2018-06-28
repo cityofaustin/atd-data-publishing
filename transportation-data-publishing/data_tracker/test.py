@@ -38,6 +38,10 @@
 #          'cheese': ['swiss', 'cheddar', 'brie']}
 
 # print(mydict['fruits'][0])
-from utils import testutils
+# from utils import testutils
 
-testutils.dummyfunc()
+def funcA():
+    print("its working")
+
+def funcB():
+    funcA()
