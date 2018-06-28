@@ -227,17 +227,13 @@ def main(job):
 if __name__ == '__main__':
 
 
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    script_name = testutils.getscriptname()
 
     args = cli_args()
     logger.info( 'args: {}'.format( str(args) ))
 
     app_name = args.app_name
-    
+
     try:
         job = jobutil.Job(
             name=script_name,
@@ -245,7 +241,7 @@ if __name__ == '__main__':
             source='knack',
             destination='knack',
             auth=JOB_DB_API_TOKEN)
- 
+
         job.start()
 
         result = main(job)
@@ -267,7 +263,7 @@ if __name__ == '__main__':
                              error_text,
                              EMAIL['user'],
                              EMAIL['password'])
-        
+
         job.result('error', message=str(e))
 
         raise e

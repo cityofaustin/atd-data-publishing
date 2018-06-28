@@ -1,3 +1,5 @@
+# not relly open public
+
 SCRIPTINFO = {
     "backup":
         {
@@ -21,7 +23,8 @@ SCRIPTINFO = {
                         'object_142', 'object_143', 'object_141', 'object_149'],
             "source": "knack",
             "destination": "csv",
-            "subject": "backup error"
+            "subject": "backup error",
+            "loggerresult": "{} records downloaded"
 
         },
     "detection_status_signals":
@@ -29,14 +32,20 @@ SCRIPTINFO = {
             "arguments": ["app_name"],
             "objects": [],
             "source": "knack",
-            "destination":"knack"
+            "destination":"knack",
+            "subject": "Detection Status Update Failure",
+            "loggerresult": "{} signal records updated"
+
         },
     "device_status":
         {
             "arguments": ["device_type", "app_name"],
             "objects": [],
             "source": "knack",
-            "destination": "knack"
+            "destination": "knack",
+            "subject": "Device Status Check Failure: {}",
+            "loggerresult": ""
+
         },
     "device_status_log":
         {
