@@ -17,6 +17,8 @@ import knackpy
 
 import _setpath
 from config.secrets import *
+from config.public import *
+
 from tdutils import argutil
 from tdutils import datautil
 from tdutils import emailutil
@@ -147,20 +149,7 @@ def getMaxDate(sig, det_status):
     else:
         return arrow.now().format('MM-DD-YYYY')
 
-def cli_args():
-
-    parser = argutil.get_parser(
-        'detection_status_signals.py',
-        'Assign detection status to traffic signal based on status of its detectors.',
-        'app_name'
-    )
-
-    args = parser.parse_args()
-    
-    return args
-
 def main(job):
-
 
     api_key = KNACK_CREDENTIALS[app_name]['api_key']
     app_id = KNACK_CREDENTIALS[app_name]['app_id']
@@ -226,8 +215,12 @@ def main(job):
 
 if __name__ == '__main__':
 
-
     scriptname = os.path.basename(__file__).replace('.py', '')
+
+    if SCRIPTINFO[scriptname]['arguments'] is not None:
+        argsdict = testutils.cli_args(scriptname)
+
+    app_name = argsdict["app_name"]
 
     testutils.runcatch(main, scriptname)
 

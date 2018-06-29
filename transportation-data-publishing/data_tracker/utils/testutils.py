@@ -27,7 +27,6 @@ def cli_args(scriptname):
         SCRIPTINFO[scriptname]["argdescription"],
         *arglist)
 
-
     # '{}.py'
     # format(str(scriptname)),
     # 'Assign detection status to traffic signal based on status of its detectors.',
@@ -35,7 +34,9 @@ def cli_args(scriptname):
 
     args = parser.parse_args()
 
-    return args
+    argdict = vars(args)
+
+    return argdict
 
 def createlogger(scriptname):
 
@@ -63,16 +64,8 @@ def runcatch(func, scriptname):
     logger = createlogger(scriptname)
 
     # find out # of required argument
-
-    if SCRIPTINFO[scriptname]['arguments'] is not None:
-        args = cli_args(scriptname)
-        argsdict = {}
-
-        for arg in SCRIPTINFO[scriptname]['arguments']:
-            argsdict[arg] = args.__dict__[arg]
-    print(argsdict)
-
     # Job creation
+
 
     job = jobutil.Job(
         name=scriptname,
@@ -111,7 +104,7 @@ def runcatch(func, scriptname):
 
         raise e
 
-
+# if __name__ == main:
 
 
 

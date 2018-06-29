@@ -410,7 +410,11 @@ if __name__ == '__main__':
     except Exception as e:
         error_text = traceback.format_exc()
         logger.error(str(e))
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', error_text, EMAIL['user'], EMAIL['password'])
+        emailutil.send_email(ALERTS_DISTRIBUTION,
+                             'KITS CAMERA SYNC FAILURE',
+                             error_text,
+                             EMAIL['user'],
+                             EMAIL['password'])
         
         job.result('error')
 

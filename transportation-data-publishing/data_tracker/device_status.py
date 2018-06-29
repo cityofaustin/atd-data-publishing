@@ -211,6 +211,8 @@ if __name__ == '__main__':
         script_name,
         args.device_type)
 
+    testutils.runcatch(main. scriptname)
+
     try:
         job = jobutil.Job(
             name=script_id,
