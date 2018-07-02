@@ -23,6 +23,7 @@ from tdutils import jobutil
 from tdutils import datautil
 from tdutils import logutil
 
+from utils import testutils
 
 LOG_OBJ = 'object_131'
 
@@ -107,6 +108,7 @@ def cli_args():
     return args
 
 
+
 if __name__ == '__main__':
     
     script_name = os.path.basename(__file__).replace('.py', '')
@@ -122,11 +124,11 @@ if __name__ == '__main__':
 
     script_id = f'{script_name}_{device_type}'
 
+    knack_creds = KNACK_CREDENTIALS[app_name]
+
     primary_key = cfg[device_type]['primary_key']
     status_field = cfg[device_type]['status_field']
     status_filters = cfg[device_type]['status_filter_comm_status']
-
-    knack_creds = KNACK_CREDENTIALS[app_name]
 
     try:
         job = jobutil.Job(
@@ -145,7 +147,11 @@ if __name__ == '__main__':
         error_text = traceback.format_exc()
         email_subject = "Device Status Log Failure: {}".format(device_type)
         
-        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
+        emailutil.send_email(ALERTS_DISTRIBUTION,
+                             email_subject,
+                             error_text,
+                             EMAIL['user'],
+                             EMAIL['password'])
         logger.error(error_text)
 
         job.result('error')
