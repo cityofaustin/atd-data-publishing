@@ -1,4 +1,5 @@
 knackpy.egg-info
+.idea/
 build/
 dist/
 changelog
