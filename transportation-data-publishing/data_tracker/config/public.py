@@ -41,7 +41,7 @@ SCRIPTINFO = {
         },
     "device_status":
         {
-            "arguments": ["device_type", "app_name"],
+            "arguments": ["script_name", "device_type", "app_name"],
             "argdescription": "",
             "objects": [],
             "source": "knack",
@@ -52,7 +52,7 @@ SCRIPTINFO = {
         },
     "device_status_log":
         {
-            "arguments": ["device_type", "app_name"],
+            "arguments": ["script_name", "device_type", "app_name"],
             "argdescription": "",
             "objects":[],
             "source": "knack",
