@@ -15,7 +15,7 @@ import pdb
 import arrow
 import knackpy
 
-import _setpath
+#import _setpath
 from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil

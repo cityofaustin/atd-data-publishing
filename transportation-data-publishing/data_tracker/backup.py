@@ -7,7 +7,7 @@ import pdb
 import arrow
 import knackpy
 
-import _setpath
+#import _setpath
 from config.secrets import *
 
 from tdutils import datautil
@@ -15,7 +15,10 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
-def main(job):
+def main(job, **kwargs):
+
+    objects = kwargs["objects"]
+    app_name = kwargs["app_name"]
 
     job.start()
 
