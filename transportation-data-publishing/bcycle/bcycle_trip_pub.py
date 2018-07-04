@@ -1,9 +1,11 @@
-"""
-Check for new b-cycle data in Dropbox share and upload to
-Open Data portal (Socrata)
+# Check for new b-cycle data in Dropbox share and upload to
+# Open Data portal (Socrata)
 
-B-Cycle staff put new trip data in Dropbox share on a monthly basis.
-"""
+# B-Cycle staff put new trip data in Dropbox share on a monthly basis.
+
+# Attributes:
+#     resource_id (str): Description
+
 import csv
 import os
 import pdb
@@ -20,9 +22,19 @@ from tdutils import logutil
 from tdutils import socratautil
 
 
+# define config variables
+resource_id = "tyfh-5r8s"
+
+
 def max_date_socrata(resource_id):
     """
     Get the most recent trip date from socrata
+    
+    Args:
+        resource_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     url = "https://data.austintexas.gov/resource/{}.json?$query=SELECT checkout_date as date ORDER BY checkout_date DESC LIMIT 1".format(
         resource_id
@@ -35,6 +47,13 @@ def max_date_socrata(resource_id):
 def get_data(path, token):
     """
     Get trip data file as string from dropbox
+    
+    Args:
+        path (TYPE): Description
+        token (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     logger.info(f"Get data for {path}")
 
@@ -50,8 +69,15 @@ def handle_data(data):
     """
     Convert data file string to csv dict. Source column headers are replaced
     with database-friendly field names
+    
+    Args:
+        data (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     #  assume fields in this order  :(
+    
     fieldnames = (
         "trip_id",
         "membership_type",
@@ -71,91 +97,75 @@ def handle_data(data):
     return list(reader)
 
 
-if __name__ == "__main__":
+def main(job, **kwargs):
+    """
+    Args:
+        job
+        **kwargs
+    
+    Returns:
+    
+    Raises:
+        e: Description
+    
+    """
 
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-    logger = logutil.timed_rotating_log(logfile)
+    script_name = kwargs["script_name"]
 
-    try:
-        logger.info("START AT {}".format(arrow.now()))
+    dt_current = arrow.now().replace(months=-1)
+    dt_current_formatted = dt_current.format("MM-YYYY")
+    up_to_date = False
+    results = None
 
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="dropbox",
-            destination="socrata",
-            auth=JOB_DB_API_TOKEN,
-        )
+    while not up_to_date:
+        socrata_dt = max_date_socrata(resource_id)
+        socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
 
-        job.start()
+        if dt_current_formatted == socrata_dt_formatted:
+            up_to_date = True
+            job.result("success", records_processed=0)
+            results = 0
 
-        resource_id = "tyfh-5r8s"
-        dt_current = arrow.now().replace(months=-1)
-        dt_current_formatted = dt_current.format("MM-YYYY")
-        up_to_date = False
+        else:
+            #  socrata data is at least one month old
+            dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
+            dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
 
-        while not up_to_date:
-            socrata_dt = max_date_socrata(resource_id)
-            socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
+            current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
+            root = "austinbcycletripdata"  # note the lowercase-ness
+            path = "/{}/{}/{}".format(root, dropbox_year, current_file)
+            date_fields = ["checkout_date"]
 
-            if dt_current_formatted == socrata_dt_formatted:
-                up_to_date = True
-                job.result("success", records_processed=0)
+            try:
+                data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                results = len(data)
 
-            else:
-                #  socrata data is at least one month old
-                dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
-                dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
+            except dropbox.exceptions.ApiError as e:
 
-                current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
-                root = "austinbcycletripdata"  #  note the lowercase-ness
-                path = "/{}/{}/{}".format(root, dropbox_year, current_file)
-                date_fields = ["checkout_date"]
+                if "LookupError" in str(e):
+                    #  end loop when no file can be found
+                    # logger.warning(f"No data found for {path}")
+                    up_to_date = True
+                    job.result("success")
+                    break
 
-                try:
-                    data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                else:
+                    job.result("error", message=str(e))
+                    raise e
 
-                except dropbox.exceptions.ApiError as e:
+            data = handle_data(data)
+            # logger.info("{} records found".format(len(data)))
 
-                    if "LookupError" in str(e):
-                        #  end loop when no file can be found
-                        logger.warning(f"No data found for {path}")
-                        up_to_date = True
-                        job.result("success")
-                        break
+            socratautil.Soda(
+                auth=SOCRATA_CREDENTIALS,
+                records=data,
+                resource=resource_id,
+                location_field=None,
+            )
 
-                    else:
-                        job.result("error", message=str(e))
-                        raise e
+            logger.info(res.json())
 
-                data = handle_data(data)
-                logger.info("{} records found".format(len(data)))
+            job.result("success", records_processed=len(data))
 
-                socratautil.Soda(
-                    auth=SOCRATA_CREDENTIALS,
-                    records=data,
-                    resource=resource_id,
-                    location_field=None,
-                )
-
-                logger.info(res.json())
-
-                job.result("success", records_processed=len(data))
-
-        logger.info("Finish at {}".format(arrow.now()))
-
-    except Exception as e:
-        logger.error(e)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "DATA PROCESSING ALERT: B-Cycle Trip Data",
-            str(e),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e
+            results = len(data)
+    return results

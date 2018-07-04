@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.6
 
 #  Set the working directory
 WORKDIR /app
@@ -7,6 +7,7 @@ WORKDIR /app
 COPY requirements.txt /app
 
 RUN apt-get update
+RUN apt-get install dialog apt-utils -y
 
 #  Install tzdata and set timezone
 RUN apt-get install -y tzdata

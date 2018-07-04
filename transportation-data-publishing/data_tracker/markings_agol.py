@@ -1,6 +1,7 @@
-"""
-Publish pavement markings work orders to ArcGIS Online
-"""
+# Publish pavement markings work orders to ArcGIS Online
+
+# Attributes:
+#     config (TYPE): Description
 import os
 import pdb
 import traceback
@@ -20,9 +21,9 @@ from tdutils import logutil
 
 
 config = [
-     # Knack and AGOL source object defintions.
-     # Order of config elements matters! Work orders must be processed before
-     # jobs and attachments because work orders are the parent record to both.
+    # Knack and AGOL source object defintions.
+    # Order of config elements matters! Work orders must be processed before
+    # jobs and attachments because work orders are the parent record to both.
     {
         "name": "signs_markings_work_orders",
         "scene": "scene_774",
@@ -75,7 +76,7 @@ config = [
         "name": ",specifications",
         "scene": "scene_774",
         "view": "view_2272",
-        "ref_obj": ["object_143","object_140", "object_141"],
+        "ref_obj": ["object_143", "object_140", "object_141"],
         "modified_date_field_id": "field_2567",
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "SPECIFICATION_ID",
@@ -83,7 +84,6 @@ config = [
         "layer_id": 1,
         "item_type": "table",
     },
-
     {
         "name": ",materials",
         "scene": "scene_774",
@@ -99,6 +99,26 @@ config = [
 ]
 
 
+def remove_empty_strings(records):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
+    new_records = []
+    for record in records:
+        new_record = {
+            key: record[key]
+            for key in record.keys()
+            if not (type(record[key]) == str and not record[key])
+        }
+        new_records.append(new_record)
+    return new_records
+
+
 def append_paths(
     records,
     features,
@@ -112,11 +132,14 @@ def append_paths(
     contains an array of ids matching the input spatial features, or a singular string
     stored as 'path_id_field' which uniquely identfies a feature in the source geomtery. 
     """
-    unmatched = ''
+    unmatched = ""
+
+    # pdb.set_trace()
 
     for record in records:
-        path_id = record.get(path_id_field)
-
+        
+        path_id = record.get(path_id_field)   
+        
         if path_id:
             paths = []
 
@@ -134,31 +157,57 @@ def append_paths(
             elif type(path_id) == list:
                 for path_id in record[path_id_field]:
                     for feature in features:
-                        if path_id == feature.attributes.get(path_id_field):
+                        if str(path_id) == str(feature.attributes.get(path_id_field)):
+                            # print('match!')
                             paths = paths + [path for path in feature.geometry["paths"]]
+                            # print(paths)
 
                 record[output_field] = paths
 
             if not record.get(output_field):
-                unmatched += f'{path_id_field}: {path_id}\n'
+                # pdb.set_trace()
+                unmatched += f"{path_id_field}: {path_id}\n"
 
     if unmatched:
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
-            f'Markings AGOL: Geomtries Not Found',
+            f"Markings AGOL: Geomtries Not Found",
             unmatched,
-            EMAIL['user'],
-            EMAIL['password']
+            EMAIL["user"],
+            EMAIL["password"],
         )
+
+
 
     return records
 
 
 def filter_by_date(data, date_field, compare_date):
+    """Summary
+    
+    Args:
+        data (TYPE): Description
+        date_field (TYPE): Description
+        compare_date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return [record for record in data if record[date_field] >= compare_date]
 
 
 def knackpy_wrapper(cfg, auth, obj=None, filters=None):
+    """Summary
+    
+    Args:
+        cfg (TYPE): Description
+        auth (TYPE): Description
+        obj (None, optional): Description
+        filters (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return knackpy.Knack(
         obj=obj,
         scene=cfg["scene"],
@@ -172,7 +221,11 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
 
 
 def cli_args():
-
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "markings_agol.py",
         "Publish Signs and Markings Work Order Data to ArcGIS Online",
@@ -185,14 +238,17 @@ def cli_args():
     return args
 
 
-def main(config, job):
+def main(job, **kwargs):
     records_processed = 0
 
     last_run_date = job.most_recent()
 
-    if not last_run_date or args.replace:
+    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
+
+    if not last_run_date or kwargs["replace"]:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1/1/1900"
+        # the arrow package needs a specific date and timeformat 
+        last_run_date = "1970-01-01"
     """
     We include a filter in our API call to limit to records which have
     been modified on or after the date the last time this job ran
@@ -221,6 +277,8 @@ def main(config, job):
 
         records = kn.data
 
+        # pdb.set_trace()
+
         if cfg.get("geometry_service_id"):
             #  dataset has geomteries to be retrieved from another dataset
             if cfg.get("multi_source_geometry"):
@@ -234,31 +292,41 @@ def main(config, job):
                 )
 
             where_ids = ", ".join(f"'{x}'" for x in source_ids)
-            where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
 
-            geometry_layer = agolutil.get_item(
-                auth=AGOL_CREDENTIALS,
-                service_id=cfg["geometry_service_id"],
-                layer_id=cfg["geometry_layer_id"],
-            )
+            if where_ids:
+                where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
 
-            source_geometries = geometry_layer.query(
-                where=where, outFields=cfg["geometry_record_id_field"]
-            )
+                # pdb.set_trace()
+
+                geometry_layer = agolutil.get_item(
+                    auth=AGOL_CREDENTIALS,
+                    service_id=cfg["geometry_service_id"],
+                    layer_id=cfg["geometry_layer_id"],
+                )
+
+                source_geometries = geometry_layer.query(
+                    where=where, outFields=cfg["geometry_record_id_field"]
+                )
+
+            # pdb.set_trace()
             
-            if not source_geometries:
-                raise Exception("No features returned from source geometry layer query")
+                if not source_geometries:
+                    raise Exception("No features returned from source geometry layer query")
 
-            records = append_paths(
-                kn.data,
-                source_geometries,
-                path_id_field=cfg["geometry_record_id_field"],
-            )
+                records = append_paths(
+                    kn.data,
+                    source_geometries,
+                    path_id_field=cfg["geometry_record_id_field"],
+                )
 
         if cfg.get("extract_attachment_url"):
             records = knackutil.attachment_url(
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
+
+        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
+        
+        # pdb.set_trace()
 
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
@@ -267,7 +335,7 @@ def main(config, job):
             item_type=cfg["item_type"],
         )
 
-        if args.replace:
+        if kwargs["replace"]:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
@@ -297,49 +365,3 @@ def main(config, job):
             records_processed += len(adds)
 
     return records_processed
-
-
-if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    args = cli_args()
-
-    auth = KNACK_CREDENTIALS[args.app_name]
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="agol",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main(config, job)
-
-        job.result("success", records_processed=results)
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-
-        logger.error(error_text)
-
-        email_subject = "Signs & Markings AGOL Pub Failure"
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL['user'],
-            EMAIL['password']
-        )
-
-        job.result("error", message=str(e))
-
-        raise e
