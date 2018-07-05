@@ -25,7 +25,8 @@ SCRIPTINFO = {
             "source": "knack",
             "destination": "csv",
             "subject": "backup error",
-            "loggerresult": "{} records downloaded"
+            "loggerresult": "{} records downloaded",
+            "scriptid_flag": False
 
         },
     "detection_status_signals":
@@ -36,18 +37,20 @@ SCRIPTINFO = {
             "source": "knack",
             "destination":"knack",
             "subject": "Detection Status Update Failure",
-            "loggerresult": "{} signal records updated"
+            "loggerresult": "{} signal records updated",
+            "scriptid_flag": False
 
         },
     "device_status":
         {
-            "arguments": ["script_name", "device_type", "app_name"],
+            "arguments": ["device_type", "app_name"],
             "argdescription": "",
             "objects": [],
             "source": "knack",
             "destination": "knack",
             "subject": "Device Status Check Failure: {}",
-            "loggerresult": ""
+            "loggerresult": "",
+            "scriptid_flag": True
 
         },
     "device_status_log":
@@ -117,6 +120,17 @@ SCRIPTINFO = {
     "traffic_reports":
         {
             "arguments": None
+        },
+    "knack_data_pub":
+        {
+            "arguments": ["dataset", "app_name", "--destination", "--replace"],
+            "argdescription":"Publish Knack data to Socrata and ArcGIS Online",
+            "id_elements": ["script_name", "dataset", "source", "destination"],
+            "source": ["knack"],
+            "destination": ["dest"],
+            "subject": "Knack Data Pub Failure: {}",
+            "logger_result": "args:{}",
+            "scriptid_flag": True
         }
 }
 

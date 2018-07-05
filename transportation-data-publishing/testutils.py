@@ -5,6 +5,7 @@ import traceback
 # import configuration dictionaries
 from config.secrets import *
 from config.public import *
+from config.knack.config import cfg as CFG
 
 # needed packages in tdutils
 from tdutils import logutil
@@ -19,7 +20,8 @@ import argparse
 
 
 def cli_args():
-    """get command line arguments
+    """get command line arguments, the get script part could be refactored as a
+    seperated function
 
     Returns: a dictionary contains all arguments from command line imputs.
 
@@ -79,6 +81,7 @@ def dynamic_import(script_name):
 
     """
     module_name = "data_tracker.{}".format(script_name)
+    print(module_name)
     script = importlib.import_module(module_name)
 
     return script
@@ -104,11 +107,33 @@ def create_job(script_name):
 
     return job
 
+def get_script_id(**kwargs):
+    """
+
+    Args:
+        script_name ():
+        **kwarg ():
+
+    Returns:
+
+    """
+    script_name = kwargs["script_name"]
+
+    element_list = []
+
+    for element in SCRIPTINFO[script_name]["id_elements"]:
+        element_list.append(kwargs[element])
+
+    script_id = ','.join(map(str, element_list))
+
+    return script_id
+
+
 
 def run_catch(**kwargs):
     """run the specified python script with command line input and config
     data from configuration documents. Maybe it makes more sense to unpack
-    this function and just write it into the __name__ = "__main__".
+    this function and just write it in the __name__ = "__main__".
 
     Args:
         **kwargs (): the combined dictionary with both command line input and
@@ -159,6 +184,19 @@ if __name__ == "__main__":
 
     args_dict = cli_args()
 
-    kwargs = dict(SCRIPTINFO[args_dict["script_name"]], **args_dict)
+    script_name = args_dict.get("script_name")
+    # dataset = args_dict["dataset"]
+    #
+    # print(dataset)
+
+    kwargs = dict(SCRIPTINFO[script_name], **args_dict)
+
+    # if SCRIPTINFO[script_name]["scriptid_flag"] == True:
+
+        #kwargs["script_id"] = get_script_id(**kwargs)
+
+        #kwargs = dict(kwargs, **CFG[dataset])
+
 
     run_catch(**kwargs)
+

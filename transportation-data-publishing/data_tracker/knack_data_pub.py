@@ -191,6 +191,7 @@ def main(job, **kwargs):
     """
     
     last_run_date = job.most_recent()
+    cfg = kwargs[]
 
     if not last_run_date or args.replace or job.destination == 'csv':
         # replace dataset by setting the last run date to a long, long time ago
