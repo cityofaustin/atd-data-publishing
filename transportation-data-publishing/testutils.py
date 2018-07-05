@@ -23,6 +23,9 @@ def cli_args():
 
     Returns: a dictionary contains all arguments from command line imputs.
 
+    Returns:
+        dict
+
     """
 
     script_parser = argparse.ArgumentParser()
@@ -48,7 +51,7 @@ def cli_args():
     return args_dict
 
 
-def createlogger(script_name):
+def create_logger(script_name):
     """
 
     Args:
@@ -117,7 +120,7 @@ def run_catch(**kwargs):
     """
     script_name = kwargs["script_name"]
 
-    logger = createlogger(script_name)
+    logger = create_logger(script_name)
 
     script = dynamic_import(script_name)
 
