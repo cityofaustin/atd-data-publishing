@@ -1,12 +1,10 @@
 # system packages
 import os
 import traceback
-# import sys
 
 # import configuration dictionaries
 from config.secrets import *
 from config.public import *
-
 
 # needed packages in tdutils
 from tdutils import logutil
@@ -21,8 +19,11 @@ import argparse
 
 
 def cli_args():
-    # get the name of the script using
-    # known, unknown = script_parser.parse_known_args
+    """get command line arguments
+
+    Returns: a dictionary contains all arguments from command line imputs.
+
+    """
 
     script_parser = argparse.ArgumentParser()
     script_parser.add_argument("script_name")
@@ -34,8 +35,6 @@ def cli_args():
 
     args_dict = {"script_name": script_name}
 
-    #print("script name", script_name)
-    # create the argument parser using config.public dictionary and arg.util
     if SCRIPTINFO[script_name]["arguments"] is not None:
         description = SCRIPTINFO[script_name]["argdescription"]
         args_name = SCRIPTINFO[script_name]["arguments"]
@@ -50,7 +49,14 @@ def cli_args():
 
 
 def createlogger(script_name):
+    """
 
+    Args:
+        script_name ():
+
+    Returns:
+
+    """
 
     logfile = f'{LOG_DIRECTORY}/{script_name}'
     logger = logutil.timed_rotating_log(logfile)
@@ -59,23 +65,32 @@ def createlogger(script_name):
 
     return logger
 
+
 def dynamic_import(script_name):
+    """
+
+    Args:
+        script_name : name of the script as a string
+
+    Returns: script content of the specified script
+
+    """
     module_name = "data_tracker.{}".format(script_name)
     script = importlib.import_module(module_name)
 
     return script
 
-def runcatch(**kwargs):
 
-    script_name = kwargs["script_name"]
-    # print(script_name)
+def create_job(script_name):
+    """
 
-    logger = createlogger(script_name)
+    Args:
+        script_name ():
 
-    # find out # of required argument
+    Returns: a job class that will be used as a input to the main function
+    from each script.
 
-
-    # Job creation
+    """
 
     job = jobutil.Job(
         name=script_name,
@@ -84,58 +99,63 @@ def runcatch(**kwargs):
         destination=SCRIPTINFO[script_name]["destination"],
         auth=JOB_DB_API_TOKEN)
 
-    #func_dict = {"functioname": backup.main}
-    # print(type(job))
+    return job
+
+
+def run_catch(**kwargs):
+    """run the specified python script with command line input and config
+    data from configuration documents. Maybe it makes more sense to unpack
+    this function and just write it into the __name__ = "__main__".
+
+    Args:
+        **kwargs (): the combined dictionary with both command line input and
+        configuration from the configuration dictionary
+
+    Returns:various from scripts to scripts, typically defined in the main
+    function
+
+    """
+    script_name = kwargs["script_name"]
+
+    logger = createlogger(script_name)
+
+    script = dynamic_import(script_name)
+
+    job = create_job(script_name)
     job.start()
 
-    module_name = "data_tracker.{}".format(script_name)
-    script = importlib.import_module(module_name)
 
-    results = getattr(script, "main")(job, **kwargs)
+    try:
+        results = getattr(script, "main")(job, **kwargs)
+
+        if results:
+            job.result('success', records_processed=results)
+
+            logger.info(SCRIPTINFO[script_name]["loggerresult"].format(results))
+            logger.info('END AT {}'.format(arrow.now()))
+
+    except Exception as e:
+
+        error_text = traceback.format_exc()
+        logger.error(str(error_text))
+
+        emailutil.send_email(ALERTS_DISTRIBUTION,
+                             SCRIPTINFO[script_name]['subject'],
+                             str(e),
+                             EMAIL['user'],
+                             EMAIL['password'])
+
+        job.result('error', message=str(e))
+
+        raise e
 
     return results
-    #################################################
-    # try:
-    #
-    #     job.start()
-    #
-    #     results = data_tracker.script_name.main(job)
-    #
-    #     if results:
-    #
-    #         job.result('success', records_processed=results)
-    #
-    #         logger.info(SCRIPTINFO[script_name]["loggerresult"].format(results))
-    #         logger.info('END AT {}'.format(arrow.now()))
-    #
-    # except Exception as e:
-    #
-    #     error_text = traceback.format_exc()
-    #     logger.error(str(error_text))
-    #
-    #     emailutil.send_email(ALERTS_DISTRIBUTION,
-    #                          SCRIPTINFO[script_name]['subject'],
-    #                          str(e),
-    #                          EMAIL['user'],
-    #                          EMAIL['password'])
-    #
-    #     job.result('error', message=str(e))
-    #
-    #     raise e
-    ###############################################################
 
 
 if __name__ == "__main__":
-    # call cli_args function to gather all required arguments
 
     args_dict = cli_args()
 
     kwargs = dict(SCRIPTINFO[args_dict["script_name"]], **args_dict)
 
-    runcatch(**kwargs)
-
-    # get the script name
-
-    # print(script_name)
-    # call the main in the script associated with the script name, try,
-    # catch error, send email
+    run_catch(**kwargs)
