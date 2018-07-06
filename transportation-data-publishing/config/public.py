@@ -24,7 +24,8 @@ SCRIPTINFO = {
                         'object_142', 'object_143', 'object_141', 'object_149'],
             "source": "knack",
             "destination": "csv",
-            "subject": "backup error",
+            "subject_t": "Data Bakup Exception {}",
+            "subject_v": "app_name",
             "loggerresult": "{} records downloaded",
             "scriptid_flag": False
 
@@ -36,7 +37,8 @@ SCRIPTINFO = {
             "objects": [],
             "source": "knack",
             "destination":"knack",
-            "subject": "Detection Status Update Failure",
+            "subject_t": "Detection Status Update Failure {}",
+            "subject_v": "app_name",
             "loggerresult": "{} signal records updated",
             "scriptid_flag": False
 
@@ -126,9 +128,9 @@ SCRIPTINFO = {
             "arguments": ["dataset", "app_name", "--destination", "--replace"],
             "argdescription":"Publish Knack data to Socrata and ArcGIS Online",
             "id_elements": ["script_name", "dataset", "source", "destination"],
-            "source": ["knack"],
-            "destination": ["dest"],
-            "subject": "Knack Data Pub Failure: {}",
+            "source": "knack",
+            "subject_t": "Knack Data Pub Failure: {}",
+            "subject_v": "dataset",
             "logger_result": "args:{}",
             "scriptid_flag": True
         }

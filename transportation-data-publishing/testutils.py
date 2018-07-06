@@ -5,7 +5,7 @@ import traceback
 # import configuration dictionaries
 from config.secrets import *
 from config.public import *
-from config.knack.config import cfg as CFG
+from config.knack.config import cfg
 
 # needed packages in tdutils
 from tdutils import logutil
@@ -44,11 +44,21 @@ def cli_args():
         description = SCRIPTINFO[script_name]["argdescription"]
         args_name = SCRIPTINFO[script_name]["arguments"]
 
+        # print("args_name", args_name)
+
         argument_parser = argutil.get_parser(prog, description, *args_name)
+
+        # print(argument_parser)
 
         args = argument_parser.parse_args(script_arguments)
 
+        # print("args", args)
+
         args_dict.update(vars(args))
+
+        if "destination" in args_dict:
+            args_dict["destination"] = "".join(args_dict["destination"])
+
 
     return args_dict
 
@@ -57,13 +67,13 @@ def create_logger(script_name):
     """
 
     Args:
-        script_name ():
+        script_name (str): script name
 
     Returns:
 
     """
 
-    logfile = f'{LOG_DIRECTORY}/{script_name}'
+    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
     logger = logutil.timed_rotating_log(logfile)
 
     logger.info('START AT {}'.format(arrow.now()))
@@ -75,23 +85,23 @@ def dynamic_import(script_name):
     """
 
     Args:
-        script_name : name of the script as a string
+        script_name (str) : name of the script as a string
 
     Returns: script content of the specified script
 
     """
     module_name = "data_tracker.{}".format(script_name)
-    print(module_name)
+    # print(module_name)
     script = importlib.import_module(module_name)
 
     return script
 
 
-def create_job(script_name):
+def create_namejob(script_name):
     """
 
     Args:
-        script_name ():
+        script_name (str):
 
     Returns: a job class that will be used as a input to the main function
     from each script.
@@ -112,22 +122,43 @@ def get_script_id(**kwargs):
 
     Args:
         script_name ():
-        **kwarg ():
+        **kwarg (dict): a dictionary that contains both the command arguments
+        and configuration information
+
 
     Returns:
 
     """
-    script_name = kwargs["script_name"]
 
     element_list = []
 
     for element in SCRIPTINFO[script_name]["id_elements"]:
         element_list.append(kwargs[element])
 
-    script_id = ','.join(map(str, element_list))
+    script_id = '_'.join(map(str, element_list))
 
     return script_id
 
+def create_idjob(script_name, script_id, destination):
+    """
+
+    Args:
+        script_name (str):
+        script_id (str):
+
+    Returns:
+
+    """
+
+
+    job = jobutil.Job(
+        name=script_id,
+        url=JOB_DB_API_URL,
+        source=SCRIPTINFO[script_name]["source"],
+        destination = destination,
+        auth=JOB_DB_API_TOKEN)
+
+    return job
 
 
 def run_catch(**kwargs):
@@ -145,21 +176,28 @@ def run_catch(**kwargs):
     """
     script_name = kwargs["script_name"]
 
+
     logger = create_logger(script_name)
 
     script = dynamic_import(script_name)
 
-    job = create_job(script_name)
+    if kwargs["scriptid_flag"] is True:
+        script_id = get_script_id(**kwargs)
+        job = create_idjob(script_name, script_id, kwargs["destination"])
+    else:
+        job = create_namejob(script_name)
     job.start()
-
 
     try:
         results = getattr(script, "main")(job, **kwargs)
 
+        # print("results", results)
+
         if results:
             job.result('success', records_processed=results)
 
-            logger.info(SCRIPTINFO[script_name]["loggerresult"].format(results))
+            logger.info(SCRIPTINFO[script_name]["logger_result"].format(
+                results))
             logger.info('END AT {}'.format(arrow.now()))
 
     except Exception as e:
@@ -168,7 +206,8 @@ def run_catch(**kwargs):
         logger.error(str(error_text))
 
         emailutil.send_email(ALERTS_DISTRIBUTION,
-                             SCRIPTINFO[script_name]['subject'],
+                             SCRIPTINFO[script_name]['subject_t'].format(
+                                 kwargs[SCRIPTINFO[script_name]['subject_v']]),
                              str(e),
                              EMAIL['user'],
                              EMAIL['password'])
@@ -184,19 +223,15 @@ if __name__ == "__main__":
 
     args_dict = cli_args()
 
+    # print(args_dict)
+
     script_name = args_dict.get("script_name")
-    # dataset = args_dict["dataset"]
-    #
-    # print(dataset)
 
     kwargs = dict(SCRIPTINFO[script_name], **args_dict)
 
-    # if SCRIPTINFO[script_name]["scriptid_flag"] == True:
-
-        #kwargs["script_id"] = get_script_id(**kwargs)
-
-        #kwargs = dict(kwargs, **CFG[dataset])
-
+    # print(get_script_id(**kwargs))
+    #
+    # print(kwargs.get("destination"))
 
     run_catch(**kwargs)
 
