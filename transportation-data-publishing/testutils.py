@@ -1,3 +1,5 @@
+"""Summary
+"""
 # system packages
 import os
 import traceback
@@ -6,6 +8,7 @@ import traceback
 from config.secrets import *
 from config.public import *
 from config.knack.config import cfg
+from config.arguments import *
 
 # needed packages in tdutils
 from tdutils import logutil
@@ -18,16 +21,43 @@ import arrow
 import importlib
 import argparse
 
+# define 
+
+def get_parser(prog, description, *args):
+    """
+    Return a parser with the specified arguments. Each arg
+    in *args must be defined in ARGUMENTS.
+    
+    Args:
+        prog (TYPE): Description
+        description (TYPE): Description
+        *args: Description
+    
+    Returns:
+        TYPE: Description
+    """
+    parser = argparse.ArgumentParser(prog=prog, description=description)
+
+    for arg_name in args:
+        arg_def = ARGUMENTS[arg_name]
+
+        if arg_def.get("flag"):
+            parser.add_argument(arg_name, arg_def.pop("flag"), **arg_def)
+        else:
+            parser.add_argument(arg_name, **arg_def)
+
+    return parser
+
 
 def cli_args():
     """get command line arguments, the get script part could be refactored as a
     seperated function
-
+    
     Returns: a dictionary contains all arguments from command line imputs.
-
+    
     Returns:
         dict
-
+    
     """
 
     script_parser = argparse.ArgumentParser()
@@ -46,7 +76,7 @@ def cli_args():
 
         # print("args_name", args_name)
 
-        argument_parser = argutil.get_parser(prog, description, *args_name)
+        argument_parser = get_parser(prog, description, *args_name)
 
         # print(argument_parser)
 
@@ -65,12 +95,11 @@ def cli_args():
 
 def create_logger(script_name):
     """
-
     Args:
         script_name (str): script name
-
+    
     Returns:
-
+    
     """
 
     logfile = f'{LOG_DIRECTORY}/{script_name}.log'
@@ -83,12 +112,15 @@ def create_logger(script_name):
 
 def dynamic_import(script_name):
     """
-
     Args:
-        script_name (str) : name of the script as a string
-
-    Returns: script content of the specified script
-
+        script_name (TYPE): Description
+    
+    Deleted Parameters:
+        Returns: script content of the specified script
+    
+    Returns:
+        TYPE: Description
+    
     """
     module_name = "data_tracker.{}".format(script_name)
     # print(module_name)
@@ -99,13 +131,16 @@ def dynamic_import(script_name):
 
 def create_namejob(script_name):
     """
-
     Args:
-        script_name (str):
-
-    Returns: a job class that will be used as a input to the main function
-    from each script.
-
+        script_name (TYPE): Description
+        from each script.
+    
+    Deleted Parameters:
+        Returns: a job class that will be used as a input to the main function
+    
+    Returns:
+        TYPE: Description
+    
     """
 
     job = jobutil.Job(
@@ -119,15 +154,17 @@ def create_namejob(script_name):
 
 def get_script_id(**kwargs):
     """
-
     Args:
-        script_name ():
-        **kwarg (dict): a dictionary that contains both the command arguments
+        **kwargs: Description
         and configuration information
-
-
+    
+    
     Returns:
-
+    
+    Deleted Parameters:
+        script_name
+        **kwarg (dict): a dictionary that contains both the command arguments
+    
     """
 
     element_list = []
@@ -141,13 +178,13 @@ def get_script_id(**kwargs):
 
 def create_idjob(script_name, script_id, destination):
     """
-
     Args:
-        script_name (str):
-        script_id (str):
-
+        script_name (str)
+        script_id (str)
+        destination (TYPE): Description
+    
     Returns:
-
+    
     """
 
 
@@ -165,14 +202,20 @@ def run_catch(**kwargs):
     """run the specified python script with command line input and config
     data from configuration documents. Maybe it makes more sense to unpack
     this function and just write it in the __name__ = "__main__".
-
+    
     Args:
-        **kwargs (): the combined dictionary with both command line input and
-        configuration from the configuration dictionary
-
-    Returns:various from scripts to scripts, typically defined in the main
-    function
-
+        **kwargs: Description
+        function
+    
+    Deleted Parameters:
+        Returns: various from scripts to scripts, typically defined in the main
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        e: Description
+    
     """
     script_name = kwargs["script_name"]
 
