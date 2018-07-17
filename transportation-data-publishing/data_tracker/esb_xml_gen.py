@@ -167,10 +167,10 @@ def main():
 
 
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}'
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}'
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
     args = cli_args()
     logger.info( 'args: {}'.format( str(args) ))

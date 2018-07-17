@@ -45,83 +45,225 @@ SCRIPTINFO = {
         },
     "device_status":
         {
-            "arguments": ["device_type", "app_name"],
+            "arguments": ["device_type", "app_name", "--json", "--replace"],
             "argdescription": "",
             "objects": [],
             "source": "knack",
             "destination": "knack",
-            "subject": "Device Status Check Failure: {}",
+            "subject_t": "Device Status Check Failure: {}",
+            "subject_v": "device_type",
             "loggerresult": "",
-            "scriptid_flag": True
+            "scriptid_flag": True,
+            "id_elements": ["script_name", "device_type"]
 
         },
     "device_status_log":
         {
             "arguments": ["script_name", "device_type", "app_name"],
-            "argdescription": "",
+            "argdescription": "Generate connectivity statistics and upload to Knack application.",
             "objects":[],
             "source": "knack",
-            "destination": "knack"
+            "destination": "knack",
+            "scriptid_flag": True,
+            "id_elements": ["script_name", "device_type"],
+            "subject_t": "Device Status Log Failure: {}",
+            "subject_v": "device_type",
+            "loggerresult": "",
         },
     "dms_msg_pub":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "kits",
+            "destination": "knack",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "DATA PROCESSING ALERT: DMS Message Update",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "esb_xml_gen":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": "Generate XML message to update 311 Service Reqeusts via Enterprise Service Bus.",
+            "objects":[],
+            "source": "knack",
+            "destination": "XML",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "esb_xml_send":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "fulc":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "kits_cctv_push":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "location_updater":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "markings_agol":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "metadata_updater":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "secondary_signals_updater":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "signal_pm_copier":
         {
-            "arguments": ["app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "signal_request_ranker":
         {
-            "arguments": ["eval_type", "app_name"]
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "street_seg_updater":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "task_orders":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "tcp_business_days":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "traffic_reports":
         {
-            "arguments": None
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects":[],
+            "source": "",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "loggerresult": ""
         },
     "knack_data_pub":
         {

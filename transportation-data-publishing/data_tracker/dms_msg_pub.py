@@ -9,7 +9,7 @@ import sys
 import arrow
 import knackpy
 
-import _setpath
+# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 from tdutils import datautil
@@ -20,6 +20,8 @@ from tdutils import logutil
 
     
 def main():
+    CONFIG = cfg['dms']
+    KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
     
     kits_query =  '''
         SELECT DMSID as KITS_ID
@@ -98,48 +100,49 @@ def main():
            
 
 if __name__=='__main__':
-    try:
+    pass
+    # try:
 
-        script_name = os.path.basename(__file__).replace('.py', '')
-        logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+        # script_name = os.path.basename(__file__).replace('.py', '')
+        # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+        #
+        # logger = logutil.timed_rotating_log(logfile)
+        # logger.info('START AT {}'.format( arrow.now() ))
 
-        logger = logutil.timed_rotating_log(logfile)
-        logger.info('START AT {}'.format( arrow.now() ))
+        # CONFIG = cfg['dms']
+        # KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
 
-        CONFIG = cfg['dms']
-        KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
-
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source='kits',
-            destination='knack',
-            auth=JOB_DB_API_TOKEN)
-
-        job.start()
-
-        results = main()
-
-        job.result('success', records_processed=results)
-
-        logger.info('END AT: {}'.format( arrow.now() ))
+        # job = jobutil.Job(
+        #     name=script_name,
+        #     url=JOB_DB_API_URL,
+        #     source='kits',
+        #     destination='knack',
+        #     auth=JOB_DB_API_TOKEN)
+        #
+        # job.start()
+        #
+        # results = main()
+        #
+        # job.result('success', records_processed=results)
+        #
+        # logger.info('END AT: {}'.format( arrow.now() ))
     
 
-    except Exception as e:        
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            'DATA PROCESSING ALERT: DMS Message Update',
-            error_text,
-            EMAIL['user'],
-            EMAIL['password']
-        )
-
-        job.result('error', message=str(e) )
-
-        raise e
+    # except Exception as e:
+    #     error_text = traceback.format_exc()
+    #     logger.error(error_text)
+    #
+    #     emailutil.send_email(
+    #         ALERTS_DISTRIBUTION,
+    #         'DATA PROCESSING ALERT: DMS Message Update',
+    #         error_text,
+    #         EMAIL['user'],
+    #         EMAIL['password']
+    #     )
+    #
+    #     job.result('error', message=str(e))
+    #
+    #     raise e
 
 
 

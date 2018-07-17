@@ -19,7 +19,7 @@ import traceback
 import arrow
 import knackpy
 
-import _setpath
+# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 from tdutils import argutil
@@ -99,95 +99,122 @@ def get_status(device):
 
 
 
-def main():
+def main(job, **kwargs):
 
-        #  get device data from Knack application
-        kn = knackpy.Knack(
-            obj=cfg[device_type]['obj'],
-            scene=cfg[device_type]['scene'],
-            view=cfg[device_type]['view'],
-            ref_obj=cfg[device_type]['ref_obj'],
-            app_id=knack_creds['app_id'],
-            api_key=knack_creds['api_key']
+
+
+    device_type = kwargs["device_type"]
+    out_json = kwargs["json"]
+    app_name = kwargs["app_name"]
+
+    primary_key = cfg[device_type]['primary_key']
+    ip_field = cfg[device_type]['ip_field']
+    knack_creds = KNACK_CREDENTIALS[app_name]
+
+
+
+    out_fields_upload = [
+        'id',
+        ip_field,
+        'IP_COMM_STATUS',
+        'COMM_STATUS_DATETIME_UTC'
+    ]
+
+    out_fields_json = [
+        'id',
+        ip_field,
+        'IP_COMM_STATUS',
+        'COMM_STATUS_DATETIME_UTC',
+        primary_key
+    ]
+
+    #  get device data from Knack application
+    kn = knackpy.Knack(
+        obj=cfg[device_type]['obj'],
+        scene=cfg[device_type]['scene'],
+        view=cfg[device_type]['view'],
+        ref_obj=cfg[device_type]['ref_obj'],
+        app_id=knack_creds['app_id'],
+        api_key=knack_creds['api_key']
+    )
+
+    #  optionally write to JSON
+    #  this is a special case for CCTV cameras.
+    #  we copy the JSON to our internal web server
+    if out_json:
+        out_dir = IP_JSON_DESTINATION
+        json_data = datautil.reduce_to_keys(kn.data, out_fields_json)
+        filename = '{}/device_data_{}.json'.format(
+            out_dir,
+            device_type
         )
 
-        #  optionally write to JSON
-        #  this is a special case for CCTV cameras.
-        #  we copy the JSON to our internal web server
-        if out_json:
-            out_dir = IP_JSON_DESTINATION
-            json_data = datautil.reduce_to_keys(kn.data, out_fields_json)
-            filename = '{}/device_data_{}.json'.format(
-                out_dir,
-                device_type
+        with open(filename, 'w') as of:
+            json.dump(json_data, of)
+
+    pool = ThreadPool(8)
+
+    results = pool.map(get_status, kn.data)
+
+    for result in results:
+        '''
+        Result is None if status has not changed. Otherwise result
+        is device record dict
+        '''
+        if result:
+            #  format for upload to Knack
+            result = datautil.reduce_to_keys([result], out_fields_upload)
+            result = datautil.replace_keys(result, kn.field_map)
+
+            res = knackpy.record(
+                result[0],
+                obj_key=cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array,
+                app_id= knack_creds['app_id'],
+                api_key=knack_creds['api_key'],
+                method='update',
             )
-            
-            with open(filename, 'w') as of:
-                json.dump(json_data, of)
 
-        pool = ThreadPool(8)
+    # close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
-        results = pool.map(get_status, kn.data)
-        
-        for result in results:
-            '''
-            Result is None if status has not changed. Otherwise result
-            is device record dict
-            '''
-            if result:
-                #  format for upload to Knack
-                result = datautil.reduce_to_keys([result], out_fields_upload)
-                result = datautil.replace_keys(result, kn.field_map)
-
-                res = knackpy.record(
-                    result[0],
-                    obj_key=cfg[device_type]['ref_obj'][0],  #  assumes record object is included in config ref_obj and is the first elem in array,
-                    app_id= knack_creds['app_id'],
-                    api_key=knack_creds['api_key'],
-                    method='update',
-                )
-
-        # close the pool and wait for the work to finish 
-        pool.close() 
-        pool.join() 
-        
-        return True
+    return True
     
 
 
-def cli_args():
-
-    parser = argutil.get_parser(
-        'device_status_check.py',
-        'Ping network devices to verify connenectivity.',
-        'device_type',
-        'app_name',
-        '--json',
-        '--replace'
-    )
-    
-    args = parser.parse_args()
-    
-    return args
+# def cli_args():
+#
+#     parser = argutil.get_parser(
+#         'device_status_check.py',
+#         'Ping network devices to verify connenectivity.',
+#         'device_type',
+#         'app_name',
+#         '--json',
+#         '--replace'
+#     )
+#
+#     args = parser.parse_args()
+#
+#     return args
 
 
 if __name__ == '__main__':
-    
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
     #  parse command-line arguments
-    args = cli_args()
-    logger.info( 'args: {}'.format( args ))
-
-    device_type = args.device_type
-    out_json = args.json
-    app_name = args.app_name
-    primary_key = cfg[device_type]['primary_key']
-    ip_field = cfg[device_type]['ip_field']
+    # args = cli_args()
+    # logger.info( 'args: {}'.format(args))
+    #
+    # device_type = args.device_type
+    # out_json = args.json
+    # app_name = args.app_name
+    # primary_key = cfg[device_type]['primary_key']
+    # ip_field = cfg[device_type]['ip_field']
 
     script_id = '{}_{}'.format(
         script_name,
@@ -203,22 +230,22 @@ if __name__ == '__main__':
      
         job.start()
 
-        knack_creds = KNACK_CREDENTIALS[app_name]
+        # knack_creds = KNACK_CREDENTIALS[app_name]
         
-        out_fields_upload = [
-            'id',
-            ip_field,
-            'IP_COMM_STATUS',
-            'COMM_STATUS_DATETIME_UTC'
-        ]
-
-        out_fields_json = [
-            'id',
-            ip_field,
-            'IP_COMM_STATUS',
-            'COMM_STATUS_DATETIME_UTC',
-            primary_key
-        ]
+        # out_fields_upload = [
+        #     'id',
+        #     ip_field,
+        #     'IP_COMM_STATUS',
+        #     'COMM_STATUS_DATETIME_UTC'
+        # ]
+        #
+        # out_fields_json = [
+        #     'id',
+        #     ip_field,
+        #     'IP_COMM_STATUS',
+        #     'COMM_STATUS_DATETIME_UTC',
+        #     primary_key
+        # ]
 
         results = main()
 
@@ -239,4 +266,4 @@ if __name__ == '__main__':
         raise e
 
 
-print(results)
+# print(results)

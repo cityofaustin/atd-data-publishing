@@ -1,8 +1,10 @@
 """Summary
+
 """
 # system packages
 import os
 import traceback
+import pdb
 
 # import configuration dictionaries
 from config.secrets import *
@@ -38,7 +40,8 @@ def get_parser(prog, description, *args):
     """
     parser = argparse.ArgumentParser(prog=prog, description=description)
 
-    for arg_name in args:
+
+    for arg_name in args[1:]:
         arg_def = ARGUMENTS[arg_name]
 
         if arg_def.get("flag"):
@@ -47,7 +50,6 @@ def get_parser(prog, description, *args):
             parser.add_argument(arg_name, **arg_def)
 
     return parser
-
 
 def cli_args():
     """get command line arguments, the get script part could be refactored as a
@@ -219,10 +221,13 @@ def run_catch(**kwargs):
     """
     script_name = kwargs["script_name"]
 
+    # pdb.set_trace()
 
     logger = create_logger(script_name)
 
     script = dynamic_import(script_name)
+
+    # pdb.set_trace()
 
     if kwargs["scriptid_flag"] is True:
         script_id = get_script_id(**kwargs)
@@ -266,15 +271,9 @@ if __name__ == "__main__":
 
     args_dict = cli_args()
 
-    # print(args_dict)
-
     script_name = args_dict.get("script_name")
 
     kwargs = dict(SCRIPTINFO[script_name], **args_dict)
-
-    # print(get_script_id(**kwargs))
-    #
-    # print(kwargs.get("destination"))
 
     run_catch(**kwargs)
 

@@ -13,7 +13,7 @@ import traceback
 import arrow
 import knackpy
 
-import _setpath
+# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
@@ -26,7 +26,7 @@ from tdutils import logutil
 
 LOG_OBJ = 'object_131'
 
-def get_log_data():
+def get_log_data(knack_creds):
 
     return knackpy.Knack(
             obj=LOG_OBJ,
@@ -37,7 +37,7 @@ def get_log_data():
         )
 
 
-def build_payload(data):
+def build_payload(data, device_type):
     #  create a localized timestamp because Knack assumes timestamps are local
     now = arrow.now().replace(tzinfo='UTC').timestamp * 1000
 
@@ -54,9 +54,18 @@ def build_payload(data):
         }
 
 
-def main(job):
+def main(job, **kwargs):
 
-    job.start()
+    device_type = kwargs["device_type"]
+    app_name = kwargs["app_name"]
+
+    primary_key = cfg[device_type]['primary_key']
+    status_field = cfg[device_type]['status_field']
+    status_filters = cfg[device_type]['status_filter_comm_status']
+
+    knack_creds = KNACK_CREDENTIALS[app_name]
+
+    # job.start()
 
     kn = knackpy.Knack(
         obj=cfg[device_type]['obj'],
@@ -67,7 +76,7 @@ def main(job):
         api_key=knack_creds['api_key']
     )
     
-    kn_log = get_log_data()
+    kn_log = get_log_data(knack_creds)
 
     stats = defaultdict(int)
 
@@ -79,7 +88,7 @@ def main(job):
             status = device['IP_COMM_STATUS']
             stats[status] += 1
 
-    payload = build_payload(stats)
+    payload = build_payload(stats, kwargs["device_type"])
     payload = datautil.replace_keys([payload], kn_log.field_map)
 
     res = knackpy.record(
@@ -108,25 +117,25 @@ def cli_args():
 
 
 if __name__ == '__main__':
-    
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
 
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
-    args = cli_args()
+    # args = cli_args()
 
-    device_type = args.device_type
-    app_name = args.app_name
+    # device_type = args.device_type
+    # app_name = args.app_name
 
-    script_id = f'{script_name}_{device_type}'
+    # script_id = f'{script_name}_{device_type}'
 
-    primary_key = cfg[device_type]['primary_key']
-    status_field = cfg[device_type]['status_field']
-    status_filters = cfg[device_type]['status_filter_comm_status']
+    # primary_key = cfg[device_type]['primary_key']
+    # status_field = cfg[device_type]['status_field']
+    # status_filters = cfg[device_type]['status_filter_comm_status']
 
-    knack_creds = KNACK_CREDENTIALS[app_name]
+    # knack_creds = KNACK_CREDENTIALS[app_name]
 
     try:
         job = jobutil.Job(
