@@ -3,7 +3,7 @@
 SCRIPTINFO = {
     "backup":
         {
-            "arguments": ["app_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": "",
             "objects": ['object_87', 'object_93', 'object_77', 'object_53',
                         'object_96', 'object_83', 'object_95', 'object_21',
@@ -26,33 +26,34 @@ SCRIPTINFO = {
             "destination": "csv",
             "subject_t": "Data Bakup Exception {}",
             "subject_v": "app_name",
-            "loggerresult": "{} records downloaded",
+            "logger_result": "{} records downloaded",
             "scriptid_flag": False
 
         },
     "detection_status_signals":
         {
-            "arguments": ["app_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": "Assign detection status to traffic signal based on status of its detectors.",
             "objects": [],
             "source": "knack",
             "destination":"knack",
             "subject_t": "Detection Status Update Failure {}",
             "subject_v": "app_name",
-            "loggerresult": "{} signal records updated",
+            "logger_result": "{} signal records updated",
             "scriptid_flag": False
 
         },
     "device_status":
         {
-            "arguments": ["device_type", "app_name", "--json", "--replace"],
+            "arguments": ["script_name", "device_type", "app_name", "--json",
+                          "--replace"],
             "argdescription": "",
             "objects": [],
             "source": "knack",
             "destination": "knack",
             "subject_t": "Device Status Check Failure: {}",
             "subject_v": "device_type",
-            "loggerresult": "",
+            "logger_result": "",
             "scriptid_flag": True,
             "id_elements": ["script_name", "device_type"]
 
@@ -68,7 +69,7 @@ SCRIPTINFO = {
             "id_elements": ["script_name", "device_type"],
             "subject_t": "Device Status Log Failure: {}",
             "subject_v": "device_type",
-            "loggerresult": "",
+            "logger_result": "",
         },
     "dms_msg_pub":
         {
@@ -79,35 +80,35 @@ SCRIPTINFO = {
             "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "DATA PROCESSING ALERT: DMS Message Update",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "DATA PROCESSING ALERT: DMS Message Update {}",
+            "subject_v": "app_name",
+            "logger_result": ""
         },
     "esb_xml_gen":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": "Generate XML message to update 311 Service Reqeusts via Enterprise Service Bus.",
             "objects":[],
             "source": "knack",
             "destination": "XML",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "ESB XML Generate Failure {}",
+            "subject_v": "app_name",
+            "logger_result": "{} records processed."
         },
     "esb_xml_send":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "ESB",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "ESB Publication Failure",
+            "subject_v": "app_name",
+            "logger_result": "{} records transmitted."
         },
     "fulc":
         {
@@ -120,20 +121,20 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "kits_cctv_push":
         {
             "arguments": ["script_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "KITS",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "KITS CAMERA SYNC FAILURE {}",
+            "subject_v": "script_name",
+            "logger_result": ""
         },
     "location_updater":
         {
@@ -144,35 +145,35 @@ SCRIPTINFO = {
             "destination": "",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
+            "subject_t": "Location Update Failure",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "markings_agol":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name", "--replace"],
             "argdescription": " ",
             "objects":[],
             "source": "",
             "destination": "",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "Signs & Markings AGOL Pub Failure",
+            "subject_v": "script_name",
+            "logger_result": ""
         },
     "metadata_updater":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
-            "loggerresult": ""
+            "subject_t": "Metadata Update Failure",
+            "subject_v": "app_name",
+            "logger_result": ""
         },
     "secondary_signals_updater":
         {
@@ -185,7 +186,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "signal_pm_copier":
         {
@@ -198,7 +199,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "signal_request_ranker":
         {
@@ -211,7 +212,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "street_seg_updater":
         {
@@ -224,7 +225,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "task_orders":
         {
@@ -237,7 +238,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "tcp_business_days":
         {
@@ -250,7 +251,7 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "traffic_reports":
         {
@@ -263,11 +264,13 @@ SCRIPTINFO = {
             "id_elements": [],
             "subject_t": "",
             "subject_v": "",
-            "loggerresult": ""
+            "logger_result": ""
         },
     "knack_data_pub":
         {
-            "arguments": ["dataset", "app_name", "--destination", "--replace"],
+            "arguments": ["script_name", "dataset", "app_name",
+                          "--destination",
+                          "--replace"],
             "argdescription":"Publish Knack data to Socrata and ArcGIS Online",
             "id_elements": ["script_name", "dataset", "source", "destination"],
             "source": "knack",

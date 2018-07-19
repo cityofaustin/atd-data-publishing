@@ -10,16 +10,17 @@ import traceback
 import arrow
 import knackpy
 
-import _setpath
+# import _setpath
 from config.esb.config import cfg
 from config.secrets import *
+
 from tdutils import argutil
 from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
-
+cfg = cfg["tmc_activities"]
 #  invalid XLM characters to be encoded
 SPECIAL = {
     "<" : '&lt;',
@@ -63,7 +64,7 @@ def get_csr_filters(emi_field, esb_status_field, esb_status_match):
     return filters
 
 
-def check_for_data():
+def check_for_data(app_name):
     #  check for data at public endpoint
     #  this api call does not count against
     #  daily subscription limit because we do not
@@ -130,17 +131,28 @@ def cli_args():
     return args
 
 
-def main():
+def main(jobs, **kwargs):
 
+    app_name = kwargs["app_name"]
+
+    outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
+
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
+
+    knack_creds = KNACK_CREDENTIALS
+
+    # cfg = cfg["tmc_activity"]
     #  check for data at public endpoint
-    data = check_for_data()
+    data = check_for_data(app_name)
 
     if data:
         #  get data at private enpoint
         kn = get_data()
-        
+
+    # should I just abort in this case?
     else:
-        logger.info('No new records to process')
+        # logger.info('No new records to process')
         return 0
 
     #  identify date fields for conversion from mills to unix
@@ -160,7 +172,7 @@ def main():
         with open('{}/{}_{}.xml'.format(outpath, record['ATD_ACTIVITY_ID'], record['id']), 'w') as fout:
             fout.write(payload)
     
-    logger.info('{} records processed.'.format(len(kn.data)))
+    # logger.info('{} records processed.'.format(len(kn.data)))
 
     return len(kn.data)
 
@@ -173,7 +185,7 @@ if __name__ == '__main__':
     # logger.info('START AT {}'.format( arrow.now() ))
 
     args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
+    logger.info( 'args: {}'.format(str(args)))
 
     app_name = args.app_name
     
@@ -186,14 +198,14 @@ if __name__ == '__main__':
             auth=JOB_DB_API_TOKEN)
 
         #  config
-        knack_creds = KNACK_CREDENTIALS
-        cfg = cfg['tmc_activities']
+        # knack_creds = KNACK_CREDENTIALS
+        # cfg = cfg['tmc_activities']
         
         #  template output path
-        outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
-        
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
+        # outpath = '{}/{}'.format(ESB_XML_DIRECTORY, 'ready_to_send')
+        #
+        # if not os.path.exists(outpath):
+        #     os.makedirs(outpath)
 
         job.start()
 

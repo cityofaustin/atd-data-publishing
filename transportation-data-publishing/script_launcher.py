@@ -188,8 +188,6 @@ def create_idjob(script_name, script_id, destination):
     Returns:
     
     """
-
-
     job = jobutil.Job(
         name=script_id,
         url=JOB_DB_API_URL,
@@ -219,15 +217,15 @@ def run_catch(**kwargs):
         e: Description
     
     """
-    script_name = kwargs["script_name"]
+    print(kwargs)
 
-    # pdb.set_trace()
+    script_name = kwargs["script_name"]
 
     logger = create_logger(script_name)
 
-    script = dynamic_import(script_name)
 
-    # pdb.set_trace()
+
+    script = dynamic_import(script_name)
 
     if kwargs["scriptid_flag"] is True:
         script_id = get_script_id(**kwargs)
@@ -238,6 +236,7 @@ def run_catch(**kwargs):
 
     try:
         results = getattr(script, "main")(job, **kwargs)
+        print(results)
 
         # print("results", results)
 
@@ -252,6 +251,8 @@ def run_catch(**kwargs):
 
         error_text = traceback.format_exc()
         logger.error(str(error_text))
+
+        print(kwargs)
 
         emailutil.send_email(ALERTS_DISTRIBUTION,
                              SCRIPTINFO[script_name]['subject_t'].format(

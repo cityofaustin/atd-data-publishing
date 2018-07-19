@@ -19,7 +19,7 @@ from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
-
+cfg = cfg["tmc_activities"]
 
 def get_record_id_from_file(directory, file):
     '''
@@ -108,7 +108,21 @@ def cli_args():
     return args
 
 
-def main():
+def main(job, **kwargs):
+
+    app_name = kwargs["app_name"]
+    knack_creds = KNACK_CREDENTIALS[app_name]
+
+    base_path = os.path.abspath(ESB_XML_DIRECTORY)
+    inpath = '{}/{}'.format(base_path, 'ready_to_send')
+    outpath = '{}/{}'.format(base_path, 'sent')
+
+    if not os.path.exists(inpath):
+        os.makedirs(inpath)
+
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
+
     directory = os.fsencode(inpath)
     '''
     Get files in order by incremental ID. This ensures messages
@@ -141,26 +155,25 @@ def main():
 
         move_file(inpath, outpath, filename)
 
-    logger.info('{} records transmitted.'.format(len(files)))
+    # logger.info('{} records transmitted.'.format(len(files)))
 
     return len(files)
     
 
     
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
-    args = cli_args()
-    logger.info( 'args: {}'.format( str(args) ))
+    # args = cli_args()
+    # logger.info( 'args: {}'.format( str(args) ))
 
-    app_name = args.app_name
+    # app_name = args.app_name
 
-    knack_creds = KNACK_CREDENTIALS[app_name]
-    cfg = cfg['tmc_activities']
+    # knack_creds = KNACK_CREDENTIALS[app_name]
     
     base_path = os.path.abspath(ESB_XML_DIRECTORY)
     inpath = '{}/{}'.format(base_path, 'ready_to_send')
@@ -174,11 +187,11 @@ if __name__ == '__main__':
             destination='ESB',
             auth=JOB_DB_API_TOKEN)
 
-        if not os.path.exists(inpath):
-            os.makedirs(inpath)
-
-        if not os.path.exists(outpath):
-            os.makedirs(outpath)
+        # if not os.path.exists(inpath):
+        #     os.makedirs(inpath)
+        #
+        # if not os.path.exists(outpath):
+        #     os.makedirs(outpath)
 
         job.start()
 

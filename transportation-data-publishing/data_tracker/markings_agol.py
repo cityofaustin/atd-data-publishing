@@ -185,12 +185,18 @@ def cli_args():
     return args
 
 
-def main(config, job):
+def main(job, **kwargs):
+
+
+    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
+
+
     records_processed = 0
 
     last_run_date = job.most_recent()
 
-    if not last_run_date or args.replace:
+    if not last_run_date or kwargs["replace"]:
+        # replace dataset by setting the last run date to a long, long time ago
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1/1/1900"
     """
@@ -267,7 +273,7 @@ def main(config, job):
             item_type=cfg["item_type"],
         )
 
-        if args.replace:
+        if kwargs["replace"]:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
@@ -300,15 +306,15 @@ def main(config, job):
 
 
 if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
+    # script_name = os.path.basename(__file__).replace(".py", "")
+    # logfile = f"{LOG_DIRECTORY}/{script_name}.log"
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info("START AT {}".format(arrow.now()))
 
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    args = cli_args()
-
-    auth = KNACK_CREDENTIALS[args.app_name]
+    # args = cli_args()
+    #
+    # auth = KNACK_CREDENTIALS[args.app_name]
 
     try:
         job = jobutil.Job(

@@ -200,11 +200,14 @@ def cli_args():
 
 
 
-def main():
+def main(job, **kwargs):
     '''
     Knack database fields that will be updated. Payload is reduced to
     these fields.
     '''
+
+    script_name = kwargs["script_name"]
+
     update_fields = [field for layer in layers for field in layer['updateFields']]
 
     kn = knackpy.Knack(
@@ -321,11 +324,11 @@ def main():
 
 
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}'
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
     args = cli_args()
     app_name = args.app_name

@@ -247,7 +247,7 @@ def create_delete_query(table, match_key, match_val):
     '''.format(table, match_key, match_val)
 
 
-def main():
+def main(job, **kwargs):
     
     kn = knackpy.Knack(
         scene=knack_scene,
@@ -295,7 +295,7 @@ def main():
     
     
     if data_cd['new']:
-        logger.info('new: {}'.format( len(data_cd['new']) ))    
+        # logger.info('new: {}'.format( len(data_cd['new']) ))
         
         max_cam_id = get_max_id(kits_table_camera, 'CAMID')
         data_cd['new'] = map_bools(data_cd['new'])
@@ -327,7 +327,7 @@ def main():
         
         data_cd['change'] = map_bools(data_cd['change'])
         
-        logger.info('change: {}'.format( len(data_cd['change']) ))
+        # logger.info('change: {}'.format( len(data_cd['change']) ))
 
         for record in data_cd['change']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
@@ -354,7 +354,7 @@ def main():
             
     if data_cd['delete']:
 
-        logger.info('delete: {}'.format( len(data_cd['delete']) ))
+        # logger.info('delete: {}'.format( len(data_cd['delete']) ))
         
         for record in data_cd['delete']:
             time.sleep(1) #  connection will fail if queried are pushed too frequently
@@ -371,10 +371,10 @@ def main():
 
             insert_results = kitsutil.insert_multi_table(kits_creds, [query_camera, query_geo, query_web])
 
-    if data_cd['no_change']:
-        logger.info('no_change: {}'.format( len(data_cd['no_change']) ))
+    # if data_cd['no_change']:
+        # logger.info('no_change: {}'.format( len(data_cd['no_change']) ))
 
-    logger.info('END AT {}'.format( arrow.now().format() ))
+    # logger.info('END AT {}'.format( arrow.now().format() ))
 
     results = {'total' : 0}
     
@@ -386,11 +386,11 @@ def main():
 
 if __name__ == '__main__':
 
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
     
     try:
         
@@ -410,7 +410,11 @@ if __name__ == '__main__':
     except Exception as e:
         error_text = traceback.format_exc()
         logger.error(str(e))
-        emailutil.send_email(ALERTS_DISTRIBUTION, 'KITS CAMERA SYNC FAILURE', error_text, EMAIL['user'], EMAIL['password'])
+        emailutil.send_email(ALERTS_DISTRIBUTION,
+                             'KITS CAMERA SYNC FAILURE',
+                             error_text,
+                             EMAIL['user'],
+                             EMAIL['password'])
         
         job.result('error')
 
