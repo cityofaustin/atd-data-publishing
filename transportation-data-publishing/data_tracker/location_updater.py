@@ -207,6 +207,7 @@ def main(job, **kwargs):
     '''
 
     script_name = kwargs["script_name"]
+    app_name = kwargs["app_name"]
 
     update_fields = [field for layer in layers for field in layer['updateFields']]
 
@@ -221,7 +222,6 @@ def main(job, **kwargs):
     unmatched_locations = []
 
     if not kn.data:
-        logger.info('No new records to process')
         return 0
 
     '''
@@ -312,11 +312,11 @@ def main(job, **kwargs):
             method='update',
         )
 
-    logger.info('{} records updated'.format( len(kn.data) - len(unmatched_locations)))
+    # logger.info('{} records updated'.format( len(kn.data) - len(
+    # unmatched_locations)))
 
     if (len(unmatched_locations) > 0):
         error_text = 'Location Point/Poly Match Failure(s): {}'.format(', '.join( str(x) for x in unmatched_locations))
-        logger.info(error_text)
         raise Exception(error_text)
 
     else:

@@ -138,15 +138,15 @@ SCRIPTINFO = {
         },
     "location_updater":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
             "source": "",
             "destination": "",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "Location Update Failure",
-            "subject_v": "",
+            "subject_t": "Location Update Failure{}",
+            "subject_v": "app_name",
             "logger_result": ""
         },
     "markings_agol":
@@ -177,41 +177,41 @@ SCRIPTINFO = {
         },
     "secondary_signals_updater":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "Update Secondary Signals Failure {}",
+            "subject_v": "app_name",
             "logger_result": ""
         },
     "signal_pm_copier":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "Copy Preventative Maintenance Failure",
+            "subject_v": "app_name",
             "logger_result": ""
         },
     "signal_request_ranker":
         {
-            "arguments": ["script_name"],
-            "argdescription": " ",
+            "arguments": ["script_name", "eval_type", "app_name"],
+            "argdescription": "",
             "objects":[],
             "source": "",
             "destination": "",
-            "scriptid_flag": False,
-            "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "scriptid_flag": True,
+            "id_elements": ["script_name", "eval_type"],
+            "subject_t": "Signal Request Ranker Failure {}",
+            "subject_v": "eval_type",
             "logger_result": ""
         },
     "street_seg_updater":
@@ -219,12 +219,12 @@ SCRIPTINFO = {
             "arguments": ["script_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "knack",
+            "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "Street Segment Update Failure",
+            "subject_v": "script_name",
             "logger_result": ""
         },
     "task_orders":
@@ -232,12 +232,12 @@ SCRIPTINFO = {
             "arguments": ["script_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "kits",
+            "destination": "knack",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "DATA PROCESSING ALERT: Task Order Update Failure",
+            "subject_v": "script_name",
             "logger_result": ""
         },
     "tcp_business_days":
@@ -249,8 +249,8 @@ SCRIPTINFO = {
             "destination": "",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "Days Elapsed Update Failure",
+            "subject_v": "app_name",
             "logger_result": ""
         },
     "traffic_reports":

@@ -21,6 +21,8 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+CONFIG = cfg['task_orders']
+KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
 
 def get_html(url):
     form_data = {'DeptNumber' : 2400, 'Search': 'Search', 'TaskOrderName': ''}
@@ -59,7 +61,7 @@ def compare(new_rows, existing_rows, key='TASK_ORDER'):
     return [row for row in new_rows if str(row[key]) not in existing_ids]
 
 
-def main():
+def main(job, **kwargs):
     html = get_html(TASK_ORDERS_ENDPOINT)
     data = handle_html(html)
     rows = handle_rows(data)

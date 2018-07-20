@@ -17,8 +17,15 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+ref_obj = ['object_7']
+scene = 'scene_424'
+view = 'view_1198'
+primay_key = 'SEGMENT_ID_NUMBER'
 
-def main():
+def main(job, **kwargs):
+
+
+    knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
 
     kn = knackpy.Knack(
             scene=scene,
@@ -32,7 +39,7 @@ def main():
     unmatched_segments = []
     
     if not kn.data:
-        logger.info('No records to update.')
+        # logger.info('No records to update.')
         return 0
 
     for street_segment in kn.data:
@@ -83,7 +90,7 @@ def main():
 
     if (len(unmatched_segments) > 0):
         error_text = 'Unmatched street segments: {}'.format(', '.join( str(x) for x in unmatched_segments))
-        logger.info(error_text)
+        #  logger.info(error_text)
         raise Exception(error_text)
 
     return count

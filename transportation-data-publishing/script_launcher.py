@@ -238,11 +238,14 @@ def run_catch(**kwargs):
         results = getattr(script, "main")(job, **kwargs)
         print(results)
 
+
         # print("results", results)
 
-        if results:
-            job.result('success', records_processed=results)
+        if results or results == 0:
 
+            # pdb.set_trace()
+            job.result('success', message = results)
+            # pdb.set_trace()
             logger.info(SCRIPTINFO[script_name]["logger_result"].format(
                 results))
             logger.info('END AT {}'.format(arrow.now()))

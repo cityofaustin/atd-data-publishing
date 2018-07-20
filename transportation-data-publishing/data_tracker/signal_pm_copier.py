@@ -17,6 +17,20 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+params_pm = {
+    'field_obj': ['object_84', 'object_12'],
+    'scene': 'scene_416',
+    'view': 'view_1182'
+}
+
+params_signal = {
+    'field_obj': ['object_12'],
+    'scene': 'scene_73',
+    'view': 'view_197'
+}
+
+copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
+
 def get_prim_signals(list_of_signals):
     '''
     Create a dict of primary signals with and the secondary signals they control
@@ -62,7 +76,11 @@ def cli_args():
     return args
 
 
-def main():
+def main(job, **kwargs):
+
+    app_name = kwargs["app_name"]
+
+    knack_creds = KNACK_CREDENTIALS[app_name]
 
     #  get preventative maintenance (pm) records
     knack_data_pm = knackpy.Knack(
@@ -85,7 +103,7 @@ def main():
             data_pm.append(pm)
 
     if not data_pm:
-        logger.info('No PM records to copy.')
+        # logger.info('No PM records to copy.')
         return 0
 
     #  get signal data
@@ -144,7 +162,8 @@ def main():
     for record in payload_update:
         count += 1
         print( 'update record {} of {}'.format( count, len(payload_insert) ) )
-        logger.info('update record {} of {}'.format( count, len(payload_insert) ) )
+        # logger.info('update record {} of {}'.format( count,
+        # len(payload_insert) ) )
         
         res = knackpy.record(
             record,
@@ -162,7 +181,8 @@ def main():
     for record in payload_insert:
         count += 1
         print( 'insert record {} of {}'.format( count, len(payload_insert) ) )
-        logger.info('insert record {} of {}'.format( count, len(payload_insert) ) )
+        # logger.info('insert record {} of {}'.format( count,
+        # len(payload_insert) ) )
         
         res = knackpy.record(
             record,
@@ -175,37 +195,37 @@ def main():
         logger.info(res)
         update_response.append(res)
 
-    logger.info('END AT {}'.format( arrow.now() ))
+    # logger.info('END AT {}'.format( arrow.now() ))
     
     return len(payload_insert) + len(payload_update)
 
 
 
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # args = cli_args()
+    # app_name = args.app_name
+    #
+    # knack_creds = KNACK_CREDENTIALS[app_name]
 
-    args = cli_args()
-    app_name = args.app_name
-
-    knack_creds = KNACK_CREDENTIALS[app_name]
-
-    params_pm = {  
-        'field_obj' : ['object_84', 'object_12'],
-        'scene' : 'scene_416',
-        'view' : 'view_1182'
-    }
-
-    params_signal = {  
-        'field_obj' : ['object_12'],
-        'scene' : 'scene_73',
-        'view' : 'view_197'
-    }
-
-    copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
+    # params_pm = {
+    #     'field_obj' : ['object_84', 'object_12'],
+    #     'scene' : 'scene_416',
+    #     'view' : 'view_1182'
+    # }
+    #
+    # params_signal = {
+    #     'field_obj' : ['object_12'],
+    #     'scene' : 'scene_73',
+    #     'view' : 'view_197'
+    # }
+    #
+    # copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
 
     try:
         job = jobutil.Job(

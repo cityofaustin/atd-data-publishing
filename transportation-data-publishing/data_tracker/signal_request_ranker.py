@@ -34,7 +34,16 @@ eval_types = {
 }  
 
 
-def main():
+def main(job, **kwargs):
+
+    app_name = kwargs["app_name"]
+    eval_type = kwargs["eval_type"]
+
+    obj = eval_types[eval_type]
+
+    knack_creds = KNACK_CREDENTIALS[app_name]
+
+
     kn = knackpy.Knack(
         obj=eval_types[eval_type],
         app_id=knack_creds['app_id'],

@@ -18,6 +18,11 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+# define config variables
+update_field = 'field_1329'  # SECONDARY_SIGNALS field
+ref_obj = ['object_12']  # signals object
+scene = 'scene_73'
+view = 'view_197'
 
 def cli_args(): 
     parser = argutil.get_parser(
@@ -85,7 +90,10 @@ def get_old_prim_signals(signals):
 
 
 
-def main():
+def main(job, **kwargs):
+
+    app_name = kwargs["app_name"]
+    knack_creds = KNACK_CREDENTIALS[app_name]
 
     kn = knackpy.Knack(
         scene=scene,
@@ -130,10 +138,10 @@ def main():
             payload.append({ 'id' : signal_id, update_field : [] })
 
     if len(payload) == 0:
-        logger.info("No new secondary signals.")
+        # logger.info("No new secondary signals.")
         return 0
 
-    logger.info( "{} records to update".format(len(payload)) )
+    # logger.info( "{} records to update".format(len(payload)) )
     
     for record in payload:
 
@@ -145,27 +153,27 @@ def main():
             method='update',
         )
 
-    logger.info( "{} records processed".format( len(payload)) )
+    # logger.info( "{} records processed".format( len(payload)) )
     
     return len(payload)
 
 
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
+    #
+    # args = cli_args()
+    # app_name = args.app_name
 
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # update_field = 'field_1329'  # SECONDARY_SIGNALS field
+    # ref_obj = ['object_12']  #  signals object
+    # scene = 'scene_73'
+    # view = 'view_197'
 
-    args = cli_args()
-    app_name = args.app_name
-
-    update_field = 'field_1329'  # SECONDARY_SIGNALS field
-    ref_obj = ['object_12']  #  signals object
-    scene = 'scene_73'
-    view = 'view_197'
-
-    knack_creds = KNACK_CREDENTIALS[app_name]
+    # knack_creds = KNACK_CREDENTIALS[app_name]
 
     try:
         
