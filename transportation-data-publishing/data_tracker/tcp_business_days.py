@@ -23,6 +23,15 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+# define config variables
+scene = 'scene_754'
+view = 'view_1987'
+obj = 'object_147'
+start_key = 'SUBMITTED_DATE'
+end_key = 'REVIEW_COMPLETED_DATE'
+elapsed_key = 'DAYS_ELAPSED'
+
+update_fields = ['DAYS_ELAPSED', 'id']
 
 def get_calendar():
     return CustomBusinessDay(calendar=USFederalHolidayCalendar())
@@ -115,15 +124,12 @@ def update_record(record, obj_key, creds):
     return res
 
 
-def main(creds):
-    scene = 'scene_754'
-    view = 'view_1987' 
-    obj = 'object_147'
-    start_key = 'SUBMITTED_DATE'
-    end_key = 'REVIEW_COMPLETED_DATE'
-    elapsed_key = 'DAYS_ELAPSED'
+def main(job, **kwargs):
 
-    update_fields = [ 'DAYS_ELAPSED', 'id' ]
+    app_name = kwargs["app_name"]
+
+    creds = KNACK_CREDENTIALS[app_name]
+
 
     kn = knackpy.Knack(
         scene=scene,
@@ -143,7 +149,7 @@ def main(creds):
         calendar
     )
     
-    logger.info( '{} Records to Update'.format(len(kn.data) ))
+    # logger.info( '{} Records to Update'.format(len(kn.data) ))
 
     if kn.data:    
         kn.data = datautil.reduce_to_keys(kn.data, update_fields)
@@ -157,11 +163,11 @@ def main(creds):
 
 
 if __name__ == '__main__':
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( datetime.today() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( datetime.today() ))
         
     try:
         args = cli_args()

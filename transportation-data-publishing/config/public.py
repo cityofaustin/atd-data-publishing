@@ -1,6 +1,7 @@
 # not really open to public
 
 SCRIPTINFO = {
+    # start from here: config info for data_tracker
     "backup":
         {
             "arguments": ["script_name", "app_name"],
@@ -242,7 +243,7 @@ SCRIPTINFO = {
         },
     "tcp_business_days":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
             "source": "",
@@ -258,14 +259,16 @@ SCRIPTINFO = {
             "arguments": ["script_name"],
             "argdescription": " ",
             "objects":[],
-            "source": "",
-            "destination": "",
+            "source": "rss",
+            "destination": "postgrest",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "Traffic Report Process Failure",
+            "subject_v": "script_name",
             "logger_result": ""
         },
+    # ends here: config info for data tracker
+    # start from here: config info for scripts belongs in open-data
     "knack_data_pub":
         {
             "arguments": ["script_name", "dataset", "app_name",
@@ -278,5 +281,77 @@ SCRIPTINFO = {
             "subject_v": "dataset",
             "logger_result": "args:{}",
             "scriptid_flag": True
+        },
+    "pgrest_data_pub":
+        {
+            "arguments": ["script_name", "dataset", "app_name",
+                          "--destination",
+                          "--replace"],
+            "argdescription": "Publish PostgREST data to Socrata and ArcGIS Online",
+            "objects": [],
+            "source": "postgrest",
+            "destination": "socrata",
+            "scriptid_flag": False,
+            "id_elements": ["script_name", "dataset", "source", "destination"],
+            "subject_t": "Knack Data Pub Failure: {}",
+            "subject_v": "dataset",
+            "logger_result": ""
+        },
+    "redar_count_pub":
+        {
+            "arguments": ["script_name", "--replace"],
+            "argdescription": " ",
+            "objects": [],
+            "source": "knack",
+            "destination": "knack",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "DATA PROCESSING ALERT: Radar Traffic Count Publisher",
+            "subject_v": "script_name",
+            "logger_result": ""
+        },
+    "sig_stat_pub":
+        {
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects": [],
+            "source": "rss",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "logger_result": ""
+        },
+    # config files for open data ends here
+    # Start from here: config info for bcycle
+    "bcycle_kiosk_pub":
+        {
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects": [],
+            "source": "rss",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "logger_result": ""
+        },
+    "bcycle_trip_pub":
+        {
+            "arguments": ["script_name"],
+            "argdescription": " ",
+            "objects": [],
+            "source": "rss",
+            "destination": "",
+            "scriptid_flag": False,
+            "id_elements": [],
+            "subject_t": "",
+            "subject_v": "",
+            "logger_result": ""
         }
+    # ends here: config info for bcycle
+
 }
+

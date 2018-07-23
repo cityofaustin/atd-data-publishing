@@ -19,7 +19,7 @@ import urllib.parse
 import arrow
 
 import _setpath
-from config.postgrest.config import cfg as CFG
+from config.postgrest.config import cfg
 from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil
@@ -33,11 +33,11 @@ from tdutils import socratautil
 def after_date_query(date_field, date):
     return f"{date_field}=gte.{date}"
 
-def socrata_pub(records, cfg, date_fields=None):
-    if cfg.get("location_fields"):
-        lat_field = cfg["location_fields"]["lat"].lower()
-        lon_field = cfg["location_fields"]["lon"].lower()
-        location_field = cfg["location_fields"]["location_field"].lower()
+def socrata_pub(records, cfg_dataset, replace, date_fields=None):
+    if cfg_dataset.get("location_fields"):
+        lat_field = cfg_dataset["location_fields"]["lat"].lower()
+        lon_field = cfg_dataset["location_fields"]["lon"].lower()
+        location_field = cfg_dataset["location_fields"]["location_field"].lower()
     else:
         lat_field = None
         lon_field = None
@@ -46,29 +46,41 @@ def socrata_pub(records, cfg, date_fields=None):
     return socratautil.Soda(
         auth=SOCRATA_CREDENTIALS,
         records=records,
-        resource=cfg["socrata_resource_id"],
+        resource=cfg_dataset["socrata_resource_id"],
         date_fields=date_fields,
         lat_field=lat_field,
         lon_field=lon_field,
         location_field=location_field,
         source="postgrest",
-        replace=args.replace,
+        replace= replace,
     )
 
 
-def main(cfg, job, args):
+def main(job, **kwargs):
+
+    # cfg_dataset, job, args
+
+    script_name = kwargs["script_name"]
+    dataset = kwargs["dataset"]
+    app_name = kwargs["app_name"]
+    replace = kwargs["replace"]
+
+    
+    cfg_dataset = cfg[dataset]
+    
+    
 
     last_run_date = job.most_recent()
 
-    if not last_run_date or args.replace or job.destination == "csv":
+    if not last_run_date or kwargs["replace"] or job.destination == "csv":
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1900-01-01"
 
     last_run_date = urllib.parse.quote_plus( arrow.get(last_run_date).format() )
 
-    pgrest = pgrestutil.Postgrest(cfg["base_url"], auth=JOB_DB_API_TOKEN)
+    pgrest = pgrestutil.Postgrest(cfg_dataset["base_url"], auth=JOB_DB_API_TOKEN)
 
-    query_string = after_date_query(cfg["modified_date_field"], last_run_date)
+    query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
     records = pgrest.select(query_string)
 
     if not records:
@@ -80,9 +92,10 @@ def main(cfg, job, args):
     ]  # TODO: extract from API definition
 
     if job.destination == "socrata":
-        pub = socrata_pub(records, cfg, date_fields=date_fields)
+        pub = socrata_pub(records, cfg_dataset, replace,
+                          date_fields=date_fields)
 
-    logger.info("END AT {}".format(arrow.now()))
+    # logger.info("END AT {}".format(arrow.now()))
 
     return len(records)
 
@@ -104,19 +117,18 @@ def cli_args():
 
 
 if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
+    # script_name = os.path.basename(__file__).replace(".py", "")
+    # logfile = f"{LOG_DIRECTORY}/{script_name}.log"
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info("START AT {}".format(arrow.now()))
 
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
+    # args = cli_args()
+    # logger.info("args: {}".format(str(args)))
 
-    args = cli_args()
-    logger.info("args: {}".format(str(args)))
-
-    cfg = CFG[args.dataset]
+    cfg_dataset = cfg[args.dataset]
 
     for dest in args.destination:
-
         try:
             script_id = "{}_{}_{}_{}".format(
                 script_name, args.dataset, "postgres", dest
@@ -132,7 +144,7 @@ if __name__ == "__main__":
 
             job.start()
 
-            results = main(cfg, job, args)
+            results = main(cfg_dataset, job, args)
 
             job.result("success", records_processed=results)
 

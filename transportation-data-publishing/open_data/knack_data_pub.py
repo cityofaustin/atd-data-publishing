@@ -20,8 +20,9 @@ import arrow
 import knackpy
 
 # import _setpath
-from config.knack.config import cfg as CFG
+from config.knack.config import cfg
 from config.secrets import *
+
 from tdutils import agolutil
 from tdutils import argutil
 from tdutils import datautil
@@ -33,11 +34,11 @@ from tdutils import socratautil
 
 
 
-def socrata_pub(records, cfg, date_fields=None):
-    if cfg.get('location_fields'):            
-        lat_field = cfg['location_fields']['lat'].lower()
-        lon_field = cfg['location_fields']['lon'].lower()
-        location_field = cfg['location_fields']['location_field'].lower()
+def socrata_pub(records, cfg_dataset, date_fields=None):
+    if cfg_dataset.get('location_fields'):            
+        lat_field = cfg_dataset['location_fields']['lat'].lower()
+        lon_field = cfg_dataset['location_fields']['lon'].lower()
+        location_field = cfg_dataset['location_fields']['location_field'].lower()
     else:
         lat_field = None
         lon_field = None
@@ -46,7 +47,7 @@ def socrata_pub(records, cfg, date_fields=None):
     return socratautil.Soda(
         auth=SOCRATA_CREDENTIALS,
         records=records,
-        resource=cfg['socrata_resource_id'],
+        resource=cfg_dataset['socrata_resource_id'],
         date_fields=date_fields,
         lat_field=lat_field,
         lon_field=lon_field,
@@ -54,19 +55,19 @@ def socrata_pub(records, cfg, date_fields=None):
         replace=args.replace)
 
 
-def agol_pub(records, cfg):
+def agol_pub(records, cfg_dataset):
     '''
     Upsert or replace records on arcgis online features service
     '''
-    if cfg.get('location_fields'):                    
-        lat_field = cfg['location_fields']['lat']
-        lon_field = cfg['location_fields']['lon']
+    if cfg_dataset.get('location_fields'):                    
+        lat_field = cfg_dataset['location_fields']['lat']
+        lon_field = cfg_dataset['location_fields']['lon']
     else:
         lat_field = None
         lon_field = None
                 
     layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
-                                service_id=cfg['service_id'])
+                                service_id=cfg_dataset['service_id'])
     
     if args.replace:
         res = layer.manager.truncate()
@@ -81,7 +82,7 @@ def agol_pub(records, cfg):
         layer.append method, it is apparently still under development. So our
         "upsert" consists of a delete by primary key then add.
         '''
-        primary_key = cfg.get('primary_key')
+        primary_key = cfg_dataset.get('primary_key')
 
         delete_ids = [record[primary_key] for record in records]
 
@@ -101,24 +102,24 @@ def agol_pub(records, cfg):
     return True
 
 
-def write_csv(knackpy_instance, cfg):
-    if cfg.get('csv_separator'):
-        sep = cfg['csv_separator']
+def write_csv(knackpy_instance, cfg_dataset, dataset):
+    if cfg_dataset.get('csv_separator'):
+        sep = cfg_dataset['csv_separator']
     else:
         sep = ','
 
-    file_name = '{}/{}.csv'.format(FME_DIRECTORY, args.dataset)
+    file_name = '{}/{}.csv'.format(FME_DIRECTORY, dataset)
     knackpy_instance.to_csv(file_name, delimiter=sep)
     
     return True
 
 
-def knackpy_wrapper(cfg, auth, filters=None):
+def knackpy_wrapper(cfg_dataset, auth, filters=None):
     return knackpy.Knack(
-        obj=cfg['obj'],
-        scene=cfg['scene'],
-        view=cfg['view'],
-        ref_obj=cfg['ref_obj'],
+        obj=cfg_dataset['obj'],
+        scene=cfg_dataset['scene'],
+        view=cfg_dataset['view'],
+        ref_obj=cfg_dataset['ref_obj'],
         app_id=auth['app_id'],
         api_key=auth['api_key'],
         filters=filters,
@@ -126,7 +127,7 @@ def knackpy_wrapper(cfg, auth, filters=None):
     )
 
 
-def get_multi_source(cfg, auth, last_run_date):
+def get_multi_source(cfg_dataset, auth, last_run_date):
     '''
     Return a single knackpy dataset instance from multiple knack sources. Developed
     specifically for merging traffic and phb signal requests into a single dataset.
@@ -135,30 +136,30 @@ def get_multi_source(cfg, auth, last_run_date):
     '''
     kn = None
 
-    for source_cfg in cfg['sources']:
+    for source_cfg_dataset in cfg_dataset['sources']:
         
         filters = knackutil.date_filter_on_or_after(
             last_run_date,
-            source_cfg['modified_date_field_id'])
+            source_cfg_dataset['modified_date_field_id'])
 
         last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
 
         if not kn:
-            kn = knackpy_wrapper(source_cfg, auth, filters)
+            kn = knackpy_wrapper(source_cfg_dataset, auth, filters)
 
             if kn.data:
                 kn.data = filter_by_date(kn.data,
-                    source_cfg['modified_date_field'], last_run_timestamp)
+                    source_cfg_dataset['modified_date_field'], last_run_timestamp)
             else:
                 #  Replace None with empty list
                 kn.data = []
 
         else:
-            kn_temp = knackpy_wrapper(source_cfg, auth, filters)
+            kn_temp = knackpy_wrapper(source_cfg_dataset, auth, filters)
 
             if kn_temp.data:
                 kn_temp.data = filter_by_date(kn_temp.data,
-                    source_cfg['modified_date_field'], last_run_timestamp)
+                    source_cfg_dataset['modified_date_field'], last_run_timestamp)
 
             else:
                 kn_temp.data = []
@@ -181,18 +182,22 @@ def main(job, **kwargs):
 
     Args:
         previous arguments:
-        cfg ():
-        auth ():
-        job ():
-        args ():
+        cfg_dataset (dict): configuration dictionary got from config.knack.config based
+        on the name of the dataset
+        auth (dict): knack credential from secrets.py file
+        job (object): a job object
+        args (namespace): name space created by argutil/argparse that holds
+        all command line input.
 
     Returns:
 
     """
-    
+    cfg_dataset = cfg[kwargs["dataset"]]
+    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
+
     last_run_date = job.most_recent()
 
-    if not last_run_date or args.replace or job.destination == 'csv':
+    if not last_run_date or kwargs["replace"] or job.destination == 'csv':
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = '1/1/1900'
         
@@ -204,57 +209,59 @@ def main(job, **kwargs):
     we receive it.
     '''
 
-    if cfg.get('multi_source'):
-        kn = get_multi_source(cfg, auth, last_run_date)
+    if cfg_dataset.get('multi_source'):
+        kn = get_multi_source(cfg_dataset, auth, last_run_date)
 
     else:
         
         filters = knackutil.date_filter_on_or_after(
             last_run_date,
-            cfg['modified_date_field_id'])
+            cfg_dataset['modified_date_field_id'])
 
-
-        kn = knackpy_wrapper(cfg, auth, filters=filters)
+        kn = knackpy_wrapper(cfg_dataset, auth, filters=filters)
     
         if kn.data:
             # Filter data for records that have been modifed after the last 
             # job run (see comment above)
             last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
-            kn.data = filter_by_date(kn.data, cfg['modified_date_field'], last_run_timestamp)
+            kn.data = filter_by_date(kn.data, cfg_dataset['modified_date_field'], last_run_timestamp)
 
     if not kn.data:
         return 0
 
-    if cfg.get('fetch_locations'):
+    if cfg_dataset.get('fetch_locations'):
         '''
         Optionally fetch location data from another knack view and merge with
-        primary dataset. We access the base CFG object to pull request info
+        primary dataset. We access the base cfg_dataset object to pull request info
         from the 'locations' config.
         '''
-        locations = knackpy_wrapper(CFG['locations'], auth)
 
-        lat_field = CFG['locations']['location_fields']['lat']
-        lon_field = CFG['locations']['location_fields']['lon']
+        locations = knackpy_wrapper(cfg_dataset['locations'], auth)
+
+        lat_field = cfg_dataset['locations']['location_fields']['lat']
+        lon_field = cfg_dataset['locations']['location_fields']['lon']
 
         kn.data = datautil.merge_dicts(
             kn.data,
             locations.data,
-            cfg['location_join_field'],
+            cfg_dataset['location_join_field'],
             [lat_field, lon_field]
         )
 
     date_fields = [kn.fields[f]['label'] for f in kn.fields if kn.fields[f]['type'] in ['date_time', 'date']]
 
+    print("job destination", job.destination)
+
     if job.destination == 'socrata':
-        pub = socrata_pub(kn.data, cfg, date_fields=date_fields)
+        pub = socrata_pub(kn.data, cfg_dataset, date_fields=date_fields)
 
     if job.destination == 'agol':
-        pub = agol_pub(kn.data, cfg)
+        pub = agol_pub(kn.data, cfg_dataset)
 
     if job.destination == 'csv':
-        write_csv(kn, cfg)
+        write_csv(kn, cfg_dataset, kwargs["dataset"])
         
-    logger.info('END AT {}'.format( arrow.now() ))
+    # logger.info('END AT {}'.format( arrow.now() ))
     
     return len(kn.data)
 
@@ -285,7 +292,8 @@ if __name__ == '__main__':
     # args = cli_args()
     logger.info( 'args: {}'.format( str(args) ))
 
-    cfg = CFG[args.dataset]
+    cfg_dataset_dataset = cfg_dataset[args.dataset]
+
 
     for dest in args.destination:
         '''

@@ -19,8 +19,11 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 from tdutils import kitsutil
-from tdutils import socratautil   
+from tdutils import socratautil
 
+# define config variables
+
+socrata_resource = 'i626-g7ub'
 
 def my_round(x, base=15):
     # https://stackoverflow.com/questions/2272149/round-to-5-or-other-number-in-python
@@ -56,7 +59,9 @@ def get_direction(lane):
         return None
 
 
-def main():
+def main(job, **kwargs):
+
+
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
@@ -191,6 +196,7 @@ def main():
     return (len(socrata_payload))
 
 def cli_args():
+
     parser = argutil.get_parser(
         'count_data_pub.py',
         'Publish radar count data from KITS DB to City of Austin Open Data Portal.',
@@ -204,11 +210,11 @@ def cli_args():
 
 if __name__ == '__main__':
 
-    script_name = os.path.basename(__file__).replace('.py', '')
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info('START AT {}'.format( arrow.now() ))
+    # script_name = os.path.basename(__file__).replace('.py', '')
+    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    #
+    # logger = logutil.timed_rotating_log(logfile)
+    # logger.info('START AT {}'.format( arrow.now() ))
 
     socrata_resource = 'i626-g7ub'
 

@@ -11,6 +11,7 @@ from config.secrets import *
 from config.public import *
 from config.knack.config import cfg
 from config.arguments import *
+from config.wherescripts import *
 
 # needed packages in tdutils
 from tdutils import logutil
@@ -124,7 +125,19 @@ def dynamic_import(script_name):
         TYPE: Description
     
     """
-    module_name = "data_tracker.{}".format(script_name)
+
+    for directory, script in SCRIPTDIR.items():
+        for name in script:
+            # print(directory)
+            if script_name == name:
+                # print(script_name)
+                # print(script)
+                module_name = "{}.{}".format(directory, script_name)
+
+
+
+    # module_name = "{}.{}".format(directory, script_name)
+
     # print(module_name)
     script = importlib.import_module(module_name)
 
@@ -281,3 +294,4 @@ if __name__ == "__main__":
 
     run_catch(**kwargs)
 
+    # dynamic_import("backup")
