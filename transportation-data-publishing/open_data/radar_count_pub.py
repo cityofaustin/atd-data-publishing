@@ -140,7 +140,7 @@ def main(job, **kwargs):
             '''.format(strtime)
     
     else:
-        logger.info('No Data to export')
+        # logger.info('No Data to export')
         return 0
 
     kits_data = kitsutil.data_as_dict(

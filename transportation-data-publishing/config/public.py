@@ -297,7 +297,7 @@ SCRIPTINFO = {
             "subject_v": "dataset",
             "logger_result": ""
         },
-    "redar_count_pub":
+    "radar_count_pub":
         {
             "arguments": ["script_name", "--replace"],
             "argdescription": " ",
@@ -334,21 +334,21 @@ SCRIPTINFO = {
             "destination": "",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "DATA PROCESSING ALERT: B-Cycle Kiosk Pub",
+            "subject_v": "script_name",
             "logger_result": ""
         },
     "bcycle_trip_pub":
         {
             "arguments": ["script_name"],
-            "argdescription": " ",
+            "argdescription": "",
             "objects": [],
-            "source": "rss",
-            "destination": "",
+            "source": "dropbox",
+            "destination": "socrata",
             "scriptid_flag": False,
             "id_elements": [],
-            "subject_t": "",
-            "subject_v": "",
+            "subject_t": "DATA PROCESSING ALERT: B-Cycle Trip Data",
+            "subject_v": "script_name",
             "logger_result": ""
         }
     # ends here: config info for bcycle

@@ -40,7 +40,7 @@ def add_timestamps(records, timestamp_field='processed_datetime'):
 
 
 
-def main():
+def main(jobs, **kwargs):
     # get current traffic signal data from Socrata      
     socr = socratautil.Soda(resource=SOCR_SIG_RES_ID, fetch_metadata=True)
     signal_data = socr.data
