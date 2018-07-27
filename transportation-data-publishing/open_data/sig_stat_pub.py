@@ -15,7 +15,16 @@ from tdutils import logutil
 from tdutils import socratautil
 
 # test data
-# KITS_DATA = [{'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 2, 'PLAN_ID':0, 'SIGNAL_ID': 617}, {'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 1, 'PLAN_ID':0, 'SIGNAL_ID': 110}]
+# KITS_DATA = [{'KITS_ID': 50,
+# 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000),
+# 'OPERATION_STATE': 2, 'PLAN_ID':0, 'SIGNAL_ID': 617},
+# {'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 1, 'PLAN_ID':0, 'SIGNAL_ID': 110}]
+
+# define
+
+SOCR_SIG_RES_ID = 'xwqn-2f78'
+SOCR_SIG_STAT_RES_ID = '5zpr-dehc'
+FLASH_STATUSES = ['1', '2', '3']
 
 def add_ids(records, primary_key='signal_id', id_field='record_id'):
     '''

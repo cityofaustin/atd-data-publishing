@@ -257,7 +257,10 @@ def run_catch(**kwargs):
         if results or results == 0:
 
             # pdb.set_trace()
-            job.result('success', message = results)
+            try:
+                job.result('success', records_processed= results)
+            except Exception:
+                job.result('success', message = results)
             # pdb.set_trace()
             logger.info(SCRIPTINFO[script_name]["logger_result"].format(
                 results))

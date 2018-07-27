@@ -7,4 +7,5 @@ knackpy==0.0.11
 pandas==0.22.0
 pymssql
 tdutils==0.0.3
-yagmail==0.10.212
+yagmail==0.10.21
+importlib==1.0.4
