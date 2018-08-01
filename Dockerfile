@@ -7,6 +7,7 @@ WORKDIR /app
 COPY requirements.txt /app
 
 RUN apt-get update
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
 
 #  Install tzdata and set timezone
 RUN apt-get install -y tzdata
