@@ -11,7 +11,7 @@ SCRIPTDIR = {
     "data_tracker": ["backup", "detection_status_signals", "device_status",
                      "device_status_log", "dms_msg_pub", "dms_msg_pub",
                      "esb_xml_gen", "esb_xml_send", "fulc", "kits_cctv_push",
-                     "knack_data_pub", "location_updater", "markings_agol",
+                     "location_updater", "markings_agol",
                      "metadata_updater", "secondary_signals_updater",
                      "signal_pm_copier", "signal_request_ranker",
                      "street_seg_updater", "task_orders", "tcp_business_days",
