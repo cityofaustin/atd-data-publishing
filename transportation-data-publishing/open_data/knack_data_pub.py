@@ -34,7 +34,7 @@ from tdutils import socratautil
 
 
 
-def socrata_pub(records, cfg_dataset, date_fields=None):
+def socrata_pub(records, cfg_dataset, replace, date_fields=None):
     if cfg_dataset.get('location_fields'):            
         lat_field = cfg_dataset['location_fields']['lat'].lower()
         lon_field = cfg_dataset['location_fields']['lon'].lower()
@@ -52,10 +52,10 @@ def socrata_pub(records, cfg_dataset, date_fields=None):
         lat_field=lat_field,
         lon_field=lon_field,
         location_field=location_field,
-        replace=args.replace)
+        replace=replace)
 
 
-def agol_pub(records, cfg_dataset):
+def agol_pub(records, cfg_dataset, replace):
     '''
     Upsert or replace records on arcgis online features service
     '''
@@ -69,7 +69,7 @@ def agol_pub(records, cfg_dataset):
     layer = agolutil.get_item(auth=AGOL_CREDENTIALS, 
                                 service_id=cfg_dataset['service_id'])
     
-    if args.replace:
+    if replace:
         res = layer.manager.truncate()
 
         if not res.get('success'):
@@ -253,10 +253,10 @@ def main(job, **kwargs):
     print("job destination", job.destination)
 
     if job.destination == 'socrata':
-        pub = socrata_pub(kn.data, cfg_dataset, date_fields=date_fields)
+        pub = socrata_pub(kn.data, cfg_dataset, kwargs["replace"], date_fields=date_fields)
 
     if job.destination == 'agol':
-        pub = agol_pub(kn.data, cfg_dataset)
+        pub = agol_pub(kn.data, cfg_dataset, kwargs["replace"])
 
     if job.destination == 'csv':
         write_csv(kn, cfg_dataset, kwargs["dataset"])
