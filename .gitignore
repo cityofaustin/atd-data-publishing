@@ -19,3 +19,4 @@ transportation-data-publishing/data/*
 transportation-data-publishing/log/*
 transportation-data-publishing/xml/*
 !*.md
+log/
