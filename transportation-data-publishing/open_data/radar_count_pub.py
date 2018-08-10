@@ -61,7 +61,7 @@ def get_direction(lane):
 
 def main(job, **kwargs):
 
-
+    replace = kwargs["replace"]
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
