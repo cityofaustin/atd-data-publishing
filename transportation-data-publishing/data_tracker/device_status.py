@@ -44,7 +44,7 @@ def ping_ip(ip, timeout=3):
 
     response = system_call("ping " + params + " " + ip)
 
-    logger.debug(str(response))
+    # logger.debug(str(response))
 
     if response != 0:
         return 'OFFLINE'
@@ -67,11 +67,13 @@ def get_status(device):
     
     #  get old IP status, setting it to NO COMMUNICATION if not present    
     state_previous = device.setdefault('IP_COMM_STATUS', 'NO COMMUNICATION')
-    
+
+    ip_field = device["ip_field"]
     ip = device.get(ip_field)
+    device_type = device["device_type"]
 
     if ip:
-        if args.device_type != 'gridsmart':
+        if device_type != 'gridsmart':
             state_new = ping_ip(device[ip_field])
         
         else:
@@ -100,8 +102,6 @@ def get_status(device):
 
 
 def main(job, **kwargs):
-
-
 
     device_type = kwargs["device_type"]
     out_json = kwargs["json"]
@@ -137,6 +137,10 @@ def main(job, **kwargs):
         app_id=knack_creds['app_id'],
         api_key=knack_creds['api_key']
     )
+
+    for i in kn.data:
+        i["ip_field"] = ip_field
+        i["device_type"] = device_type
 
     #  optionally write to JSON
     #  this is a special case for CCTV cameras.
@@ -182,88 +186,75 @@ def main(job, **kwargs):
     
 
 
-# def cli_args():
-#
-#     parser = argutil.get_parser(
-#         'device_status_check.py',
-#         'Ping network devices to verify connenectivity.',
-#         'device_type',
-#         'app_name',
-#         '--json',
-#         '--replace'
-#     )
-#
-#     args = parser.parse_args()
-#
-#     return args
 
 
-if __name__ == '__main__':
 
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
+# if __name__ == '__main__':
 
-    #  parse command-line arguments
-    # args = cli_args()
-    # logger.info( 'args: {}'.format(args))
-    #
-    # device_type = args.device_type
-    # out_json = args.json
-    # app_name = args.app_name
-    # primary_key = cfg[device_type]['primary_key']
-    # ip_field = cfg[device_type]['ip_field']
+#     script_name = os.path.basename(__file__).replace('.py', '')
+#     logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    
+#     logger = logutil.timed_rotating_log(logfile)
+#     logger.info('START AT {}'.format( arrow.now() ))
 
-    script_id = '{}_{}'.format(
-        script_name,
-        args.device_type)
+#     parse command-line arguments
+#     args = cli_args()
+#     logger.info( 'args: {}'.format(args))
+    
+#     device_type = args.device_type
+#     out_json = args.json
+#     app_name = args.app_name
+#     primary_key = cfg[device_type]['primary_key']
+#     ip_field = cfg[device_type]['ip_field']
 
-    try:
-        job = jobutil.Job(
-            name=script_id,
-            url=JOB_DB_API_URL,
-            source='knack',
-            destination='knack',
-            auth=JOB_DB_API_TOKEN)
+#     script_id = '{}_{}'.format(
+#         script_name,
+#         args.device_type)
+
+#     try:
+#         job = jobutil.Job(
+#             name=script_id,
+#             url=JOB_DB_API_URL,
+#             source='knack',
+#             destination='knack',
+#             auth=JOB_DB_API_TOKEN)
      
-        job.start()
+#         job.start()
 
-        # knack_creds = KNACK_CREDENTIALS[app_name]
+#         knack_creds = KNACK_CREDENTIALS[app_name]
         
-        # out_fields_upload = [
-        #     'id',
-        #     ip_field,
-        #     'IP_COMM_STATUS',
-        #     'COMM_STATUS_DATETIME_UTC'
-        # ]
-        #
-        # out_fields_json = [
-        #     'id',
-        #     ip_field,
-        #     'IP_COMM_STATUS',
-        #     'COMM_STATUS_DATETIME_UTC',
-        #     primary_key
-        # ]
-
-        results = main()
-
-        if (results):
-            job.result('success')
-
-        logger.info('END AT {}'.format( arrow.now() ))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        email_subject = "Device Status Check Failure: {}".format(device_type)
-        emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
+#         out_fields_upload = [
+#             'id',
+#             ip_field,
+#             'IP_COMM_STATUS',
+#             'COMM_STATUS_DATETIME_UTC'
+#         ]
         
-        job.result('error', message=str(e))
+#         out_fields_json = [
+#             'id',
+#             ip_field,
+#             'IP_COMM_STATUS',
+#             'COMM_STATUS_DATETIME_UTC',
+#             primary_key
+#         ]
 
-        raise e
+#         results = main()
+
+#         if (results):
+#             job.result('success')
+
+#         logger.info('END AT {}'.format( arrow.now() ))
+
+#     except Exception as e:
+#         error_text = traceback.format_exc()
+#         logger.error(error_text)
+
+#         email_subject = "Device Status Check Failure: {}".format(device_type)
+#         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
+        
+#         job.result('error', message=str(e))
+
+#         raise e
 
 
 # print(results)
