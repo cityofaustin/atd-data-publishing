@@ -235,11 +235,10 @@ def main(job, **kwargs):
         primary dataset. We access the base cfg_dataset object to pull request info
         from the 'locations' config.
         '''
+        locations = knackpy_wrapper(cfg['locations'], auth)
 
-        locations = knackpy_wrapper(cfg_dataset['locations'], auth)
-
-        lat_field = cfg_dataset['locations']['location_fields']['lat']
-        lon_field = cfg_dataset['locations']['location_fields']['lon']
+        lat_field = cfg['locations']['location_fields']['lat']
+        lon_field = cfg['locations']['location_fields']['lon']
 
         kn.data = datautil.merge_dicts(
             kn.data,
