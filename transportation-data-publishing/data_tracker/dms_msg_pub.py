@@ -19,7 +19,7 @@ from tdutils import kitsutil
 from tdutils import logutil
 
     
-def main():
+def main(job, **kwargs):
     CONFIG = cfg['dms']
     KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
     

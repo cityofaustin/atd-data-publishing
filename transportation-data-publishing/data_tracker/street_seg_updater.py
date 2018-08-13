@@ -63,24 +63,20 @@ def main(job, **kwargs):
         filters=filters
     )
 
-    pdb.set_trace()
-
     if kn.data:
         # Filter data for records that have been modifed after the last 
         # job run (see comment above)
         last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
         kn.data = filter_by_date(kn.data, config['modified_date_field'], last_run_timestamp)
 
-    pdb.set_trace()
-
     payload = []
     unmatched_segments = []
     
     if not kn.data:
-        logger.info('No records to update.')
+        # logger.info('No records to update.')
         return 0
 
-    pdb.set_trace()
+    
 
     for street_segment in kn.data:
         
@@ -101,7 +97,6 @@ def main(job, **kwargs):
         segment_data['MODIFIED_BY'] = 'api-update' 
         payload.append(segment_data)
     
-    pdb.set_trace()
 
     payload = datautil.reduce_to_keys(payload, kn.fieldnames)
     payload = datautil.replace_keys(payload, kn.field_map)
@@ -129,9 +124,10 @@ def main(job, **kwargs):
 
         update_response.append(res)
 
+    pdb.set_trace()
     if (len(unmatched_segments) > 0):
         error_text = 'Unmatched street segments: {}'.format(', '.join( str(x) for x in unmatched_segments))
-        logger.info(error_text)
+        # logger.info(error_text)
         raise Exception(error_text)
 
     return count
