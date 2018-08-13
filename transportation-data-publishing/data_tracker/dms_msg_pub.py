@@ -21,7 +21,7 @@ from tdutils import logutil
     
 def main(job, **kwargs):
     CONFIG = cfg['dms']
-    KNACK_CREDS = KNACK_CREDENTIALS['data_tracker_prod']
+    KNACK_CREDS = KNACK_CREDENTIALS[kwargs["app_name"]]
     
     kits_query =  '''
         SELECT DMSID as KITS_ID

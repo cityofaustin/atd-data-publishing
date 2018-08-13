@@ -74,7 +74,7 @@ SCRIPTINFO = {
         },
     "dms_msg_pub":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
             "source": "kits",
