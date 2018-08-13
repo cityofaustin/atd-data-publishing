@@ -15,53 +15,94 @@ from tdutils import agolutil
 from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
+from tdutils import knackutil
 from tdutils import logutil
 
-ref_obj = ['object_7']
-scene = 'scene_424'
-view = 'view_1198'
-primay_key = 'SEGMENT_ID_NUMBER'
+
+config = {
+    'modified_date_field_id' : 'field_144',
+    'modified_date_field' : 'MODIFIED_DATE',
+    'primary_key' : 'SEGMENT_ID_NUMBER',
+    'ref_obj' : ['object_7'],
+    'scene' : 'scene_424',
+    'view' : 'view_1198',
+}
+
+def filter_by_date(data, date_field, compare_date):
+    '''
+    Date field and compare date should be unix timestamps with mills
+    '''
+    return [record for record in data if record[date_field] >= compare_date]
 
 def main(job, **kwargs):
 
 
-    knack_creds = KNACK_CREDENTIALS['data_tracker_prod']
+    knack_creds = KNACK_CREDENTIALS[kwargs["app_name"]]
+    last_run_date = job.most_recent()
+
+    if not last_run_date:
+        # replace dataset by setting the last run date to a long, long time ago
+        last_run_date = '1/1/2018'
+
+    filters = knackutil.date_filter_on_or_after(last_run_date,config['modified_date_field_id'])
+
+    '''
+    We include a filter in our API call to limit to records which have
+    been modified on or after the date the last time this job ran
+    successfully. The Knack API supports filter requests by date only
+    (not time), so we must apply an additional filter on the data after
+    we receive it.
+    '''
 
     kn = knackpy.Knack(
-            scene=scene,
-            view=view,
-            ref_obj=ref_obj,
-            app_id=knack_creds['app_id'],
-            api_key=knack_creds['api_key']
+        scene=config['scene'],
+        view=config['view'],
+        ref_obj=config['ref_obj'],
+        app_id=knack_creds['app_id'],
+        api_key=knack_creds['api_key'],
+        filters=filters
     )
+
+    pdb.set_trace()
+
+    if kn.data:
+        # Filter data for records that have been modifed after the last 
+        # job run (see comment above)
+        last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
+        kn.data = filter_by_date(kn.data, config['modified_date_field'], last_run_timestamp)
+
+    pdb.set_trace()
 
     payload = []
     unmatched_segments = []
     
     if not kn.data:
-        # logger.info('No records to update.')
+        logger.info('No records to update.')
         return 0
+
+    pdb.set_trace()
 
     for street_segment in kn.data:
         
         token = agolutil.get_token(AGOL_CREDENTIALS)
-        features = agolutil.query_atx_street(street_segment[primay_key], token)
+        features = agolutil.query_atx_street(street_segment[config['primary_key']], token)
 
         if features.get('features'):
             if len(features['features']) > 0:
                 segment_data = features['features'][0]['attributes']
             else:
-                unmatched_segments.append(street_segment[primay_key])
+                unmatched_segments.append(street_segment[config['primary_key']])
                 continue
         else:
-            unmatched_segments.append(street_segment[primay_key])
+            unmatched_segments.append(street_segment[config['primary_key']])
             continue
 
         segment_data['id'] = street_segment['id']
-        segment_data['MODIFIED_BY'] = 'api-update'
-        segment_data['UPDATE_PROCESSED'] = True
+        segment_data['MODIFIED_BY'] = 'api-update' 
         payload.append(segment_data)
     
+    pdb.set_trace()
+
     payload = datautil.reduce_to_keys(payload, kn.fieldnames)
     payload = datautil.replace_keys(payload, kn.field_map)
     
@@ -75,10 +116,10 @@ def main(job, **kwargs):
         for field in record:
             if type(record[field]) == str:
                 record[field] = record[field].strip()
-        
+
         res = knackpy.record(
             record,
-            obj_key=ref_obj[0],
+            obj_key=config['ref_obj'][0],
             app_id= knack_creds['app_id'],
             api_key=knack_creds['api_key'],
             method='update',
@@ -90,7 +131,7 @@ def main(job, **kwargs):
 
     if (len(unmatched_segments) > 0):
         error_text = 'Unmatched street segments: {}'.format(', '.join( str(x) for x in unmatched_segments))
-        #  logger.info(error_text)
+        logger.info(error_text)
         raise Exception(error_text)
 
     return count

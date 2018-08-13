@@ -217,7 +217,7 @@ SCRIPTINFO = {
         },
     "street_seg_updater":
         {
-            "arguments": ["script_name"],
+            "arguments": ["script_name", "app_name"],
             "argdescription": " ",
             "objects":[],
             "source": "knack",

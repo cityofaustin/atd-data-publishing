@@ -102,18 +102,18 @@ def main(job, **kwargs):
     return len(payload)
 
 
-def cli_args():
+# def cli_args():
 
-    parser = argutil.get_parser(
-        'device_status_log.py',
-        'Generate connectivity statistics and upload to Knack application.',
-        'device_type',
-        'app_name'
-    )
+#     parser = argutil.get_parser(
+#         'device_status_log.py',
+#         'Generate connectivity statistics and upload to Knack application.',
+#         'device_type',
+#         'app_name'
+#     )
     
-    args = parser.parse_args()
+#     args = parser.parse_args()
     
-    return args
+#     return args
 
 
 if __name__ == '__main__':
