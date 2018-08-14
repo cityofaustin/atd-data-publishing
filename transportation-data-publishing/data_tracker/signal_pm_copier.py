@@ -17,7 +17,6 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
-<<<<<<< HEAD
 params_pm = {
     'field_obj': ['object_84', 'object_12'],
     'scene': 'scene_416',
@@ -31,8 +30,6 @@ params_signal = {
 }
 
 copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
-=======
->>>>>>> origin/sig-pm-mod
 
 def get_prim_signals(list_of_signals):
     '''
@@ -192,7 +189,6 @@ def main(job, **kwargs):
         knack_data_pm.field_map
     )
 
-<<<<<<< HEAD
     count = 0
     update_response = []
     
@@ -201,10 +197,8 @@ def main(job, **kwargs):
         print( 'update record {} of {}'.format( count, len(payload_insert) ) )
         # logger.info('update record {} of {}'.format( count,
         # len(payload_insert) ) )
-        
-=======
+
     for record in signals_payload_update:
->>>>>>> origin/sig-pm-mod
         res = knackpy.record(
             record,
             obj_key=params_signal['field_obj'][0],
@@ -213,7 +207,7 @@ def main(job, **kwargs):
             method='update',
         )
 
-<<<<<<< HEAD
+
         # logger.info(res)
         update_response.append(res)
 
@@ -225,7 +219,7 @@ def main(job, **kwargs):
         # logger.info('insert record {} of {}'.format( count,
         # len(payload_insert) ) )
         
-=======
+
     for record in pm_payload_update:
         res = knackpy.record(
             record,
@@ -236,7 +230,7 @@ def main(job, **kwargs):
         )
 
     for record in pm_payload_insert:
->>>>>>> origin/sig-pm-mod
+
         res = knackpy.record(
             record,
             obj_key=params_pm['field_obj'][0],
@@ -245,14 +239,13 @@ def main(job, **kwargs):
             method='create',
         )
 
-<<<<<<< HEAD
         # logger.info(res)
         update_response.append(res)
 
     # logger.info('END AT {}'.format( arrow.now() ))
-=======
-    logger.info('END AT {}'.format( arrow.now() ))
->>>>>>> origin/sig-pm-mod
+
+    # logger.info('END AT {}'.format( arrow.now() ))
+
     
     return len(pm_payload_insert) + len(pm_payload_update) + len(signals_payload_update)
 

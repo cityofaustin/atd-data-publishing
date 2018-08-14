@@ -27,17 +27,6 @@ config = {
     'view' : 'view_1198',
 }
 
-<<<<<<< HEAD
-config = {
-    'modified_date_field_id' : 'field_144',
-    'modified_date_field' : 'MODIFIED_DATE',
-    'primary_key' : 'SEGMENT_ID_NUMBER',
-    'ref_obj' : ['object_7'],
-    'scene' : 'scene_424',
-    'view' : 'view_1198',
-}
-=======
->>>>>>> origin/sig-pm-mod
 
 def filter_by_date(data, date_field, compare_date):
     '''
@@ -45,16 +34,12 @@ def filter_by_date(data, date_field, compare_date):
     '''
     return [record for record in data if record[date_field] >= compare_date]
 
-<<<<<<< HEAD
-def main(job, **kwargs):
 
+
+def main(job, **kwargs):
 
     knack_creds = KNACK_CREDENTIALS[kwargs["app_name"]]
     last_run_date = job.most_recent()
-=======
-
-def main(config, last_run_date):
->>>>>>> origin/sig-pm-mod
 
     if not last_run_date:
         # replace dataset by setting the last run date to a long, long time ago
@@ -74,13 +59,8 @@ def main(config, last_run_date):
         scene=config['scene'],
         view=config['view'],
         ref_obj=config['ref_obj'],
-<<<<<<< HEAD
         app_id=knack_creds['app_id'],
         api_key=knack_creds['api_key'],
-=======
-        app_id=AUTH['app_id'],
-        api_key=AUTH['api_key'],
->>>>>>> origin/sig-pm-mod
         filters=filters
     )
 
@@ -136,13 +116,8 @@ def main(config, last_run_date):
         res = knackpy.record(
             record,
             obj_key=config['ref_obj'][0],
-<<<<<<< HEAD
             app_id= knack_creds['app_id'],
             api_key=knack_creds['api_key'],
-=======
-            app_id= AUTH['app_id'],
-            api_key=AUTH['api_key'],
->>>>>>> origin/sig-pm-mod
             method='update',
         )
 

@@ -15,13 +15,7 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
-<<<<<<< HEAD
-def main(job, **kwargs):
 
-    objects = kwargs["objects"]
-    app_name = kwargs["app_name"]
-=======
-import requests
 
 
 def mask_objects(app_name):
@@ -59,8 +53,10 @@ def mask_objects(app_name):
     return objects_for_backup
 
 
-def main(job):
->>>>>>> origin/sig-pm-mod
+def main(job, **kwargs):
+
+    objects = kwargs["objects"]
+    app_name = kwargs["app_name"]
 
     job.start()
 
