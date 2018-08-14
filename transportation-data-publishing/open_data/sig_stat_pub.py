@@ -120,9 +120,9 @@ def main(jobs, **kwargs):
     for change_type in cd_results.keys():
         #  log signals whose status has changed
         if len(cd_results[change_type]) > 0:
-            logger.info(
-                '{}: {}'.format(change_type, len(cd_results[change_type]))
-            )
+            # logger.info(
+            #     '{}: {}'.format(change_type, len(cd_results[change_type]))
+            # )
 
     
     if cd_results['new'] or cd_results['change'] or cd_results['delete']:
