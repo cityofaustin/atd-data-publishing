@@ -249,7 +249,7 @@ def run_catch(**kwargs):
 
     try:
         results = getattr(script, "main")(job, **kwargs)
-        print(results)
+        # print(results)
 
         # print("results", results)
 
@@ -269,7 +269,7 @@ def run_catch(**kwargs):
         error_text = traceback.format_exc()
         logger.error(str(error_text))
 
-        print(kwargs)
+        # print(kwargs)
 
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
