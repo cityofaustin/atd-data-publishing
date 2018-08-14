@@ -20,9 +20,9 @@ from tdutils import logutil
 
 
 config = [
-     # Knack and AGOL source object defintions.
-     # Order of config elements matters! Work orders must be processed before
-     # jobs and attachments because work orders are the parent record to both.
+    # Knack and AGOL source object defintions.
+    # Order of config elements matters! Work orders must be processed before
+    # jobs and attachments because work orders are the parent record to both.
     {
         "name": "signs_markings_work_orders",
         "scene": "scene_774",
@@ -75,7 +75,7 @@ config = [
         "name": ",specifications",
         "scene": "scene_774",
         "view": "view_2272",
-        "ref_obj": ["object_143","object_140", "object_141"],
+        "ref_obj": ["object_143", "object_140", "object_141"],
         "modified_date_field_id": "field_2567",
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "SPECIFICATION_ID",
@@ -83,7 +83,6 @@ config = [
         "layer_id": 1,
         "item_type": "table",
     },
-
     {
         "name": ",materials",
         "scene": "scene_774",
@@ -102,7 +101,11 @@ config = [
 def remove_empty_strings(records):
     new_records = []
     for record in records:
-        new_record = { key : record[key] for key in record.keys() if not (type(record[key]) == str and not record[key]) }
+        new_record = {
+            key: record[key]
+            for key in record.keys()
+            if not (type(record[key]) == str and not record[key])
+        }
         new_records.append(new_record)
     return new_records
 
@@ -120,7 +123,7 @@ def append_paths(
     contains an array of ids matching the input spatial features, or a singular string
     stored as 'path_id_field' which uniquely identfies a feature in the source geomtery. 
     """
-    unmatched = ''
+    unmatched = ""
 
     for record in records:
         path_id = record.get(path_id_field)
@@ -148,15 +151,15 @@ def append_paths(
                 record[output_field] = paths
 
             if not record.get(output_field):
-                unmatched += f'{path_id_field}: {path_id}\n'
+                unmatched += f"{path_id_field}: {path_id}\n"
 
     if unmatched:
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
-            f'Markings AGOL: Geomtries Not Found',
+            f"Markings AGOL: Geomtries Not Found",
             unmatched,
-            EMAIL['user'],
-            EMAIL['password']
+            EMAIL["user"],
+            EMAIL["password"],
         )
 
     return records
@@ -195,9 +198,7 @@ def cli_args():
 
 def main(job, **kwargs):
 
-
     auth = KNACK_CREDENTIALS[kwargs["app_name"]]
-
 
     records_processed = 0
 
@@ -259,7 +260,7 @@ def main(job, **kwargs):
             source_geometries = geometry_layer.query(
                 where=where, outFields=cfg["geometry_record_id_field"]
             )
-            
+
             if not source_geometries:
                 raise Exception("No features returned from source geometry layer query")
 
@@ -274,8 +275,10 @@ def main(job, **kwargs):
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
 
-        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
-        
+        records = remove_empty_strings(
+            records
+        )  # AGOL has unexepected handling of empty values
+
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
@@ -352,8 +355,8 @@ if __name__ == "__main__":
             ALERTS_DISTRIBUTION,
             email_subject,
             error_text,
-            EMAIL['user'],
-            EMAIL['password']
+            EMAIL["user"],
+            EMAIL["password"],
         )
 
         job.result("error", message=str(e))

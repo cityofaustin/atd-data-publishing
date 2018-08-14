@@ -33,6 +33,7 @@ from tdutils import socratautil
 def after_date_query(date_field, date):
     return f"{date_field}=gte.{date}"
 
+
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):
     if cfg_dataset.get("location_fields"):
         lat_field = cfg_dataset["location_fields"]["lat"].lower()
@@ -52,7 +53,7 @@ def socrata_pub(records, cfg_dataset, replace, date_fields=None):
         lon_field=lon_field,
         location_field=location_field,
         source="postgrest",
-        replace= replace,
+        replace=replace,
     )
 
 
@@ -65,10 +66,7 @@ def main(job, **kwargs):
     app_name = kwargs["app_name"]
     replace = kwargs["replace"]
 
-    
     cfg_dataset = cfg[dataset]
-    
-    
 
     last_run_date = job.most_recent()
 
@@ -76,7 +74,7 @@ def main(job, **kwargs):
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1900-01-01"
 
-    last_run_date = urllib.parse.quote_plus( arrow.get(last_run_date).format() )
+    last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
 
     pgrest = pgrestutil.Postgrest(cfg_dataset["base_url"], auth=JOB_DB_API_TOKEN)
 
@@ -92,8 +90,7 @@ def main(job, **kwargs):
     ]  # TODO: extract from API definition
 
     if job.destination == "socrata":
-        pub = socrata_pub(records, cfg_dataset, replace,
-                          date_fields=date_fields)
+        pub = socrata_pub(records, cfg_dataset, replace, date_fields=date_fields)
 
     # logger.info("END AT {}".format(arrow.now()))
 

@@ -7,15 +7,13 @@ import pdb
 import arrow
 import knackpy
 
-#import _setpath
+# import _setpath
 from config.secrets import *
 
 from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
-
-
 
 
 def mask_objects(app_name):

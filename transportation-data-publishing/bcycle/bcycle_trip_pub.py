@@ -21,6 +21,7 @@ from tdutils import socratautil
 
 resource_id = "tyfh-5r8s"
 
+
 def max_date_socrata(resource_id):
     """
     Get the most recent trip date from socrata
@@ -71,6 +72,7 @@ def handle_data(data):
     reader = csv.DictReader(rows, fieldnames)
     return list(reader)
 
+
 def main(job, **kwargs):
     """
 
@@ -98,15 +100,12 @@ def main(job, **kwargs):
             job.result("success", records_processed=0)
             results = 0
 
-
         else:
             #  socrata data is at least one month old
             dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
-            dropbox_year = arrow.get(socrata_dt).replace(months=1).format(
-                "YYYY")
+            dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
 
-            current_file = "TripReport-{}{}.csv".format(dropbox_month,
-                                                        dropbox_year)
+            current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
             root = "austinbcycletripdata"  # note the lowercase-ness
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
             date_fields = ["checkout_date"]

@@ -24,7 +24,8 @@ import arrow
 import importlib
 import argparse
 
-# define 
+# define
+
 
 def get_parser(prog, description, *args):
     """
@@ -41,7 +42,6 @@ def get_parser(prog, description, *args):
     """
     parser = argparse.ArgumentParser(prog=prog, description=description)
 
-
     for arg_name in args[1:]:
         arg_def = ARGUMENTS[arg_name]
 
@@ -51,6 +51,7 @@ def get_parser(prog, description, *args):
             parser.add_argument(arg_name, **arg_def)
 
     return parser
+
 
 def cli_args():
     """get command line arguments, the get script part could be refactored as a
@@ -92,7 +93,6 @@ def cli_args():
         if "destination" in args_dict:
             args_dict["destination"] = "".join(args_dict["destination"])
 
-
     return args_dict
 
 
@@ -105,10 +105,10 @@ def create_logger(script_name):
     
     """
 
-    logfile = f'{LOG_DIRECTORY}/{script_name}.log'
+    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
     logger = logutil.timed_rotating_log(logfile)
 
-    logger.info('START AT {}'.format(arrow.now()))
+    logger.info("START AT {}".format(arrow.now()))
 
     return logger
 
@@ -133,8 +133,6 @@ def dynamic_import(script_name):
                 # print(script_name)
                 # print(script)
                 module_name = "{}.{}".format(directory, script_name)
-
-
 
     # module_name = "{}.{}".format(directory, script_name)
 
@@ -163,9 +161,11 @@ def create_namejob(script_name):
         url=JOB_DB_API_URL,
         source=SCRIPTINFO[script_name]["source"],
         destination=SCRIPTINFO[script_name]["destination"],
-        auth=JOB_DB_API_TOKEN)
+        auth=JOB_DB_API_TOKEN,
+    )
 
     return job
+
 
 def get_script_id(**kwargs):
     """
@@ -187,9 +187,10 @@ def get_script_id(**kwargs):
     for element in SCRIPTINFO[script_name]["id_elements"]:
         element_list.append(kwargs[element])
 
-    script_id = '_'.join(map(str, element_list))
+    script_id = "_".join(map(str, element_list))
 
     return script_id
+
 
 def create_idjob(script_name, script_id, destination):
     """
@@ -205,8 +206,9 @@ def create_idjob(script_name, script_id, destination):
         name=script_id,
         url=JOB_DB_API_URL,
         source=SCRIPTINFO[script_name]["source"],
-        destination = destination,
-        auth=JOB_DB_API_TOKEN)
+        destination=destination,
+        auth=JOB_DB_API_TOKEN,
+    )
 
     return job
 
@@ -236,8 +238,6 @@ def run_catch(**kwargs):
 
     logger = create_logger(script_name)
 
-
-
     script = dynamic_import(script_name)
 
     if kwargs["scriptid_flag"] is True:
@@ -251,20 +251,18 @@ def run_catch(**kwargs):
         results = getattr(script, "main")(job, **kwargs)
         print(results)
 
-
         # print("results", results)
 
         if results or results == 0:
 
             # pdb.set_trace()
             try:
-                job.result('success', records_processed= results)
+                job.result("success", records_processed=results)
             except Exception:
-                job.result('success', message = results)
+                job.result("success", message=results)
             # pdb.set_trace()
-            logger.info(SCRIPTINFO[script_name]["logger_result"].format(
-                results))
-            logger.info('END AT {}'.format(arrow.now()))
+            logger.info(SCRIPTINFO[script_name]["logger_result"].format(results))
+            logger.info("END AT {}".format(arrow.now()))
 
     except Exception as e:
 
@@ -273,14 +271,17 @@ def run_catch(**kwargs):
 
         print(kwargs)
 
-        emailutil.send_email(ALERTS_DISTRIBUTION,
-                             SCRIPTINFO[script_name]['subject_t'].format(
-                                 kwargs[SCRIPTINFO[script_name]['subject_v']]),
-                             str(e),
-                             EMAIL['user'],
-                             EMAIL['password'])
+        emailutil.send_email(
+            ALERTS_DISTRIBUTION,
+            SCRIPTINFO[script_name]["subject_t"].format(
+                kwargs[SCRIPTINFO[script_name]["subject_v"]]
+            ),
+            str(e),
+            EMAIL["user"],
+            EMAIL["password"],
+        )
 
-        job.result('error', message=str(e))
+        job.result("error", message=str(e))
 
         raise e
 

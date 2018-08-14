@@ -25,13 +25,13 @@ from tdutils import logutil
 
 config = {
     "feed_url": "http://www.ci.austin.tx.us/qact/qact_rss.cfm",
-    "endpoint": "http://transportation-data-test.austintexas.io"
-                "/traffic_reports",
+    "endpoint": "http://transportation-data-test.austintexas.io" "/traffic_reports",
     "primary_key": "traffic_report_id",
     "status_field": "traffic_report_status",
     "date_field": "published_date",
     "status_date_field": "traffic_report_status_date_time",
 }
+
 
 def query(url, method, data=None, auth=JOB_DB_API_TOKEN):
 
