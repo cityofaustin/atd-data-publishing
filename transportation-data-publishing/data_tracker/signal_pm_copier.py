@@ -82,6 +82,8 @@ def main(job, **kwargs):
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
+
+
     #  get preventative maintenance (pm) records
     knack_data_pm = knackpy.Knack(
         view=params_pm['view'],
@@ -91,8 +93,16 @@ def main(job, **kwargs):
         api_key=knack_creds['api_key'],
         raw_connections=True
     )
+
+
     
     data_pm = []
+
+    pdb.set_trace()
+
+    if not knack_data_pm.data:
+    # logger.info('No PM records to copy.')
+        return 0
     
     for pm in knack_data_pm.data:
         #  verify there is data that needs to be processed
@@ -102,9 +112,9 @@ def main(job, **kwargs):
             
             data_pm.append(pm)
 
-    # if not data_pm:
-    #     # logger.info('No PM records to copy.')
-    #     return 0
+    if not data_pm:
+        # logger.info('No PM records to copy.')
+        return 0
 
     #  get signal data
     knack_data_signals = knackpy.Knack(
