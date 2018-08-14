@@ -102,9 +102,9 @@ def main(job, **kwargs):
             
             data_pm.append(pm)
 
-    if not data_pm:
-        # logger.info('No PM records to copy.')
-        return 0
+    # if not data_pm:
+    #     # logger.info('No PM records to copy.')
+    #     return 0
 
     #  get signal data
     knack_data_signals = knackpy.Knack(
