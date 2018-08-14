@@ -192,7 +192,7 @@ def main(job, **kwargs):
             method='create',
         )
 
-        logger.info(res)
+        # logger.info(res)
         update_response.append(res)
 
     # logger.info('END AT {}'.format( arrow.now() ))
