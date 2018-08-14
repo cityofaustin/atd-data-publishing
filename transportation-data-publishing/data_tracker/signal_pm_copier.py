@@ -107,8 +107,6 @@ def main(job, **kwargs):
     
     data_pm = []
 
-    pdb.set_trace()
-
     if not knack_data_pm.data:
     # logger.info('No PM records to copy.')
         return 0
