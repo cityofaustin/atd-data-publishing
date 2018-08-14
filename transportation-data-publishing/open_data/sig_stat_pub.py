@@ -117,9 +117,9 @@ def main(jobs, **kwargs):
         keys=['operation_state']  
     )
 
-    for change_type in cd_results.keys():
+    # for change_type in cd_results.keys():
         #  log signals whose status has changed
-        if len(cd_results[change_type]) > 0:
+        # if len(cd_results[change_type]) > 0:
             # logger.info(
             #     '{}: {}'.format(change_type, len(cd_results[change_type]))
             # )
