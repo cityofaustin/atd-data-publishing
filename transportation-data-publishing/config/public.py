@@ -320,7 +320,7 @@ SCRIPTINFO = {
             "scriptid_flag": False,
             "id_elements": [],
             "subject_t": "DATA PROCESSING ALERT: Signal Status Update Failure",
-            "subject_v": "app_name",
+            "subject_v": "script_name",
             "logger_result": ""
         },
     # config files for open data ends here
