@@ -173,7 +173,7 @@ def main(job, **kwargs):
             method='update',
         )
 
-        logger.info(res)
+        # logger.info(res)
         update_response.append(res)
 
     count = 0
