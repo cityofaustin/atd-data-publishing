@@ -232,7 +232,7 @@ def run_catch(**kwargs):
         e: Description
     
     """
-    print(kwargs)
+    # print(kwargs)
 
     script_name = kwargs["script_name"]
 
