@@ -1,6 +1,9 @@
 """
 Retrieve Knack app data and update new and changed object
 and field metadata records.
+
+Attributes:
+    record_types (list): Description
 """
 import argparse
 import json
@@ -28,6 +31,14 @@ record_types = ["objects", "fields"]
 
 
 def get_app_data(app_id):
+    """Summary
+    
+    Args:
+        app_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return knackpy.get_app_data(app_id)
 
 
@@ -35,6 +46,14 @@ def parse_fields(obj_data, conn_field, obj_row_id_lookup):
     """
     Extract field data from object data and append connection field
     https://www.knack.com/developer-documentation/#working-with-fields
+    
+    Args:
+        obj_data (TYPE): Description
+        conn_field (TYPE): Description
+        obj_row_id_lookup (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     fields = []
     for obj in obj_data:
@@ -51,6 +70,15 @@ def parse_fields(obj_data, conn_field, obj_row_id_lookup):
 
 
 def get_filter(id_field_id, _id):
+    """Summary
+    
+    Args:
+        id_field_id (TYPE): Description
+        _id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return {
         "match": "and",
         "rules": [{"field": f"{id_field_id}", "operator": "is", "value": f"{_id}"}],
@@ -58,6 +86,16 @@ def get_filter(id_field_id, _id):
 
 
 def get_existing_data(obj_key, app_id, api_key):
+    """Summary
+    
+    Args:
+        obj_key (TYPE): Description
+        app_id (TYPE): Description
+        api_key (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  get admin_metadata data as Knack instance
     return knackpy.Knack(
         obj=obj_key, app_id=app_id, api_key=api_key, raw_connections=True
@@ -70,12 +108,28 @@ def get_object_row_ids(object_metadata_records, id_field_key):
     each value is the corresponding row ID of that object in the admin
     metadata table. We need row ID so that we can populate the connection
     field between field metadata records and their object.
+    
+    Args:
+        object_metadata_records (TYPE): Description
+        id_field_key (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     return {row[id_field_key]: row["id"] for row in object_metadata_records}
 
 
 def evaluate_ids(new_data, old_data, id_field_key):
-
+    """Summary
+    
+    Args:
+        new_data (TYPE): Description
+        old_data (TYPE): Description
+        id_field_key (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     # each key in existing_ids is a record id in the admin table
     # each value is the application's record id of the field or object
     existing_ids = {record["id"]: record[id_field_key] for record in old_data}
@@ -111,6 +165,14 @@ def evaluate_ids(new_data, old_data, id_field_key):
 
 
 def convert_bools_nones_arrays(dicts):
+    """Summary
+    
+    Args:
+        dicts (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     for d in dicts:
         for k in d:
             if d[k] == "No":
@@ -131,12 +193,18 @@ def format_connections(dicts, conn_field):
     
     We assume one connection per object in format:
         '<span class="5a6392415e5d9837a2ff7123">vision_zero_enforcement_shifts</´span>'
+    
     or in format:
-        '5a6392415e5d9837a2ff7123'
-    or in format:
-        ['5a6392415e5d9837a2ff7123']
-
-    Returns record in format ['5a6392415e5d9837a2ff7123']
+            ['5a6392415e5d9837a2ff7123']
+    
+        Returns record in format ['5a6392415e5d9837a2ff7123']
+    
+    Args:
+        dicts (TYPE): Description
+        conn_field (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     count = 0
     for record in dicts:
@@ -160,6 +228,15 @@ def format_connections(dicts, conn_field):
 def update_records(payload, obj, method, app_name):
     """
     CRUD for Knack
+    
+    Args:
+        payload (TYPE): Description
+        obj (TYPE): Description
+        method (TYPE): Description
+        app_name (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     results = []
 
@@ -179,6 +256,11 @@ def update_records(payload, obj, method, app_name):
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "metadata_updater.py",
         "Retrieve Knack app data and update new and changed object and field metadata records.",
@@ -191,7 +273,15 @@ def cli_args():
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
 
     job.start()

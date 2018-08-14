@@ -1,6 +1,9 @@
 """
 Extract radar traffic count data from KITS database and publish
 new records to City of Austin Open Data Portal.
+
+Attributes:
+    socrata_resource (str): Description
 """
 import hashlib
 import os
@@ -27,6 +30,15 @@ socrata_resource = "i626-g7ub"
 
 
 def my_round(x, base=15):
+    """Summary
+    
+    Args:
+        x (TYPE): Description
+        base (int, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     # https://stackoverflow.com/questions/2272149/round-to-5-or-other-number-in-python
     return int(base * round(float(x) / base))
 
@@ -34,6 +46,13 @@ def my_round(x, base=15):
 def get_timebin(minute, hour):
     """
     Round an arbitrary minue/hour to the nearest 15 minutes
+    
+    Args:
+        minute (TYPE): Description
+        hour (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     minute = my_round(minute)
     hour_offset = 0
@@ -48,6 +67,14 @@ def get_timebin(minute, hour):
 
 
 def get_direction(lane):
+    """Summary
+    
+    Args:
+        lane (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     if "SB" in lane:
         return "SB"
     elif "NB" in lane:
@@ -61,7 +88,15 @@ def get_direction(lane):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     replace = kwargs["replace"]
 
     #  get most recent traffic count record from socrata
@@ -192,7 +227,11 @@ def main(job, **kwargs):
 
 
 def cli_args():
-
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "count_data_pub.py",
         "Publish radar count data from KITS DB to City of Austin Open Data Portal.",

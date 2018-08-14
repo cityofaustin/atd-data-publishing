@@ -1,5 +1,11 @@
 """
 Update traffic signal records with secondary signal relationships
+
+Attributes:
+    ref_obj (list): Description
+    scene (str): Description
+    update_field (str): Description
+    view (str): Description
 """
 import argparse
 import collections
@@ -26,6 +32,11 @@ view = "view_197"
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "secondary_signals_updater.py",
         "Update traffic signal records with secondary signal relationships.",
@@ -42,6 +53,12 @@ def get_new_prim_signals(signals):
     create a dict of primary signals and the secondary signals they control
     data is compiled from the 'primary_signal' field on secondary signals
     this field is maintained by ATD staff via the signals forms in the knack database
+    
+    Args:
+        signals (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     signals_with_children = {}
 
@@ -68,6 +85,12 @@ def get_old_prim_signals(signals):
     create a dict of primary signals and the secondary signals they control
     data is compiled from the 'secondary_signals' field on primary signals
     this field is populated by this Python service
+    
+    Args:
+        signals (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     signals_with_children = {}
 
@@ -90,7 +113,15 @@ def get_old_prim_signals(signals):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
     knack_creds = KNACK_CREDENTIALS[app_name]
 

@@ -3,6 +3,15 @@ Calculate # of business days elapsed and update records accordingly.
 
 Developed specifically for measuring Traffic Control Plan (TCP) permit
 application reviews in the Right-of-Way Management division. 
+
+Attributes:
+    elapsed_key (str): Description
+    end_key (str): Description
+    obj (str): Description
+    scene (str): Description
+    start_key (str): Description
+    update_fields (list): Description
+    view (str): Description
 """
 import argparse
 from datetime import datetime
@@ -35,10 +44,27 @@ update_fields = ["DAYS_ELAPSED", "id"]
 
 
 def get_calendar():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     return CustomBusinessDay(calendar=USFederalHolidayCalendar())
 
 
 def handle_records(data, start_key, end_key, elapsed_key, calendar):
+    """Summary
+    
+    Args:
+        data (TYPE): Description
+        start_key (TYPE): Description
+        end_key (TYPE): Description
+        elapsed_key (TYPE): Description
+        calendar (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     update = []
 
     for record in data:
@@ -69,6 +95,16 @@ def handle_records(data, start_key, end_key, elapsed_key, calendar):
 
 
 def get_dates(record, start_key, end_key):
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+        start_key (TYPE): Description
+        end_key (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     start = record.get(start_key)
 
     if start:
@@ -87,6 +123,16 @@ def get_dates(record, start_key, end_key):
 
 
 def business_days_elapsed(start, end, calendar):
+    """Summary
+    
+    Args:
+        start (TYPE): Description
+        end (TYPE): Description
+        calendar (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     index = pd.DatetimeIndex(start=start, end=end, freq=calendar)
     elapsed = len(index) - 1
     return elapsed
@@ -95,6 +141,9 @@ def business_days_elapsed(start, end, calendar):
 def cli_args():
     """
     Parse command-line arguments using argparse module.
+    
+    Returns:
+        TYPE: Description
     """
     parser = argutil.get_parser(
         "tcp_business_days.py",
@@ -108,7 +157,16 @@ def cli_args():
 
 
 def update_record(record, obj_key, creds):
-
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+        obj_key (TYPE): Description
+        creds (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     res = knackpy.record(
         record,
         obj_key=obj_key,
@@ -121,7 +179,15 @@ def update_record(record, obj_key, creds):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
 
     creds = KNACK_CREDENTIALS[app_name]

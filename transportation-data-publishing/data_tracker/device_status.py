@@ -33,6 +33,13 @@ def ping_ip(ip, timeout=3):
     """
     Ping an IP address
     https://stackoverflow.com/questions/2953462/pinging-servers-in-python
+    
+    Args:
+        ip (TYPE): Description
+        timeout (int, optional): Description
+    
+    Returns:
+        TYPE: Description
     """
     if system_name().lower() == "windows":
         #  -w is timeout -n is number of packets
@@ -55,6 +62,16 @@ def ping_ip(ip, timeout=3):
 
 
 def open_socket(ip, port, timeout=3):
+    """Summary
+    
+    Args:
+        ip (TYPE): Description
+        port (TYPE): Description
+        timeout (int, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     with socket.socket() as s:
         print(ip)
         try:
@@ -66,7 +83,14 @@ def open_socket(ip, port, timeout=3):
 
 
 def get_status(device):
-
+    """Summary
+    
+    Args:
+        device (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  get old IP status, setting it to NO COMMUNICATION if not present
     state_previous = device.setdefault("IP_COMM_STATUS", "NO COMMUNICATION")
 
@@ -105,7 +129,15 @@ def get_status(device):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     device_type = kwargs["device_type"]
     out_json = kwargs["json"]
     app_name = kwargs["app_name"]

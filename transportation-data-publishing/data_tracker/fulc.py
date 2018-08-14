@@ -3,11 +3,11 @@ fulcrum / knack integration enginge
 
 
 todo:
-- left off mapping fields for insert
-- you want to design the field map in a way that in can be passed with a 'from/to' param
-- and handle either 'direction'
-- assigned to id lookup/mapping
-- logging
+    - left off mapping fields for insert
+    - you want to design the field map in a way that in can be passed with a 'from/to' param
+    - and handle either 'direction'
+    - assigned to id lookup/mapping
+    - logging
 """
 
 import argparse
@@ -23,6 +23,11 @@ from tdutils import fulcutil
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argparse.ArgumentParser(
         prog="fulcrum/knack data sync",
         description="Synchronize data between Knack application and Fulcrum application",
@@ -48,6 +53,16 @@ def cli_args():
 
 
 def get_records_knack(app_name, config, endpoint_type="private"):
+    """Summary
+    
+    Args:
+        app_name (TYPE): Description
+        config (TYPE): Description
+        endpoint_type (str, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     api_key = KNACK_CREDENTIALS[app_knack]["api_key"]
     app_id = KNACK_CREDENTIALS[app_knack]["app_id"]
 
@@ -65,6 +80,13 @@ def get_records_knack(app_name, config, endpoint_type="private"):
 
 
 def map_fields(record, field_map, *, method):
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+        field_map (TYPE): Description
+        method (TYPE): Description
+    """
     pdb.set_trace()
     print("ok")
 
@@ -82,6 +104,15 @@ def map_fields(record, field_map, *, method):
 
 
 def get_field_data(fulc, form_id):
+    """Summary
+    
+    Args:
+        fulc (TYPE): Description
+        form_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  move to fulcutil
     form = fulc.forms.find(form_id)
     return form["form"][0]["elements"]
@@ -90,6 +121,17 @@ def get_field_data(fulc, form_id):
 def get_fulcrum_id(knack_record, api_key, table):
     """
     Lookup record in Fulcrum and append record ID to input record dict
+    
+    Args:
+        knack_record (TYPE): Description
+        api_key (TYPE): Description
+        table (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        Exception: Description
     """
     query = fulcutil.get_query_by_value("knack_id", knack_record["id"], table)
     res = fulcutil.query(api_key, query)
@@ -107,6 +149,20 @@ def get_fulcrum_id(knack_record, api_key, table):
 
 
 def update_fulcrum(*, record, task, api_key, form_id):
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+        task (TYPE): Description
+        api_key (TYPE): Description
+        form_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        Exception: Description
+    """
     record = map_fields(record, KNACK_FULC_FIELDMAP, method="knack_to_fulcrum")
     payload = fulcutil.get_template()
     payload = fulcutil.format_record(record, payload, form_id)
@@ -125,6 +181,15 @@ def update_fulcrum(*, record, task, api_key, form_id):
 
 
 def main(app_knack, app_fulcrum):
+    """Summary
+    
+    Args:
+        app_knack (TYPE): Description
+        app_fulcrum (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  get configuration for Knack and Fulcrum
     api_key_fulcrum = FULCRUM[app_fulcrum]["api_key"]
     form_id_fulcrum = FULCRUM[app_fulcrum]["form_id"]

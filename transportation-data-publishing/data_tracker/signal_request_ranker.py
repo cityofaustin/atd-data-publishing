@@ -1,6 +1,17 @@
 """
 Assign traffic and PHB request rankings based on evaluation score
 dataset argument is required and must be either 'phb' or 'traffic_signal'
+
+Attributes:
+    concat_keys (list): Description
+    eval_types (dict): Description
+    group_key (str): Description
+    modified_date_key (str): Description
+    primary_key (str): Description
+    rank_key (str): Description
+    score_key (str): Description
+    status_key (str): Description
+    status_vals (list): Description
 """
 import argparse
 import os
@@ -32,7 +43,15 @@ eval_types = {"traffic_signal": "object_27", "phb": "object_26"}
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
     eval_type = kwargs["eval_type"]
 
@@ -139,6 +158,9 @@ def main(job, **kwargs):
 def cli_args():
     """
     Parse command-line arguments using argparse module.
+    
+    Returns:
+        TYPE: Description
     """
     parser = argutil.get_parser(
         "signal_requests_ranker.py",

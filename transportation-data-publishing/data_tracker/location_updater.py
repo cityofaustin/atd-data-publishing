@@ -1,6 +1,19 @@
 """
 Update Data Tracker location records with council district, engineer area,
 and jurisdiction attributes from from COA ArcGIS Online feature services
+
+Attributes
+----------
+field_maps : TYPE
+    Description
+filters : TYPE
+    Description
+knack_creds : TYPE
+    Description
+layers : TYPE
+    Description
+obj : str
+    Description
 """
 import argparse
 import os
@@ -36,6 +49,16 @@ field_maps = {
 def format_stringify_list(input_list):
     """
     Function to format features when merging multiple feature attributes
+    
+    Parameters
+    ----------
+    input_list : TYPE
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
     """
     return ", ".join(str(l) for l in input_list)
 
@@ -95,6 +118,18 @@ def map_fields(record, field_map):
     """
     Replace field names according to field map. Used to replace ArcGIS Online
     reference feature service field names with database field names.
+    
+    Parameters
+    ----------
+    record : TYPE
+        Description
+    field_map : TYPE
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
     """
     new_record = {}
 
@@ -110,7 +145,18 @@ def map_fields(record, field_map):
 
 
 def get_params(layer_config):
-    """base params for AGOL query request"""
+    """base params for AGOL query request
+    
+    Parameters
+    ----------
+    layer_config : TYPE
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
+    """
     params = {
         "f": "json",
         "outFields": "*",
@@ -146,7 +192,7 @@ def join_features_to_record(features, layer_config, record):
     record : dict (required)
         The source database record whose geomtetry intersects with
         the provided features
-
+    
     Returns
     -------
     record (dict)
@@ -181,6 +227,13 @@ def join_features_to_record(features, layer_config, record):
 
 
 def cli_args():
+    """Summary
+    
+    Returns
+    -------
+    TYPE
+        Description
+    """
     parser = argutil.get_parser(
         "location_updater.py",
         "Update location attributes via point-in-poly against various intersecting geospatial data layers.",
@@ -196,6 +249,23 @@ def main(job, **kwargs):
     """
     Knack database fields that will be updated. Payload is reduced to
     these fields.
+    
+    Parameters
+    ----------
+    job : TYPE
+        Description
+    **kwargs
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
+    
+    Raises
+    ------
+    Exception
+        Description
     """
 
     script_name = kwargs["script_name"]

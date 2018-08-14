@@ -17,7 +17,14 @@ from tdutils import logutil
 
 
 def mask_objects(app_name):
-
+    """Summary
+    
+    Args:
+        app_name (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     obj_count = knackpy.get_app_data(KNACK_CREDENTIALS[app_name]["app_id"])
 
     obj_all = list(obj_count["counts"].keys())
@@ -52,7 +59,15 @@ def mask_objects(app_name):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     objects = kwargs["objects"]
     app_name = kwargs["app_name"]
 

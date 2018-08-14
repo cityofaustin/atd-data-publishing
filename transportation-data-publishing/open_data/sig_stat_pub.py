@@ -1,3 +1,10 @@
+"""Summary
+
+Attributes:
+    FLASH_STATUSES (list): Description
+    SOCR_SIG_RES_ID (str): Description
+    SOCR_SIG_STAT_RES_ID (str): Description
+"""
 import os
 import pdb
 import sys
@@ -30,6 +37,14 @@ FLASH_STATUSES = ["1", "2", "3"]
 def add_ids(records, primary_key="signal_id", id_field="record_id"):
     """
     Generate a unique record ID which is a concatenation of the signal ID and the current time
+    
+    Args:
+        records (TYPE): Description
+        primary_key (str, optional): Description
+        id_field (str, optional): Description
+    
+    Returns:
+        TYPE: Description
     """
     now = arrow.now().timestamp
 
@@ -41,6 +56,15 @@ def add_ids(records, primary_key="signal_id", id_field="record_id"):
 
 
 def add_timestamps(records, timestamp_field="processed_datetime"):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+        timestamp_field (str, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     now = arrow.now().timestamp
 
     for record in records:
@@ -50,6 +74,15 @@ def add_timestamps(records, timestamp_field="processed_datetime"):
 
 
 def main(jobs, **kwargs):
+    """Summary
+    
+    Args:
+        jobs (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     # get current traffic signal data from Socrata
     socr = socratautil.Soda(resource=SOCR_SIG_RES_ID, fetch_metadata=True)
     signal_data = socr.data

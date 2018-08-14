@@ -1,6 +1,10 @@
-""" 
+"""
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
+
+Attributes:
+    cfg (TYPE): Description
+    SPECIAL (dict): Description
 """
 import argparse
 import os
@@ -26,6 +30,14 @@ SPECIAL = {"<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;", "&": "&amp;"}
 
 
 def encode_special_characters(text):
+    """Summary
+    
+    Args:
+        text (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  ESB requires ASCII characters only
     #  We drop non-ASCII characters by encoding as ASCII with "ignore" flag
     text = text.encode("ascii", errors="ignore")
@@ -39,6 +51,16 @@ def encode_special_characters(text):
 
 
 def get_csr_filters(emi_field, esb_status_field, esb_status_match):
+    """Summary
+    
+    Args:
+        emi_field (TYPE): Description
+        esb_status_field (TYPE): Description
+        esb_status_match (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  construct a knack filter object
     filters = {
         "match": "and",
@@ -52,6 +74,14 @@ def get_csr_filters(emi_field, esb_status_field, esb_status_match):
 
 
 def check_for_data(app_name):
+    """Summary
+    
+    Args:
+        app_name (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  check for data at public endpoint
     #  this api call does not count against
     #  daily subscription limit because we do not
@@ -72,6 +102,11 @@ def check_for_data(app_name):
 
 
 def get_data():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     #  get data at public enpoint and also get
     #  necessary field metadata (which is not public)
     #  field dat ais fetched because we provide a ref_obj array
@@ -85,6 +120,14 @@ def get_data():
 
 
 def build_xml_payload(record):
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     record["TMC_ACTIVITY_DETAILS"] = format_activity_details(record)
     record["TMC_ACTIVITY_DETAILS"] = encode_special_characters(
         record["TMC_ACTIVITY_DETAILS"]
@@ -97,6 +140,14 @@ def build_xml_payload(record):
 
 
 def format_activity_details(record):
+    """Summary
+    
+    Args:
+        record (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     activity = record["TMC_ACTIVITY"]
     details = record["TMC_ACTIVITY_DETAILS"]
 
@@ -109,6 +160,11 @@ def format_activity_details(record):
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "esb_xml_gen.py",
         "Generate XML message to update 311 Service Reqeusts via Enterprise Service Bus.",
@@ -121,7 +177,15 @@ def cli_args():
 
 
 def main(jobs, **kwargs):
-
+    """Summary
+    
+    Args:
+        jobs (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
 
     outpath = "{}/{}".format(ESB_XML_DIRECTORY, "ready_to_send")

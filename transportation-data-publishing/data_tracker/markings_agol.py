@@ -1,5 +1,8 @@
 """
 Publish pavement markings work orders to ArcGIS Online
+
+Attributes:
+    config (TYPE): Description
 """
 import os
 import pdb
@@ -99,6 +102,14 @@ config = [
 
 
 def remove_empty_strings(records):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     new_records = []
     for record in records:
         new_record = {
@@ -166,10 +177,31 @@ def append_paths(
 
 
 def filter_by_date(data, date_field, compare_date):
+    """Summary
+    
+    Args:
+        data (TYPE): Description
+        date_field (TYPE): Description
+        compare_date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return [record for record in data if record[date_field] >= compare_date]
 
 
 def knackpy_wrapper(cfg, auth, obj=None, filters=None):
+    """Summary
+    
+    Args:
+        cfg (TYPE): Description
+        auth (TYPE): Description
+        obj (None, optional): Description
+        filters (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return knackpy.Knack(
         obj=obj,
         scene=cfg["scene"],
@@ -183,7 +215,11 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
 
 
 def cli_args():
-
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "markings_agol.py",
         "Publish Signs and Markings Work Order Data to ArcGIS Online",
@@ -197,7 +233,18 @@ def cli_args():
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        Exception: Description
+    """
     auth = KNACK_CREDENTIALS[kwargs["app_name"]]
 
     records_processed = 0

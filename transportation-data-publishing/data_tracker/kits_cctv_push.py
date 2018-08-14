@@ -1,5 +1,20 @@
 """
 Copy CCTV records from Data Tracker to KITS traffic management system.
+
+Attributes:
+    app_name (str): Description
+    fieldmap (TYPE): Description
+    filters (TYPE): Description
+    kits_creds (TYPE): Description
+    kits_table_camera (str): Description
+    kits_table_geom (str): Description
+    kits_table_web (str): Description
+    knack_creds (TYPE): Description
+    knack_objects (list): Description
+    knack_scene (str): Description
+    knack_view (str): Description
+    max_cam_id (int): Description
+    primary_key_knack (str): Description
 """
 
 from copy import deepcopy
@@ -141,6 +156,14 @@ filters = {
 
 
 def map_bools(dicts):
+    """Summary
+    
+    Args:
+        dicts (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  convert boolean values to 1/0 for SQL compatibility
     for record in dicts:
         for key in record.keys():
@@ -154,10 +177,27 @@ def map_bools(dicts):
 
 
 def create_camera_query(table_name):
+    """Summary
+    
+    Args:
+        table_name (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return "SELECT * FROM {}".format(table_name)
 
 
 def convert_data(data, fieldmap):
+    """Summary
+    
+    Args:
+        data (TYPE): Description
+        fieldmap (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     new_data = []
 
     for record in data:
@@ -173,6 +213,15 @@ def convert_data(data, fieldmap):
 
 
 def setDefaults(dicts, fieldmap):
+    """Summary
+    
+    Args:
+        dicts (TYPE): Description
+        fieldmap (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     for row in dicts:
         for field in fieldmap.keys():
 
@@ -188,12 +237,29 @@ def setDefaults(dicts, fieldmap):
 
 
 def create_cam_comment(dicts):
+    """Summary
+    
+    Args:
+        dicts (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     for row in dicts:
         row["CAMCOMMENT"] = "Updated via API on {}".format(arrow.now().format())
     return dicts
 
 
 def get_max_id(table, id_field):
+    """Summary
+    
+    Args:
+        table (TYPE): Description
+        id_field (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     print("get max ID for table {} col {}".format(table, id_field))
     query = """
         SELECT MAX({}) AS max_id FROM {}
@@ -206,6 +272,15 @@ def get_max_id(table, id_field):
 
 
 def create_insert_query(table, row):
+    """Summary
+    
+    Args:
+        table (TYPE): Description
+        row (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     cols = str(tuple([key for key in row])).replace("'", "")
     vals = str(tuple([row[key] for key in row]))
 
@@ -218,6 +293,16 @@ def create_insert_query(table, row):
 
 
 def create_update_query(table, row, where_key):
+    """Summary
+    
+    Args:
+        table (TYPE): Description
+        row (TYPE): Description
+        where_key (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     mod_row = deepcopy(row)
 
     where = "{} = {}".format(where_key, row[where_key])
@@ -239,6 +324,17 @@ def create_update_query(table, row, where_key):
 
 
 def create_match_query(table, return_key, match_key, match_val):
+    """Summary
+    
+    Args:
+        table (TYPE): Description
+        return_key (TYPE): Description
+        match_key (TYPE): Description
+        match_val (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return """
         SELECT {}
         FROM {}
@@ -249,6 +345,16 @@ def create_match_query(table, return_key, match_key, match_val):
 
 
 def create_delete_query(table, match_key, match_val):
+    """Summary
+    
+    Args:
+        table (TYPE): Description
+        match_key (TYPE): Description
+        match_val (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return """
     DELETE FROM {}
     WHERE {} = {}
@@ -258,7 +364,15 @@ def create_delete_query(table, match_key, match_val):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     kn = knackpy.Knack(
         scene=knack_scene,
         view=knack_view,

@@ -1,6 +1,9 @@
-""" 
+"""
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
+
+Attributes:
+    cfg (TYPE): Description
 """
 import argparse
 import os
@@ -26,14 +29,21 @@ cfg = cfg["tmc_activities"]
 def get_record_id_from_file(directory, file):
     """
     Extract Knack record id from filename.
-
+    
     Expects XML messages to be named with incremental record ID as well as
     Knack database ID. The former is used to sort records in chronological
     order (not returned by this function) and the latter is used to update
     the Knack record with a 'SENT' status when message has been successfully
     transmitted to ESB.
-
+    
     Expected format is incrementaId_knackId.xml. E.g. 10034_axc3345f23msf0.xml
+    
+    Args:
+        directory (TYPE): Description
+        file (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     record_data = file.split(".")[0]
     return record_data.split("_")[1]
@@ -43,12 +53,18 @@ def get_sorted_file_list(path):
     """
     Retrieve XML files from directory and return a sorted list of
     files based on filename.
-
+    
     Assumes ascendant sorting of filenames is equivalent to sorting
     oldest to newest records in database. This is accomplished by naming files
     with their incremental record ID via esb_xml_gen.py
-
+    
     Returns array of filenames sorted A-Z, aka oldest to newest.
+    
+    Args:
+        path (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     files = []
 
@@ -64,12 +80,33 @@ def get_sorted_file_list(path):
 
 
 def get_msg(directory, file):
+    """Summary
+    
+    Args:
+        directory (TYPE): Description
+        file (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     fin = os.path.join(directory, file)
     with open(fin, "r") as msg:
         return msg.read()
 
 
 def send_msg(msg, endpoint, path_cert, path_key, timeout=20):
+    """Summary
+    
+    Args:
+        msg (TYPE): Description
+        endpoint (TYPE): Description
+        path_cert (TYPE): Description
+        path_key (TYPE): Description
+        timeout (int, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     headers = {"content-type": "text/xml"}
     res = requests.post(
         endpoint,
@@ -84,6 +121,16 @@ def send_msg(msg, endpoint, path_cert, path_key, timeout=20):
 
 
 def move_file(old_dir, new_dir, f):
+    """Summary
+    
+    Args:
+        old_dir (TYPE): Description
+        new_dir (TYPE): Description
+        f (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     infile = os.path.join(old_dir, f)
     outfile = os.path.join(new_dir, f)
     os.rename(infile, outfile)
@@ -91,11 +138,24 @@ def move_file(old_dir, new_dir, f):
 
 
 def create_payload(record_id):
+    """Summary
+    
+    Args:
+        record_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     payload = {"id": record_id, cfg["esb_status_field"]: "SENT"}
     return payload
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "esb_xml_send.py",
         "Update service requests in the CSR system from Knack via Enterprise Service Bus",
@@ -108,7 +168,15 @@ def cli_args():
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
     knack_creds = KNACK_CREDENTIALS[app_name]
 

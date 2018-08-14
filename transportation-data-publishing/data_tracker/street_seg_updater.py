@@ -1,6 +1,9 @@
 """
 Update Knack street segments with data from 
 COA ArcGIS Online Street Segment Feature Service
+
+Attributes:
+    config (TYPE): Description
 """
 import os
 import pdb
@@ -31,12 +34,31 @@ config = {
 def filter_by_date(data, date_field, compare_date):
     """
     Date field and compare date should be unix timestamps with mills
+    
+    Args:
+        data (TYPE): Description
+        date_field (TYPE): Description
+        compare_date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     return [record for record in data if record[date_field] >= compare_date]
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        Exception: Description
+    """
     knack_creds = KNACK_CREDENTIALS[kwargs["app_name"]]
     last_run_date = job.most_recent()
 

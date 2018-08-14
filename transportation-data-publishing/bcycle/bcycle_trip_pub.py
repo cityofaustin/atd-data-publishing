@@ -3,6 +3,9 @@ Check for new b-cycle data in Dropbox share and upload to
 Open Data portal (Socrata)
 
 B-Cycle staff put new trip data in Dropbox share on a monthly basis.
+
+Attributes:
+    resource_id (str): Description
 """
 import csv
 import os
@@ -25,6 +28,12 @@ resource_id = "tyfh-5r8s"
 def max_date_socrata(resource_id):
     """
     Get the most recent trip date from socrata
+    
+    Args:
+        resource_id (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     url = "https://data.austintexas.gov/resource/{}.json?$query=SELECT checkout_date as date ORDER BY checkout_date DESC LIMIT 1".format(
         resource_id
@@ -37,6 +46,13 @@ def max_date_socrata(resource_id):
 def get_data(path, token):
     """
     Get trip data file as string from dropbox
+    
+    Args:
+        path (TYPE): Description
+        token (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     logger.info(f"Get data for {path}")
 
@@ -52,6 +68,12 @@ def handle_data(data):
     """
     Convert data file string to csv dict. Source column headers are replaced
     with database-friendly field names
+    
+    Args:
+        data (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     #  assume fields in this order  :(
     fieldnames = (
@@ -75,13 +97,15 @@ def handle_data(data):
 
 def main(job, **kwargs):
     """
-
     Args:
-        job ():
-        **kwargs ():
-
+        job
+        **kwargs
+    
     Returns:
-
+    
+    Raises:
+        e: Description
+    
     """
 
     script_name = kwargs["script_name"]

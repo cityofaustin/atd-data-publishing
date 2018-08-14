@@ -1,5 +1,10 @@
 """
 Get latest b-cycle kiosk data from Dropbox and upload to Socrata, ArcGIS Online
+
+Attributes:
+    dropbox_path (str): Description
+    service_id (str): Description
+    socrata_resource_id (str): Description
 """
 import csv
 import os
@@ -26,6 +31,13 @@ dropbox_path = "/austinbcycletripdata/kiosks.csv"
 def get_data(path, token):
     """
     Get trip data file as string from dropbox
+    
+    Args:
+        path (TYPE): Description
+        token (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     # logger.info(f'Get data for {path}')
 
@@ -40,6 +52,12 @@ def get_data(path, token):
 def handle_data(data):
     """
     Convert data file string to csv dict.
+    
+    Args:
+        data (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     rows = data.splitlines()
     reader = csv.DictReader(rows)
@@ -47,7 +65,15 @@ def handle_data(data):
 
 
 def main(jobs, **kwargs):
-
+    """Summary
+    
+    Args:
+        jobs (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     script_name = kwargs["script_name"]
 
     job_agol = jobutil.Job(

@@ -4,6 +4,25 @@ Update detection status log when signal detection status changes.
 
 #TODO
 - only process modified signals/detectors (currently processing all detectors)
+
+Attributes
+----------
+config_detectors : dict
+    Description
+config_signals : dict
+    Description
+config_status_log : dict
+    Description
+DET_DATE_LABEL : str
+    Description
+DET_STATUS_LABEL : str
+    Description
+fieldmap_status_log : TYPE
+    Description
+SIG_DATE_LABEL : str
+    Description
+SIG_STATUS_LABEL : str
+    Description
 """
 import argparse
 from collections import defaultdict
@@ -47,20 +66,25 @@ SIG_DATE_LABEL = "DETECTION_STATUS_DATE"
 def groupBySignal(detector_data):
     """
     Group signal detector status and status date according to parent signal. 
-
+    
      Parameters
     ----------
     detector_data : list | (required)
         List of dicts where each dict contains vehicle detector data
         retrieved from Knack view. attributes include signal id, detector
         status, and detector status date. 
-
+    
     Returns
     -------
     det_status : dict
         Each key in dict is a traffic signal id with keys statuses (an array of detector
         statuses) and dates (an array of detector status dates). This dict will be used to
         determine most current status and date. see methond getStatus().
+    
+    Parameters
+    ----------
+    detector_data : TYPE
+        Description
     """
     det_status = defaultdict(dict)
 
@@ -84,14 +108,14 @@ def getStatus(sig, det_status):
     """
     Determine a signal's detection status based on the status
     of its detectors
-
+    
     Parameters
     ----------
     sig : dict | (required)
         A signal record dict generated from a Knack.View instance
     det_status : dict | (required)
         A lookup dictionary generated from method groupBySignal()
-
+    
     Returns
     -------
     value : string
@@ -119,14 +143,14 @@ def getStatus(sig, det_status):
 def getMaxDate(sig, det_status):
     """
     Determine a signal's most recent status date status 
-
+    
     Parameters
     ----------
     sig : dict | (required)
         A signal record dict generated from a Knack.View instance
     det_status : dict | (required)
         A lookup dictionary generated from method groupBySignal()
-
+    
     Returns
     -------
     value : int
@@ -141,7 +165,20 @@ def getMaxDate(sig, det_status):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Parameters
+    ----------
+    job : TYPE
+        Description
+    **kwargs
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
+    """
     app_name = kwargs["app_name"]
 
     api_key = KNACK_CREDENTIALS[app_name]["api_key"]

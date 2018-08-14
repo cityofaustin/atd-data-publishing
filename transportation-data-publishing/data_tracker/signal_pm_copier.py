@@ -1,6 +1,11 @@
 """
 Check traffic signal prevent maintenance (PM) records and
 insert copies of PM records to signals' secondary signals.
+
+Attributes:
+    copy_fields (list): Description
+    params_pm (TYPE): Description
+    params_signal (dict): Description
 """
 import argparse
 import os
@@ -32,6 +37,12 @@ def get_prim_signals(list_of_signals):
     """
     Create a dict of primary signals with and the secondary signals they control.
     List_of_signals must have a Knack datbase id.
+    
+    Args:
+        list_of_signals (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     signals_with_children = {}
 
@@ -44,7 +55,16 @@ def get_prim_signals(list_of_signals):
 
 
 def copy_pm_record(destination_signal_id, source_record, copy_fields):
-
+    """Summary
+    
+    Args:
+        destination_signal_id (TYPE): Description
+        source_record (TYPE): Description
+        copy_fields (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     new_record = {
         "SIGNAL": [destination_signal_id],
         "COPIED_FROM_ID": source_record["ATD_PM_ID"],
@@ -61,6 +81,16 @@ def copy_pm_record(destination_signal_id, source_record, copy_fields):
 
 
 def apply_modified_date(dicts, key="MODIFIED_DATE", offset=600000):
+    """Summary
+    
+    Args:
+        dicts (TYPE): Description
+        key (str, optional): Description
+        offset (int, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  set the record modified date as a "local" timestamp (knack-friendly)
     #  also apply a forward offset to ensure modified records are picked up
     #  by the publishing scripts which are checking for recently modded data
@@ -71,6 +101,11 @@ def apply_modified_date(dicts, key="MODIFIED_DATE", offset=600000):
 
 
 def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "signal_pm_copier.py",
         "Check traffic signal prevent maintenance (PM) records and insert copies of PM records to signals' secondary signals",
@@ -83,7 +118,15 @@ def cli_args():
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     app_name = kwargs["app_name"]
 
     knack_creds = KNACK_CREDENTIALS[app_name]

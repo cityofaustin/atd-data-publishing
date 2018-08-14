@@ -31,10 +31,30 @@ from tdutils import socratautil
 
 
 def after_date_query(date_field, date):
+    """Summary
+    
+    Args:
+        date_field (TYPE): Description
+        date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return f"{date_field}=gte.{date}"
 
 
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+        cfg_dataset (TYPE): Description
+        replace (TYPE): Description
+        date_fields (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     if cfg_dataset.get("location_fields"):
         lat_field = cfg_dataset["location_fields"]["lat"].lower()
         lon_field = cfg_dataset["location_fields"]["lon"].lower()
@@ -58,7 +78,15 @@ def socrata_pub(records, cfg_dataset, replace, date_fields=None):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     # cfg_dataset, job, args
 
     script_name = kwargs["script_name"]
@@ -98,7 +126,11 @@ def main(job, **kwargs):
 
 
 def cli_args():
-
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
     parser = argutil.get_parser(
         "pgrest_data_pub.py",
         "Publish PostgREST data to Socrata and ArcGIS Online",

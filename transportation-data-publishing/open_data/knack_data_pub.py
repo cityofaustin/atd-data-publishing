@@ -34,6 +34,17 @@ from tdutils import socratautil
 
 
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+        cfg_dataset (TYPE): Description
+        replace (TYPE): Description
+        date_fields (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     if cfg_dataset.get("location_fields"):
         lat_field = cfg_dataset["location_fields"]["lat"].lower()
         lon_field = cfg_dataset["location_fields"]["lon"].lower()
@@ -58,6 +69,17 @@ def socrata_pub(records, cfg_dataset, replace, date_fields=None):
 def agol_pub(records, cfg_dataset, replace):
     """
     Upsert or replace records on arcgis online features service
+    
+    Args:
+        records (TYPE): Description
+        cfg_dataset (TYPE): Description
+        replace (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    
+    Raises:
+        Exception: Description
     """
     if cfg_dataset.get("location_fields"):
         lat_field = cfg_dataset["location_fields"]["lat"]
@@ -106,6 +128,16 @@ def agol_pub(records, cfg_dataset, replace):
 
 
 def write_csv(knackpy_instance, cfg_dataset, dataset):
+    """Summary
+    
+    Args:
+        knackpy_instance (TYPE): Description
+        cfg_dataset (TYPE): Description
+        dataset (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     if cfg_dataset.get("csv_separator"):
         sep = cfg_dataset["csv_separator"]
     else:
@@ -118,6 +150,16 @@ def write_csv(knackpy_instance, cfg_dataset, dataset):
 
 
 def knackpy_wrapper(cfg_dataset, auth, filters=None):
+    """Summary
+    
+    Args:
+        cfg_dataset (TYPE): Description
+        auth (TYPE): Description
+        filters (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return knackpy.Knack(
         obj=cfg_dataset["obj"],
         scene=cfg_dataset["scene"],
@@ -134,8 +176,16 @@ def get_multi_source(cfg_dataset, auth, last_run_date):
     """
     Return a single knackpy dataset instance from multiple knack sources. Developed
     specifically for merging traffic and phb signal requests into a single dataset.
-
+    
     See note in main() about why we filter by date twice for each knackpy instance.
+    
+    Args:
+        cfg_dataset (TYPE): Description
+        auth (TYPE): Description
+        last_run_date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     kn = None
 
@@ -182,24 +232,34 @@ def get_multi_source(cfg_dataset, auth, last_run_date):
 def filter_by_date(data, date_field, compare_date):
     """
     Date field and compare date should be unix timestamps with mills
+    
+    Args:
+        data (TYPE): Description
+        date_field (TYPE): Description
+        compare_date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
     """
     return [record for record in data if record[date_field] >= compare_date]
 
 
 def main(job, **kwargs):
     """
-
     Args:
-        previous arguments:
-        cfg_dataset (dict): configuration dictionary got from config.knack.config based
-        on the name of the dataset
-        auth (dict): knack credential from secrets.py file
         job (object): a job object
-        args (namespace): name space created by argutil/argparse that holds
+        **kwargs: Description
+        previous arguments:
+        on the name of the dataset
         all command line input.
-
+    
     Returns:
-
+    
+    Deleted Parameters:
+        cfg_dataset (dict): configuration dictionary got from config.knack.config based
+        auth (dict): knack credential from secrets.py file
+        args (namespace): name space created by argutil/argparse that holds
+    
     """
     cfg_dataset = cfg[kwargs["dataset"]]
     auth = KNACK_CREDENTIALS[kwargs["app_name"]]

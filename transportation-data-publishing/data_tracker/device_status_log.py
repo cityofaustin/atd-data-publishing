@@ -1,6 +1,9 @@
 """
 Get number of device online/offline/no communication and write to log table
 in Data Tracker.
+
+Attributes:
+    LOG_OBJ (str): Description
 """
 
 import argparse
@@ -28,7 +31,14 @@ LOG_OBJ = "object_131"
 
 
 def get_log_data(knack_creds):
-
+    """Summary
+    
+    Args:
+        knack_creds (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return knackpy.Knack(
         obj=LOG_OBJ,
         app_id=knack_creds["app_id"],
@@ -39,6 +49,15 @@ def get_log_data(knack_creds):
 
 
 def build_payload(data, device_type):
+    """Summary
+    
+    Args:
+        data (TYPE): Description
+        device_type (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     #  create a localized timestamp because Knack assumes timestamps are local
     now = arrow.now().replace(tzinfo="UTC").timestamp * 1000
 
@@ -56,7 +75,15 @@ def build_payload(data, device_type):
 
 
 def main(job, **kwargs):
-
+    """Summary
+    
+    Args:
+        job (TYPE): Description
+        **kwargs: Description
+    
+    Returns:
+        TYPE: Description
+    """
     device_type = kwargs["device_type"]
     app_name = kwargs["app_name"]
 
