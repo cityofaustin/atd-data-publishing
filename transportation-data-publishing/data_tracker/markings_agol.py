@@ -245,14 +245,14 @@ def main(job, **kwargs):
     Raises:
         Exception: Description
     """
-    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
-
+def main(job, **kwargs):
     records_processed = 0
 
     last_run_date = job.most_recent()
 
+    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
+
     if not last_run_date or kwargs["replace"]:
-        # replace dataset by setting the last run date to a long, long time ago
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1/1/1900"
     """
@@ -307,7 +307,7 @@ def main(job, **kwargs):
             source_geometries = geometry_layer.query(
                 where=where, outFields=cfg["geometry_record_id_field"]
             )
-
+            
             if not source_geometries:
                 raise Exception("No features returned from source geometry layer query")
 
@@ -322,10 +322,8 @@ def main(job, **kwargs):
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
 
-        records = remove_empty_strings(
-            records
-        )  # AGOL has unexepected handling of empty values
-
+        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
+        
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
