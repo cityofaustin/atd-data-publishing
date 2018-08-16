@@ -1,21 +1,20 @@
-"""
-Copy CCTV records from Data Tracker to KITS traffic management system.
+# Copy CCTV records from Data Tracker to KITS traffic management system.
 
-Attributes:
-    app_name (str): Description
-    fieldmap (TYPE): Description
-    filters (TYPE): Description
-    kits_creds (TYPE): Description
-    kits_table_camera (str): Description
-    kits_table_geom (str): Description
-    kits_table_web (str): Description
-    knack_creds (TYPE): Description
-    knack_objects (list): Description
-    knack_scene (str): Description
-    knack_view (str): Description
-    max_cam_id (int): Description
-    primary_key_knack (str): Description
-"""
+# Attributes:
+#     app_name (str): Description
+#     fieldmap (TYPE): Description
+#     filters (TYPE): Description
+#     kits_creds (TYPE): Description
+#     kits_table_camera (str): Description
+#     kits_table_geom (str): Description
+#     kits_table_web (str): Description
+#     knack_creds (TYPE): Description
+#     knack_objects (list): Description
+#     knack_scene (str): Description
+#     knack_view (str): Description
+#     max_cam_id (int): Description
+#     primary_key_knack (str): Description
+
 
 from copy import deepcopy
 import os
@@ -36,6 +35,7 @@ from tdutils import jobutil
 from tdutils import kitsutil
 from tdutils import logutil
 
+# define config variables
 
 kits_table_geom = "KITSDB.KITS.CameraSpatialData"
 kits_table_camera = "KITSDB.KITS.CAMERA"
@@ -520,43 +520,3 @@ def main(job, **kwargs):
         results[result] = len(data_cd[result])
 
     return results
-
-
-if __name__ == "__main__":
-
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
-
-    try:
-
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="KITS",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main()
-
-        job.result("success", message=str(results), records_processed=results["total"])
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(str(e))
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "KITS CAMERA SYNC FAILURE",
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error")
-
-        raise e

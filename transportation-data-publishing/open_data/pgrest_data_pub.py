@@ -1,14 +1,14 @@
-"""
-Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
-or CSV.
 
-By default, destination data is incrementally updated based on a
-modified date field defined in the configuration file. Alternatively use
---replace to truncate/replace the entire dataset. CSV output is always handled
-with --replace.
+# Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
+# or CSV.
 
-#TODO: agol pub
-"""
+# By default, destination data is incrementally updated based on a
+# modified date field defined in the configuration file. Alternatively use
+# --replace to truncate/replace the entire dataset. CSV output is always handled
+# with --replace.
+
+# #TODO: agol pub
+
 import argparse
 from copy import deepcopy
 import os
@@ -143,55 +143,3 @@ def cli_args():
     args = parser.parse_args()
 
     return args
-
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace(".py", "")
-    # logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info("START AT {}".format(arrow.now()))
-
-    # args = cli_args()
-    # logger.info("args: {}".format(str(args)))
-
-    cfg_dataset = cfg[args.dataset]
-
-    for dest in args.destination:
-        try:
-            script_id = "{}_{}_{}_{}".format(
-                script_name, args.dataset, "postgres", dest
-            )
-
-            job = jobutil.Job(
-                name=script_id,
-                url=JOB_DB_API_URL,
-                source="postgrest",
-                destination=dest,
-                auth=JOB_DB_API_TOKEN,
-            )
-
-            job.start()
-
-            results = main(cfg_dataset, job, args)
-
-            job.result("success", records_processed=results)
-
-        except Exception as e:
-            error_text = traceback.format_exc()
-
-            logger.error(error_text)
-
-            email_subject = "Knack Data Pub Failure: {}".format(args.dataset)
-
-            emailutil.send_email(
-                ALERTS_DISTRIBUTION,
-                email_subject,
-                error_text,
-                EMAIL["user"],
-                EMAIL["password"],
-            )
-
-            job.result("error", message=str(e))
-
-            raise e

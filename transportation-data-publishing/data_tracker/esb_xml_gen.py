@@ -1,11 +1,10 @@
-"""
-Generate XML message to update 311 Service Reqeusts
-via Enterprise Service Bus
+# Generate XML message to update 311 Service Reqeusts
+# via Enterprise Service Bus
 
-Attributes:
-    cfg (TYPE): Description
-    SPECIAL (dict): Description
-"""
+# Attributes:
+#     cfg (TYPE): Description
+#     SPECIAL (dict): Description
+
 import argparse
 import os
 import pdb
@@ -24,6 +23,7 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 
+# define config dictionary
 cfg = cfg["tmc_activities"]
 #  invalid XLM characters to be encoded
 SPECIAL = {"<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;", "&": "&amp;"}
@@ -195,7 +195,6 @@ def main(jobs, **kwargs):
 
     knack_creds = KNACK_CREDENTIALS
 
-    # cfg = cfg["tmc_activity"]
     #  check for data at public endpoint
     data = check_for_data(app_name)
 

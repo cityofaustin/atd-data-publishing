@@ -1,18 +1,17 @@
-"""
-Calculate # of business days elapsed and update records accordingly.
+# Calculate # of business days elapsed and update records accordingly.
 
-Developed specifically for measuring Traffic Control Plan (TCP) permit
-application reviews in the Right-of-Way Management division. 
+# Developed specifically for measuring Traffic Control Plan (TCP) permit
+# application reviews in the Right-of-Way Management division. 
 
-Attributes:
-    elapsed_key (str): Description
-    end_key (str): Description
-    obj (str): Description
-    scene (str): Description
-    start_key (str): Description
-    update_fields (list): Description
-    view (str): Description
-"""
+# Attributes:
+#     elapsed_key (str): Description
+#     end_key (str): Description
+#     obj (str): Description
+#     scene (str): Description
+#     start_key (str): Description
+#     update_fields (list): Description
+#     view (str): Description
+
 import argparse
 from datetime import datetime
 import os
@@ -216,49 +215,3 @@ def main(job, **kwargs):
 
     return len(kn.data)
 
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( datetime.today() ))
-
-    try:
-        args = cli_args()
-        logger.info("args: {}".format(str(args)))
-
-        app_name = args.app_name
-        knack_creds = KNACK_CREDENTIALS[app_name]
-
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main(knack_creds)
-
-        job.result("success", records_processed=results)
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        email_subject = "Days Elapsed Update Failure"
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e

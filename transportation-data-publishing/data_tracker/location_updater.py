@@ -1,20 +1,18 @@
-"""
-Update Data Tracker location records with council district, engineer area,
-and jurisdiction attributes from from COA ArcGIS Online feature services
+# Update Data Tracker location records with council district, engineer area,
+# and jurisdiction attributes from from COA ArcGIS Online feature services
 
-Attributes
-----------
-field_maps : TYPE
-    Description
-filters : TYPE
-    Description
-knack_creds : TYPE
-    Description
-layers : TYPE
-    Description
-obj : str
-    Description
-"""
+# Attributes
+# ----------
+# field_maps : TYPE
+#     Description
+# filters : TYPE
+#     Description
+# knack_creds : TYPE
+#     Description
+# layers : TYPE
+#     Description
+# obj : str
+#     Description
 import argparse
 import os
 import pdb
@@ -45,28 +43,6 @@ field_maps = {
     }
 }
 
-
-def format_stringify_list(input_list):
-    """
-    Function to format features when merging multiple feature attributes
-    
-    Parameters
-    ----------
-    input_list : TYPE
-        Description
-    
-    Returns
-    -------
-    TYPE
-        Description
-    """
-    return ", ".join(str(l) for l in input_list)
-
-
-"""
-layer config for interacting with ArcGIS Online
-see: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
-"""
 layers = [
     {
         "service_name": "BOUNDARIES_single_member_districts",
@@ -112,6 +88,28 @@ filters = {
     "match": "and",
     "rules": [{"field": "field_1357", "operator": "is", "value": "No"}],
 }
+
+def format_stringify_list(input_list):
+    """
+    Function to format features when merging multiple feature attributes
+    
+    Parameters
+    ----------
+    input_list : TYPE
+        Description
+    
+    Returns
+    -------
+    TYPE
+        Description
+    """
+    return ", ".join(str(l) for l in input_list)
+
+
+# layer config for interacting with ArcGIS Online
+# see: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
+
+
 
 
 def map_fields(record, field_map):
@@ -374,46 +372,3 @@ def main(job, **kwargs):
 
     else:
         return len(kn.data)
-
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
-
-    args = cli_args()
-    app_name = args.app_name
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main()
-
-        job.result("success", records_processed=results)
-
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "Location Update Failure",
-            str(e),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-        raise e

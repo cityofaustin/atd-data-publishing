@@ -1,11 +1,10 @@
-"""
-Ping network devices and update ip comm status in Knack database.
 
-command ex: device_status_check.py travel_sensors data_tracker_prod
+# Ping network devices and update ip comm status in Knack database.
 
-#TODO
-- move write to JSON to a separate script. it doesn't belong here.
-"""
+# command ex: device_status_check.py travel_sensors data_tracker_prod
+
+# - move write to JSON to a separate script. it doesn't belong here.
+
 import argparse
 import json
 from multiprocessing.dummy import Pool as ThreadPool
@@ -19,7 +18,6 @@ import traceback
 import arrow
 import knackpy
 
-# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 from tdutils import argutil
@@ -35,11 +33,13 @@ def ping_ip(ip, timeout=3):
     https://stackoverflow.com/questions/2953462/pinging-servers-in-python
     
     Args:
-        ip (TYPE): Description
-        timeout (int, optional): Description
+        ip (str): ip address
+        timeout (int, optional): length of time for the function to return
+        timeout status. 
     
     Returns:
-        TYPE: Description
+        str: OFFLINE if the device is OFFLINE
+             ONLINE if the device is ONLINE 
     """
     if system_name().lower() == "windows":
         #  -w is timeout -n is number of packets

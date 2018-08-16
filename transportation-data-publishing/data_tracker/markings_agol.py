@@ -1,9 +1,7 @@
-"""
-Publish pavement markings work orders to ArcGIS Online
+# Publish pavement markings work orders to ArcGIS Online
 
-Attributes:
-    config (TYPE): Description
-"""
+# Attributes:
+#     config (TYPE): Description
 import os
 import pdb
 import traceback
@@ -361,49 +359,3 @@ def main(job, **kwargs):
             records_processed += len(adds)
 
     return records_processed
-
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace(".py", "")
-    # logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info("START AT {}".format(arrow.now()))
-
-    # args = cli_args()
-    #
-    # auth = KNACK_CREDENTIALS[args.app_name]
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="agol",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main(config, job)
-
-        job.result("success", records_processed=results)
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-
-        logger.error(error_text)
-
-        email_subject = "Signs & Markings AGOL Pub Failure"
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e

@@ -1,5 +1,9 @@
 """Summary
-
+a script launcher tha handls:
+    job creation for job server
+    log start and end time
+    log exceptions
+    dynamically import 
 """
 # system packages
 import os
@@ -13,7 +17,7 @@ from config.knack.config import cfg
 from config.arguments import *
 from config.wherescripts import *
 
-# needed packages in tdutils
+# tdutils subpackages
 from tdutils import logutil
 from tdutils import jobutil
 from tdutils import emailutil
@@ -24,23 +28,21 @@ import arrow
 import importlib
 import argparse
 
-# define
-
 
 def get_parser(prog, description, *args):
     """
     Return a parser with the specified arguments. Each arg
-    in *args must be defined in ARGUMENTS.
+    in *args must be defined in ARGUMENTS dictionary.
     
     Args:
-        prog (TYPE): Description
-        description (TYPE): Description
-        *args: Description
+        prog (str): program the script name
+        description (description): description of arguments
     
-    Returns:
-        TYPE: Description
+    Returns: parser
+        parser: a parser class from ArugumentParser packages 
     """
     parser = argparse.ArgumentParser(prog=prog, description=description)
+
 
     for arg_name in args[1:]:
         arg_def = ARGUMENTS[arg_name]
@@ -54,14 +56,14 @@ def get_parser(prog, description, *args):
 
 
 def cli_args():
-    """get command line arguments, the get script part could be refactored as a
-    seperated function
+    """get command line arguments defined in ARGUMENTS dictionary
     
-    Returns: a dictionary contains all arguments from command line imputs.
+    Returns: 
+
+    Returns: args_dict
+        a dictionary contains all arguments from command line imputs.
     
-    Returns:
-        dict
-    
+
     """
 
     script_parser = argparse.ArgumentParser()
@@ -78,15 +80,9 @@ def cli_args():
         description = SCRIPTINFO[script_name]["argdescription"]
         args_name = SCRIPTINFO[script_name]["arguments"]
 
-        # print("args_name", args_name)
-
         argument_parser = get_parser(prog, description, *args_name)
 
-        # print(argument_parser)
-
         args = argument_parser.parse_args(script_arguments)
-
-        # print("args", args)
 
         args_dict.update(vars(args))
 
@@ -101,7 +97,8 @@ def create_logger(script_name):
     Args:
         script_name (str): script name
     
-    Returns:
+    Returns: logger
+        a logger class that logs exceptions, start time and end time in the log folder. 
     
     """
 
@@ -116,43 +113,35 @@ def create_logger(script_name):
 def dynamic_import(script_name):
     """
     Args:
-        script_name (TYPE): Description
+        script_name (str): 
     
-    Deleted Parameters:
-        Returns: script content of the specified script
     
-    Returns:
-        TYPE: Description
+    Returns: script
+        script content of the imported script
     
     """
 
+    # TODO: get rid of the SCRIPTDIR and dynamically search for scripts in sub folders
+
     for directory, script in SCRIPTDIR.items():
         for name in script:
-            # print(directory)
+
             if script_name == name:
-                # print(script_name)
-                # print(script)
+
                 module_name = "{}.{}".format(directory, script_name)
 
-    # module_name = "{}.{}".format(directory, script_name)
-
-    # print(module_name)
     script = importlib.import_module(module_name)
 
     return script
 
 
 def create_namejob(script_name):
-    """
+    """create a script name based job to post on job server
     Args:
-        script_name (TYPE): Description
-        from each script.
-    
-    Deleted Parameters:
-        Returns: a job class that will be used as a input to the main function
+        script_name (str): script_name
     
     Returns:
-        TYPE: Description
+        job class: 
     
     """
 
@@ -168,7 +157,7 @@ def create_namejob(script_name):
 
 
 def get_script_id(**kwargs):
-    """
+    """ 
     Args:
         **kwargs: Description
         and configuration information
@@ -193,7 +182,7 @@ def get_script_id(**kwargs):
 
 
 def create_idjob(script_name, script_id, destination):
-    """
+    """ create a script id based job to post on job server
     Args:
         script_name (str)
         script_id (str)
@@ -219,11 +208,8 @@ def run_catch(**kwargs):
     this function and just write it in the __name__ = "__main__".
     
     Args:
-        **kwargs: Description
+        **kwargs: a
         function
-    
-    Deleted Parameters:
-        Returns: various from scripts to scripts, typically defined in the main
     
     Returns:
         TYPE: Description
@@ -232,7 +218,6 @@ def run_catch(**kwargs):
         e: Description
     
     """
-    # print(kwargs)
 
     script_name = kwargs["script_name"]
 
@@ -249,18 +234,14 @@ def run_catch(**kwargs):
 
     try:
         results = getattr(script, "main")(job, **kwargs)
-        # print(results)
-
-        # print("results", results)
 
         if results or results == 0:
 
-            # pdb.set_trace()
             try:
                 job.result("success", records_processed=results)
             except Exception:
                 job.result("success", message=results)
-            # pdb.set_trace()
+
             logger.info(SCRIPTINFO[script_name]["logger_result"].format(results))
             logger.info("END AT {}".format(arrow.now()))
 
@@ -268,8 +249,6 @@ def run_catch(**kwargs):
 
         error_text = traceback.format_exc()
         logger.error(str(error_text))
-
-        # print(kwargs)
 
         emailutil.send_email(
             ALERTS_DISTRIBUTION,
@@ -297,5 +276,3 @@ if __name__ == "__main__":
     kwargs = dict(SCRIPTINFO[script_name], **args_dict)
 
     run_catch(**kwargs)
-
-    # dynamic_import("backup")

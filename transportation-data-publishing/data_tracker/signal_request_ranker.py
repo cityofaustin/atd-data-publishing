@@ -1,18 +1,17 @@
-"""
-Assign traffic and PHB request rankings based on evaluation score
-dataset argument is required and must be either 'phb' or 'traffic_signal'
+# Assign traffic and PHB request rankings based on evaluation score
+# dataset argument is required and must be either 'phb' or 'traffic_signal'
 
-Attributes:
-    concat_keys (list): Description
-    eval_types (dict): Description
-    group_key (str): Description
-    modified_date_key (str): Description
-    primary_key (str): Description
-    rank_key (str): Description
-    score_key (str): Description
-    status_key (str): Description
-    status_vals (list): Description
-"""
+# Attributes:
+#     concat_keys (list): Description
+#     eval_types (dict): Description
+#     group_key (str): Description
+#     modified_date_key (str): Description
+#     primary_key (str): Description
+#     rank_key (str): Description
+#     score_key (str): Description
+#     status_key (str): Description
+#     status_vals (list): Description
+
 import argparse
 import os
 import pdb
@@ -172,55 +171,3 @@ def cli_args():
     args = parser.parse_args()
 
     return args
-
-
-if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    args = cli_args()
-    logger.info("args: {}".format(str(args)))
-
-    app_name = args.app_name
-    knack_creds = KNACK_CREDENTIALS[app_name]
-    eval_type = args.eval_type
-    obj = eval_types[eval_type]
-
-    script_id = f"{script_name}_{eval_type}"
-
-    try:
-        job = jobutil.Job(
-            name=script_id,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main()
-
-        job.result("success", records_processed=results)
-
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        logger.error(str(e))
-        error_text = traceback.format_exc()
-        email_subject = "Signal Request Ranker Failure: {}".format(eval_type)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e

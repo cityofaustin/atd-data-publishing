@@ -378,12 +378,4 @@ def main(job, **kwargs):
 
     results = " | ".join(results)
 
-    # pdb.set_trace()
-
     return results
-
-    # job.result('success', message=' | '.join(results) )
-
-
-if __name__ == "__main__":
-    pass

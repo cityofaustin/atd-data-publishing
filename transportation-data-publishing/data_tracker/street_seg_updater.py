@@ -1,10 +1,10 @@
-"""
-Update Knack street segments with data from 
-COA ArcGIS Online Street Segment Feature Service
 
-Attributes:
-    config (TYPE): Description
-"""
+# Update Knack street segments with data from 
+# COA ArcGIS Online Street Segment Feature Service
+
+# Attributes:
+#     config (TYPE): Description
+
 import os
 import pdb
 
@@ -149,7 +149,6 @@ def main(job, **kwargs):
 
         update_response.append(res)
 
-    pdb.set_trace()
     if len(unmatched_segments) > 0:
         error_text = "Unmatched street segments: {}".format(
             ", ".join(str(x) for x in unmatched_segments)
@@ -158,47 +157,3 @@ def main(job, **kwargs):
         raise Exception(error_text)
 
     return count
-
-
-if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    AUTH = KNACK_CREDENTIALS["data_tracker_prod"]
-
-    try:
-
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        last_run_date = job.most_recent()
-
-        results = main(config, last_run_date)
-
-        job.result("success", records_processed=results)
-
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        logger.error(str(e))
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "Street Segment Update Failure",
-            str(e),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-        raise e

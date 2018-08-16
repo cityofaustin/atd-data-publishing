@@ -1,12 +1,11 @@
-"""
-Check traffic signal prevent maintenance (PM) records and
-insert copies of PM records to signals' secondary signals.
+# Check traffic signal prevent maintenance (PM) records and
+# insert copies of PM records to signals' secondary signals.
 
-Attributes:
-    copy_fields (list): Description
-    params_pm (TYPE): Description
-    params_signal (dict): Description
-"""
+# Attributes:
+#     copy_fields (list): Description
+#     params_pm (TYPE): Description
+#     params_signal (dict): Description
+
 import argparse
 import os
 import pdb
@@ -252,62 +251,3 @@ def main(job, **kwargs):
     # logger.info('END AT {}'.format( arrow.now() ))
     
     return len(pm_payload_insert) + len(pm_payload_update) + len(signals_payload_update)
-
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
-
-    # args = cli_args()
-    # app_name = args.app_name
-    #
-    # knack_creds = KNACK_CREDENTIALS[app_name]
-
-    # params_pm = {
-    #     'field_obj' : ['object_84', 'object_12'],
-    #     'scene' : 'scene_416',
-    #     'view' : 'view_1182'
-    # }
-    #
-    # params_signal = {
-    #     'field_obj' : ['object_12'],
-    #     'scene' : 'scene_73',
-    #     'view' : 'view_197'
-    # }
-    #
-    # copy_fields = ['PM_COMPLETED_DATE', 'WORK_ORDER', 'PM_COMPLETED_BY']
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main()
-
-        job.result("success", records_processed=results)
-
-    except Exception as e:
-        # logger.error(str(e))
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "Copy Preventative Maintenance Failure",
-            str(e),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e
-
-    print(results)

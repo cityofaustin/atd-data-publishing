@@ -1,10 +1,8 @@
-"""
-Get number of device online/offline/no communication and write to log table
-in Data Tracker.
+# Get number of device online/offline/no communication and write to log table
+# in Data Tracker.
 
-Attributes:
-    LOG_OBJ (str): Description
-"""
+# Attributes:
+#     LOG_OBJ (str): Description
 
 import argparse
 from collections import defaultdict
@@ -16,7 +14,6 @@ import traceback
 import arrow
 import knackpy
 
-# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
@@ -93,8 +90,6 @@ def main(job, **kwargs):
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    # job.start()
-
     kn = knackpy.Knack(
         obj=cfg[device_type]["obj"],
         scene=cfg[device_type]["scene"],
@@ -129,68 +124,3 @@ def main(job, **kwargs):
 
     return len(payload)
 
-
-# def cli_args():
-
-#     parser = argutil.get_parser(
-#         'device_status_log.py',
-#         'Generate connectivity statistics and upload to Knack application.',
-#         'device_type',
-#         'app_name'
-#     )
-
-#     args = parser.parse_args()
-
-#     return args
-
-
-if __name__ == "__main__":
-
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
-
-    # args = cli_args()
-
-    # device_type = args.device_type
-    # app_name = args.app_name
-
-    # script_id = f'{script_name}_{device_type}'
-
-    # primary_key = cfg[device_type]['primary_key']
-    # status_field = cfg[device_type]['status_field']
-    # status_filters = cfg[device_type]['status_filter_comm_status']
-
-    # knack_creds = KNACK_CREDENTIALS[app_name]
-
-    try:
-        job = jobutil.Job(
-            name=script_id,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        results = main(job)
-
-        job.result("success", records_processed=results)
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        email_subject = "Device Status Log Failure: {}".format(device_type)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-        logger.error(error_text)
-
-        job.result("error")
-        raise e

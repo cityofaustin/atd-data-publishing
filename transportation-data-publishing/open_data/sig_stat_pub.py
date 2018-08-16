@@ -1,17 +1,15 @@
-"""Summary
+# Attributes:
+#     FLASH_STATUSES (list): Description
+#     SOCR_SIG_RES_ID (str): Description
+#     SOCR_SIG_STAT_RES_ID (str): Description
 
-Attributes:
-    FLASH_STATUSES (list): Description
-    SOCR_SIG_RES_ID (str): Description
-    SOCR_SIG_STAT_RES_ID (str): Description
-"""
 import os
 import pdb
 import sys
 
 import arrow
 
-import _setpath
+# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 from tdutils import kitsutil
@@ -21,13 +19,7 @@ from tdutils import jobutil
 from tdutils import logutil
 from tdutils import socratautil
 
-# test data
-# KITS_DATA = [{'KITS_ID': 50,
-# 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000),
-# 'OPERATION_STATE': 2, 'PLAN_ID':0, 'SIGNAL_ID': 617},
-# {'KITS_ID': 50, 'OPERATION_STATE_DATETIME': datetime.datetime(2018, 5, 16, 13, 45, 29, 17000), 'OPERATION_STATE': 1, 'PLAN_ID':0, 'SIGNAL_ID': 110}]
-
-# define
+# define config variables
 
 SOCR_SIG_RES_ID = "xwqn-2f78"
 SOCR_SIG_STAT_RES_ID = "5zpr-dehc"
@@ -143,12 +135,6 @@ def main(jobs, **kwargs):
         keys=["operation_state"],
     )
 
-    # for change_type in cd_results.keys():
-    #  log signals whose status has changed
-    # if len(cd_results[change_type]) > 0:
-    # logger.info(
-    #     '{}: {}'.format(change_type, len(cd_results[change_type]))
-    # )
 
     if cd_results["new"] or cd_results["change"] or cd_results["delete"]:
 
@@ -179,49 +165,3 @@ def main(jobs, **kwargs):
 
     else:
         return 0
-
-
-if __name__ == "__main__":
-
-    SOCR_SIG_RES_ID = "xwqn-2f78"
-    SOCR_SIG_STAT_RES_ID = "5zpr-dehc"
-    FLASH_STATUSES = ["1", "2", "3"]
-
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-
-    try:
-        logger.info("START AT {}".format(arrow.now()))
-
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="kits",
-            destination="socrata",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        results = main()
-
-        logger.info("END AT {}".format(arrow.now()))
-
-        job.result("success", records_processed=results)
-
-    except Exception as e:
-        logger.info(e)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "DATA PROCESSING ALERT: Signal Status Update Failure",
-            str(e),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e

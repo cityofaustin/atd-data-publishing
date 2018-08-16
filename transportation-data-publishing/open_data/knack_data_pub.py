@@ -19,7 +19,6 @@ import traceback
 import arrow
 import knackpy
 
-# import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
@@ -270,13 +269,13 @@ def main(job, **kwargs):
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1/1/1900"
 
-    """
-    We include a filter in our API call to limit to records which have
-    been modified on or after the date the last time this job ran
-    successfully. The Knack API supports filter requests by date only
-    (not time), so we must apply an additional filter on the data after
-    we receive it.
-    """
+
+    # We include a filter in our API call to limit to records which have
+    # been modified on or after the date the last time this job ran
+    # successfully. The Knack API supports filter requests by date only
+    # (not time), so we must apply an additional filter on the data after
+    # we receive it.
+
 
     if cfg_dataset.get("multi_source"):
         kn = get_multi_source(cfg_dataset, auth, last_run_date)
@@ -301,11 +300,11 @@ def main(job, **kwargs):
         return 0
 
     if cfg_dataset.get("fetch_locations"):
-        """
-        Optionally fetch location data from another knack view and merge with
-        primary dataset. We access the base cfg_dataset object to pull request info
-        from the 'locations' config.
-        """
+
+        # Optionally fetch location data from another knack view and merge with
+        # primary dataset. We access the base cfg_dataset object to pull request info
+        # from the 'locations' config.
+
         locations = knackpy_wrapper(cfg["locations"], auth)
 
         lat_field = cfg["locations"]["location_fields"]["lat"]
@@ -340,86 +339,3 @@ def main(job, **kwargs):
     # logger.info('END AT {}'.format( arrow.now() ))
 
     return len(kn.data)
-
-
-# def cli_args():
-#
-#     parser = argutil.get_parser(
-#         'knack_data_pub.py',
-#         'Publish Knack data to Socrata and ArcGIS Online',
-#         'dataset',
-#         'app_name',
-#         '--destination',
-#         '--replace'
-#     )
-#
-#     args = parser.parse_args()
-#
-#     return args
-
-
-if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
-
-    # args = cli_args()
-    logger.info("args: {}".format(str(args)))
-
-    cfg_dataset_dataset = cfg_dataset[args.dataset]
-
-    for dest in args.destination:
-        """
-        Knack data pub is a special case in which multiple "jobs" are kicked off
-        within a single script. For each specified destination, we query knack
-        based on the last_run_date and publish data accordingly. The result is
-        that each time the script runs, the source db (knack) will likely be sent
-        multiple requests for the same data, because each job will probably share
-        the same last run date (but we don't want to assume so). This isn't such
-        a big deal for incremental updates, but when the --replace option is used,
-        all the source data will be downloaded in it's entirety for each
-        destination!
-
-        The underlying issue here is that this kind of ETL process should really
-        use a staging database, so that source data is extracted once and 
-        individual process run separately to publish from the staging DB to the
-        various destination datasets. That's a task for another day, hopefully
-        soon...
-        """
-        try:
-            script_id = "{}_{}_{}_{}".format(script_name, args.dataset, "knack", dest)
-
-            job = jobutil.Job(
-                name=script_id,
-                url=JOB_DB_API_URL,
-                source="knack",
-                destination=dest,
-                auth=JOB_DB_API_TOKEN,
-            )
-
-            job.start()
-
-            results = main(job, **kwargs)
-
-            job.result("success", records_processed=results)
-
-        except Exception as e:
-            error_text = traceback.format_exc()
-
-            logger.error(error_text)
-
-            email_subject = "Knack Data Pub Failure: {}".format(args.dataset)
-
-            emailutil.send_email(
-                ALERTS_DISTRIBUTION,
-                email_subject,
-                error_text,
-                EMAIL["user"],
-                EMAIL["password"],
-            )
-
-            job.result("error", message=str(e))
-
-            continue

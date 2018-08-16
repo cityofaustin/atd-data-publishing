@@ -1,29 +1,29 @@
-"""
-Assign detection status to traffic signal based on status of its detectors. 
-Update detection status log when signal detection status changes.
 
-#TODO
-- only process modified signals/detectors (currently processing all detectors)
+# Assign detection status to traffic signal based on status of its detectors. 
+# Update detection status log when signal detection status changes.
 
-Attributes
-----------
-config_detectors : dict
-    Description
-config_signals : dict
-    Description
-config_status_log : dict
-    Description
-DET_DATE_LABEL : str
-    Description
-DET_STATUS_LABEL : str
-    Description
-fieldmap_status_log : TYPE
-    Description
-SIG_DATE_LABEL : str
-    Description
-SIG_STATUS_LABEL : str
-    Description
-"""
+# #TODO
+# - only process modified signals/detectors (currently processing all detectors)
+
+# Attributes
+# ----------
+# config_detectors : dict
+#     Description
+# config_signals : dict
+#     Description
+# config_status_log : dict
+#     Description
+# DET_DATE_LABEL : str
+#     Description
+# DET_STATUS_LABEL : str
+#     Description
+# fieldmap_status_log : TYPE
+#     Description
+# SIG_DATE_LABEL : str
+#     Description
+# SIG_STATUS_LABEL : str
+#     Description
+
 import argparse
 from collections import defaultdict
 import logging
@@ -34,7 +34,6 @@ import pdb
 import arrow
 import knackpy
 
-# import _setpath
 from config.secrets import *
 from config.public import *
 
@@ -43,6 +42,8 @@ from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
+
+# define config arguments
 
 config_detectors = {"scene": "scene_468", "view": "view_1333", "objects": ["object_98"]}
 
@@ -169,15 +170,16 @@ def main(job, **kwargs):
     
     Parameters
     ----------
-    job : TYPE
-        Description
-    **kwargs
-        Description
+    job : Job class from job utils
+        a job class that handles job method to post information to job server
+    **kwargs : dict
+        **kwargs: a dictionary of arguements from user input and the public.py
+        dictionary file
     
     Returns
     -------
-    TYPE
-        Description
+    count_sig
+        number of signals that has been updated
     """
     app_name = kwargs["app_name"]
 
@@ -242,140 +244,3 @@ def main(job, **kwargs):
         count_sig += 1
 
     return count_sig
-
-
-if __name__ == "__main__":
-
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    args = cli_args()
-    logger.info("args: {}".format(str(args)))
-
-    app_name = args.app_name
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="knack",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        job.start()
-
-        DET_STATUS_LABEL = "DETECTOR_STATUS"
-        DET_DATE_LABEL = "MODIFIED_DATE"
-
-        SIG_STATUS_LABEL = "DETECTION_STATUS"
-        SIG_DATE_LABEL = "DETECTION_STATUS_DATE"
-
-        api_key = KNACK_CREDENTIALS[app_name]["api_key"]
-        app_id = KNACK_CREDENTIALS[app_name]["app_id"]
-
-        config_detectors = {
-            "scene": "scene_468",
-            "view": "view_1333",
-            "objects": ["object_98"],
-        }
-
-        config_signals = {
-            "scene": "scene_73",
-            "view": "view_197",
-            "objects": ["object_12"],
-        }
-
-        config_status_log = {"objects": ["object_102"]}
-
-        fieldmap_status_log = {
-            "EVENT": "field_1576",
-            "SIGNAL": "field_1577",
-            "EVENT_DATE": "field_1578",
-        }
-
-        detectors = knackpy.Knack(
-            scene=config_detectors["scene"],
-            view=config_detectors["view"],
-            ref_obj=config_detectors["objects"],
-            api_key=api_key,
-            app_id=app_id,
-            timeout=30,
-        )
-
-        signals = knackpy.Knack(
-            scene=config_signals["scene"],
-            view=config_signals["view"],
-            ref_obj=config_signals["objects"],
-            api_key=api_key,
-            app_id=app_id,
-            timeout=30,
-        )
-
-        signals.data = datautil.filter_by_key_exists(signals.data, "SIGNAL_STATUS")
-        signals.data = datautil.filter_by_val(
-            signals.data, "SIGNAL_STATUS", ["TURNED_ON"]
-        )
-
-        lookup = groupBySignal(detectors.data)
-
-        count_sig = 0
-        count_status = 0
-
-        for sig in signals.data:
-
-            old_status = None
-            new_status = getStatus(sig, lookup)
-            new_status_date = getMaxDate(sig, lookup)
-
-            if SIG_STATUS_LABEL in sig:
-                old_status = sig[SIG_STATUS_LABEL]
-
-                if old_status == new_status:
-                    continue
-
-            payload_signals = {
-                "id": sig["id"],
-                SIG_STATUS_LABEL: new_status,
-                SIG_DATE_LABEL: getMaxDate(sig, lookup),
-            }
-
-            payload_signals = datautil.replace_keys(
-                [payload_signals], signals.field_map
-            )
-
-            #  update signal record with detection status and date
-            res = knackpy.record(
-                payload_signals[0],
-                obj_key=config_signals["objects"][0],
-                app_id=app_id,
-                api_key=api_key,
-                method="update",
-            )
-
-            count_sig += 1
-
-        job.result("success", records_processed=count_sig)
-
-        logger.info("{} signal records updated".format(count_sig))
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(error_text)
-
-        email_subject = "Detection Status Update Failure"
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            email_subject,
-            error_text,
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error", message=str(e))
-
-        raise e
