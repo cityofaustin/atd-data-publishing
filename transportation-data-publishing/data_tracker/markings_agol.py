@@ -134,9 +134,12 @@ def append_paths(
     """
     unmatched = ""
 
-    for record in records:
-        path_id = record.get(path_id_field)
+    # pdb.set_trace()
 
+    for record in records:
+        
+        path_id = record.get(path_id_field)   
+        
         if path_id:
             paths = []
 
@@ -154,12 +157,15 @@ def append_paths(
             elif type(path_id) == list:
                 for path_id in record[path_id_field]:
                     for feature in features:
-                        if path_id == feature.attributes.get(path_id_field):
+                        if str(path_id) == str(feature.attributes.get(path_id_field)):
+                            # print('match!')
                             paths = paths + [path for path in feature.geometry["paths"]]
+                            # print(paths)
 
                 record[output_field] = paths
 
             if not record.get(output_field):
+                # pdb.set_trace()
                 unmatched += f"{path_id_field}: {path_id}\n"
 
     if unmatched:
@@ -170,6 +176,8 @@ def append_paths(
             EMAIL["user"],
             EMAIL["password"],
         )
+
+
 
     return records
 
@@ -231,19 +239,6 @@ def cli_args():
 
 
 def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    
-    Raises:
-        Exception: Description
-    """
-def main(job, **kwargs):
     records_processed = 0
 
     last_run_date = job.most_recent()
@@ -252,7 +247,8 @@ def main(job, **kwargs):
 
     if not last_run_date or kwargs["replace"]:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1/1/1900"
+        # the arrow package needs a specific date and timeformat 
+        last_run_date = "1970-01-01"
     """
     We include a filter in our API call to limit to records which have
     been modified on or after the date the last time this job ran
@@ -281,6 +277,8 @@ def main(job, **kwargs):
 
         records = kn.data
 
+        # pdb.set_trace()
+
         if cfg.get("geometry_service_id"):
             #  dataset has geomteries to be retrieved from another dataset
             if cfg.get("multi_source_geometry"):
@@ -294,26 +292,32 @@ def main(job, **kwargs):
                 )
 
             where_ids = ", ".join(f"'{x}'" for x in source_ids)
-            where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
 
-            geometry_layer = agolutil.get_item(
-                auth=AGOL_CREDENTIALS,
-                service_id=cfg["geometry_service_id"],
-                layer_id=cfg["geometry_layer_id"],
-            )
+            if where_ids:
+                where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
 
-            source_geometries = geometry_layer.query(
-                where=where, outFields=cfg["geometry_record_id_field"]
-            )
+                # pdb.set_trace()
+
+                geometry_layer = agolutil.get_item(
+                    auth=AGOL_CREDENTIALS,
+                    service_id=cfg["geometry_service_id"],
+                    layer_id=cfg["geometry_layer_id"],
+                )
+
+                source_geometries = geometry_layer.query(
+                    where=where, outFields=cfg["geometry_record_id_field"]
+                )
+
+            # pdb.set_trace()
             
-            if not source_geometries:
-                raise Exception("No features returned from source geometry layer query")
+                if not source_geometries:
+                    raise Exception("No features returned from source geometry layer query")
 
-            records = append_paths(
-                kn.data,
-                source_geometries,
-                path_id_field=cfg["geometry_record_id_field"],
-            )
+                records = append_paths(
+                    kn.data,
+                    source_geometries,
+                    path_id_field=cfg["geometry_record_id_field"],
+                )
 
         if cfg.get("extract_attachment_url"):
             records = knackutil.attachment_url(
@@ -322,6 +326,8 @@ def main(job, **kwargs):
 
         records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
         
+        # pdb.set_trace()
+
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
