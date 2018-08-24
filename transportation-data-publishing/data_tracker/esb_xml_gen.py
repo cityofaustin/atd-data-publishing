@@ -101,7 +101,7 @@ def check_for_data(app_name):
         return False
 
 
-def get_data():
+def get_data(app_name):
     """Summary
     
     Returns:
@@ -200,7 +200,7 @@ def main(jobs, **kwargs):
 
     if data:
         #  get data at private enpoint
-        kn = get_data()
+        kn = get_data(app_name)
 
     # should I just abort in this case?
     else:
