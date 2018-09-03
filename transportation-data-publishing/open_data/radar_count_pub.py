@@ -4,10 +4,7 @@
 # Attributes:
 #     socrata_resource (str): Description
 import hashlib
-import os
 import pdb
-import sys
-import traceback
 
 import arrow
 import knackpy

@@ -10,12 +10,6 @@ with --replace.
 #TODO
 - filter fetch locations by source data
 """
-from copy import deepcopy
-import os
-import pdb
-import sys
-import traceback
-
 import arrow
 import knackpy
 
@@ -26,10 +20,7 @@ from config.secrets import *
 from tdutils import agolutil
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
 from tdutils import knackutil
-from tdutils import logutil
 from tdutils import socratautil
 
 

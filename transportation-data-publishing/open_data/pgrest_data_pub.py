@@ -10,11 +10,8 @@ with --replace.
 
 """
 import argparse
-from copy import deepcopy
-import os
 import pdb
 import sys
-import traceback
 import urllib.parse
 
 import arrow
@@ -24,9 +21,6 @@ from config.postgrest.config import cfg
 from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
 from tdutils import pgrestutil
 from tdutils import socratautil
 
@@ -113,7 +107,7 @@ def main():
     ]  # TODO: extract from API definition
 
     if args.destination[0] == "socrata":
-        pub = socrata_pub(records, cfg_dataset, replace, date_fields=date_fields)
+        pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)
 
     return len(records)
 
