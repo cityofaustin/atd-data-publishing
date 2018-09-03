@@ -9,6 +9,31 @@ cfg = {
         "ref_obj": ["object_1"],
         "socrata_resource_id": "tkk5-uugs",
     },
+    "backup": {
+        "objects": [
+            "object_137", # admin_field_meta
+            "object_138", # admin_object_meta
+            "object_95", # csr_flex_notes
+            "object_67", # quote_of_the_week
+            "object_77", # signal_id_generator     
+            "object_148", # street_names 
+            "object_7", # street_segments
+            "object_83", # tmc_issues
+            "object_58", # tmc_issues_DEPRECTATED_HISTORICAL_DATA_ONLY
+            "object_10", # Asset editor
+            "object_19", # Viewer
+            "object_20", # System Administrator
+            "object_24", # Program Editor
+            "object_57", # Supervisor | AMD
+            "object_65", # Technician|AMD
+            "object_68", # Quote of the Week Editor
+            "object_76", # Inventory Editor
+            "object_97", # Account Administrator
+            "object_151", # Supervisor | Signs&Markings
+            "object_152", # Technician | Signs & Markings
+            "object_155", # Contractor | Detection
+        ],
+    },
     "cabinets": {
         "primary_key": "CABINET_ID",
         "ref_obj": ["object_118", "object_12"],
@@ -143,7 +168,7 @@ cfg = {
         "scene": "scene_589",
         "view": "view_1597",
         "service_url": "http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/pole_attachments/FeatureServer/0/",
-        "service_id": "3a5a777f780447db940534b5808d4ba7",
+        "service_id": "3a5a777f780447db940534b5808d4`7",
         "include_ids": True,
         "socrata_resource_id": "btg5-ebcy",
         "ip_field": None,
