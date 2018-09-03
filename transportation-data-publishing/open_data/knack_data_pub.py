@@ -10,15 +10,16 @@ with --replace.
 #TODO
 - filter fetch locations by source data
 """
-import argparse
 from copy import deepcopy
 import os
 import pdb
+import sys
 import traceback
 
 import arrow
 import knackpy
 
+import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
@@ -243,7 +244,32 @@ def filter_by_date(data, date_field, compare_date):
     return [record for record in data if record[date_field] >= compare_date]
 
 
-def main(job, **kwargs):
+def cli_args(args):
+
+    parser = argutil.get_parser(
+        'knack_data_pub.py',
+        'Publish Knack data to Socrata and ArcGIS Online',
+        'dataset',
+        'app_name',
+        '--destination',
+        '--replace'
+    )
+    
+    parser.add_argument(
+        '-l',
+        '--last_run_date',
+        type=int,
+        required=False,
+        help='A unix timestamp representing the last date the job was run. Will be applied as a temporal filter when querying data for processing.')
+
+    #TODO add temporal filter / last_run_date arg (format?)
+    parsed = parser.parse_args(args)
+    
+
+    return parsed
+
+
+def main(args):
     """
     Args:
         job (object): a job object
@@ -260,23 +286,23 @@ def main(job, **kwargs):
         args (namespace): name space created by argutil/argparse that holds
     
     """
-    cfg_dataset = cfg[kwargs["dataset"]]
-    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
+    args = cli_args(args)
+    
+    cfg_dataset = cfg[args.dataset]
+    
+    last_run_date = args.last_run_date
 
-    last_run_date = job.most_recent()
+    auth = KNACK_CREDENTIALS[args.app_name]
 
-    if not last_run_date or kwargs["replace"] or job.destination == "csv":
+    if not last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1/1/1900"
-
+        last_run_date = "1970-01-01"
 
     # We include a filter in our API call to limit to records which have
     # been modified on or after the date the last time this job ran
     # successfully. The Knack API supports filter requests by date only
     # (not time), so we must apply an additional filter on the data after
     # we receive it.
-
-
     if cfg_dataset.get("multi_source"):
         kn = get_multi_source(cfg_dataset, auth, last_run_date)
 
@@ -323,19 +349,25 @@ def main(job, **kwargs):
         if kn.fields[f]["type"] in ["date_time", "date"]
     ]
 
-    print("job destination", job.destination)
-
-    if job.destination == "socrata":
+    if args.destination[0] == "socrata":
         pub = socrata_pub(
-            kn.data, cfg_dataset, kwargs["replace"], date_fields=date_fields
+            kn.data, cfg_dataset, args.replace, date_fields=date_fields
         )
 
-    if job.destination == "agol":
-        pub = agol_pub(kn.data, cfg_dataset, kwargs["replace"])
+    if args.destination[0] == "agol":
+        pub = agol_pub(kn.data, cfg_dataset, args.replace)
 
-    if job.destination == "csv":
-        write_csv(kn, cfg_dataset, kwargs["dataset"])
-
-    # logger.info('END AT {}'.format( arrow.now() ))
+    if args.destination[0] == "csv":
+        write_csv(kn, cfg_dataset, args.dataset)
 
     return len(kn.data)
+
+
+if __name__=="__main__":
+    main(sys.argv, job=job)
+
+
+
+
+
+
