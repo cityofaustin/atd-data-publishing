@@ -1,18 +1,19 @@
+"""Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
+or CSV.
 
-# Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
-# or CSV.
+By default, destination data is incrementally updated based on a
+modified date field defined in the configuration file. Alternatively use
+--replace to truncate/replace the entire dataset. CSV output is always handled
+with --replace.
 
-# By default, destination data is incrementally updated based on a
-# modified date field defined in the configuration file. Alternatively use
-# --replace to truncate/replace the entire dataset. CSV output is always handled
-# with --replace.
+#TODO: agol pub
 
-# #TODO: agol pub
-
+"""
 import argparse
 from copy import deepcopy
 import os
 import pdb
+import sys
 import traceback
 import urllib.parse
 
@@ -77,30 +78,24 @@ def socrata_pub(records, cfg_dataset, replace, date_fields=None):
     )
 
 
-def main(job, **kwargs):
-    """Summary
-    
+def main():
+    """
     Args:
-        job (TYPE): Description
-        **kwargs: Description
+        args (list, required): Command line arguments.
     
     Returns:
-        TYPE: Description
+        int: The number of records processed.
+        
     """
-    # cfg_dataset, job, args
+    args = cli_args()
 
-    script_name = kwargs["script_name"]
-    dataset = kwargs["dataset"]
-    app_name = kwargs["app_name"]
-    replace = kwargs["replace"]
+    cfg_dataset = cfg[args.dataset]
 
-    cfg_dataset = cfg[dataset]
+    last_run_date = args.last_run_date
 
-    last_run_date = job.most_recent()
-
-    if not last_run_date or kwargs["replace"] or job.destination == "csv":
+    if not last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1900-01-01"
+        last_run_date = "1970-01-01"
 
     last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
 
@@ -117,29 +112,33 @@ def main(job, **kwargs):
         "published_date",
     ]  # TODO: extract from API definition
 
-    if job.destination == "socrata":
+    if args.destination[0] == "socrata":
         pub = socrata_pub(records, cfg_dataset, replace, date_fields=date_fields)
-
-    # logger.info("END AT {}".format(arrow.now()))
 
     return len(records)
 
 
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "pgrest_data_pub.py",
         "Publish PostgREST data to Socrata and ArcGIS Online",
         "dataset",
-        "app_name",
         "--destination",
         "--replace",
+    )
+
+    parser.add_argument(
+        "-l",
+        "--last_run_date",
+        type=int,
+        required=False,
+        help="A unix timestamp representing the last date the job was run. Will be applied as a temporal filter when querying data for processing.",
     )
 
     args = parser.parse_args()
 
     return args
+
+
+if __name__ == "__main__":
+    main()

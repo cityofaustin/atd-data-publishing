@@ -244,52 +244,43 @@ def filter_by_date(data, date_field, compare_date):
     return [record for record in data if record[date_field] >= compare_date]
 
 
-def cli_args(args):
+def cli_args():
 
     parser = argutil.get_parser(
-        'knack_data_pub.py',
-        'Publish Knack data to Socrata and ArcGIS Online',
-        'dataset',
-        'app_name',
-        '--destination',
-        '--replace'
+        "knack_data_pub.py",
+        "Publish Knack data to Socrata and ArcGIS Online",
+        "dataset",
+        "app_name",
+        "--destination",
+        "--replace",
     )
-    
+
     parser.add_argument(
-        '-l',
-        '--last_run_date',
+        "-l",
+        "--last_run_date",
         type=int,
         required=False,
-        help='A unix timestamp representing the last date the job was run. Will be applied as a temporal filter when querying data for processing.')
+        help="A unix timestamp representing the last date the job was run. Will be applied as a temporal filter when querying data for processing.",
+    )
 
-    #TODO add temporal filter / last_run_date arg (format?)
-    parsed = parser.parse_args(args)
-    
+    parsed = parser.parse_args()
 
     return parsed
 
 
-def main(args):
+def main():
     """
     Args:
-        job (object): a job object
-        **kwargs: Description
-        previous arguments:
-        on the name of the dataset
-        all command line input.
+        None
     
     Returns:
-    
-    Deleted Parameters:
-        cfg_dataset (dict): configuration dictionary got from config.knack.config based
-        auth (dict): knack credential from secrets.py file
-        args (namespace): name space created by argutil/argparse that holds
-    
+        int: The number of records processed.
+
     """
-    args = cli_args(args)
-    
+    args = cli_args()
+
     cfg_dataset = cfg[args.dataset]
-    
+
     last_run_date = args.last_run_date
 
     auth = KNACK_CREDENTIALS[args.app_name]
@@ -350,9 +341,7 @@ def main(args):
     ]
 
     if args.destination[0] == "socrata":
-        pub = socrata_pub(
-            kn.data, cfg_dataset, args.replace, date_fields=date_fields
-        )
+        pub = socrata_pub(kn.data, cfg_dataset, args.replace, date_fields=date_fields)
 
     if args.destination[0] == "agol":
         pub = agol_pub(kn.data, cfg_dataset, args.replace)
@@ -363,11 +352,5 @@ def main(args):
     return len(kn.data)
 
 
-if __name__=="__main__":
-    main(sys.argv, job=job)
-
-
-
-
-
-
+if __name__ == "__main__":
+    main()
