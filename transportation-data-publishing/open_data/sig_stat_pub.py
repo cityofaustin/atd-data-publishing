@@ -8,16 +8,16 @@ import pdb
 import sys
 
 import arrow
-
-# import _setpath
-from config.knack.config import cfg
-from config.secrets import *
 from tdutils import kitsutil
 from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 from tdutils import socratautil
+
+import _setpath
+from config.knack.config import cfg
+from config.secrets import *
 
 # define config variables
 
@@ -65,7 +65,7 @@ def add_timestamps(records, timestamp_field="processed_datetime"):
     return records
 
 
-def main(jobs, **kwargs):
+def main():
     """Summary
     
     Args:
@@ -135,7 +135,6 @@ def main(jobs, **kwargs):
         keys=["operation_state"],
     )
 
-
     if cd_results["new"] or cd_results["change"] or cd_results["delete"]:
 
         adds = add_ids(cd_results["new"])
@@ -165,3 +164,7 @@ def main(jobs, **kwargs):
 
     else:
         return 0
+
+
+if __name__ == "__main__":
+    main()

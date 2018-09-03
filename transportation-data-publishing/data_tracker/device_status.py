@@ -3,9 +3,9 @@
 
 # command ex: device_status_check.py travel_sensors data_tracker_prod
 
-# - move write to JSON to a separate script. it doesn't belong here.
+# TODO: move write to JSON to a separate script. it doesn't belong here.
 
-import argparse
+
 import json
 from multiprocessing.dummy import Pool as ThreadPool
 import os
@@ -13,18 +13,15 @@ from os import system as system_call
 import pdb
 from platform import system as system_name
 import socket
-import traceback
 
 import arrow
 import knackpy
-
-from config.knack.config import cfg
-from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
+
+import _setpath
+from config.knack.config import cfg
+from config.secrets import *
 
 
 def ping_ip(ip, timeout=3):
@@ -62,16 +59,7 @@ def ping_ip(ip, timeout=3):
 
 
 def open_socket(ip, port, timeout=3):
-    """Summary
-    
-    Args:
-        ip (TYPE): Description
-        port (TYPE): Description
-        timeout (int, optional): Description
-    
-    Returns:
-        TYPE: Description
-    """
+
     with socket.socket() as s:
         print(ip)
         try:
@@ -83,14 +71,6 @@ def open_socket(ip, port, timeout=3):
 
 
 def get_status(device):
-    """Summary
-    
-    Args:
-        device (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     #  get old IP status, setting it to NO COMMUNICATION if not present
     state_previous = device.setdefault("IP_COMM_STATUS", "NO COMMUNICATION")
 
@@ -128,19 +108,37 @@ def get_status(device):
         return None
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    device_type = kwargs["device_type"]
-    out_json = kwargs["json"]
-    app_name = kwargs["app_name"]
+def set_workdir():
+    #  set the working directory to the location of this script
+    #  ensures file outputs go to their intended places when
+    #  script is run by an external  fine (e.g., the launcher)
+    path = os.path.dirname(__file__)
+    os.chdir(path)
+
+
+def cli_args():
+
+    parser = argutil.get_parser(
+        "device_status_check.py",
+        "Ping network devices to verify connenectivity.",
+        "device_type",
+        "app_name",
+        "--json",
+        "--replace",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+
+    args = cli_args()
+
+    device_type = args.device_type
+    out_json = args.json
+    app_name = args.app_name
 
     primary_key = cfg[device_type]["primary_key"]
     ip_field = cfg[device_type]["ip_field"]
@@ -174,6 +172,7 @@ def main(job, **kwargs):
     #  this is a special case for CCTV cameras.
     #  we copy the JSON to our internal web server
     if out_json:
+        set_workdir()
         out_dir = IP_JSON_DESTINATION
         json_data = datautil.reduce_to_keys(kn.data, out_fields_json)
         filename = "{}/device_data_{}.json".format(out_dir, device_type)
@@ -212,72 +211,5 @@ def main(job, **kwargs):
     return True
 
 
-# if __name__ == '__main__':
-
-#     script_name = os.path.basename(__file__).replace('.py', '')
-#     logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-
-#     logger = logutil.timed_rotating_log(logfile)
-#     logger.info('START AT {}'.format( arrow.now() ))
-
-#     parse command-line arguments
-#     args = cli_args()
-#     logger.info( 'args: {}'.format(args))
-
-#     device_type = args.device_type
-#     out_json = args.json
-#     app_name = args.app_name
-#     primary_key = cfg[device_type]['primary_key']
-#     ip_field = cfg[device_type]['ip_field']
-
-#     script_id = '{}_{}'.format(
-#         script_name,
-#         args.device_type)
-
-#     try:
-#         job = jobutil.Job(
-#             name=script_id,
-#             url=JOB_DB_API_URL,
-#             source='knack',
-#             destination='knack',
-#             auth=JOB_DB_API_TOKEN)
-
-#         job.start()
-
-#         knack_creds = KNACK_CREDENTIALS[app_name]
-
-#         out_fields_upload = [
-#             'id',
-#             ip_field,
-#             'IP_COMM_STATUS',
-#             'COMM_STATUS_DATETIME_UTC'
-#         ]
-
-#         out_fields_json = [
-#             'id',
-#             ip_field,
-#             'IP_COMM_STATUS',
-#             'COMM_STATUS_DATETIME_UTC',
-#             primary_key
-#         ]
-
-#         results = main()
-
-#         if (results):
-#             job.result('success')
-
-#         logger.info('END AT {}'.format( arrow.now() ))
-
-#     except Exception as e:
-#         error_text = traceback.format_exc()
-#         logger.error(error_text)
-
-#         email_subject = "Device Status Check Failure: {}".format(device_type)
-#         emailutil.send_email(ALERTS_DISTRIBUTION, email_subject, error_text, EMAIL['user'], EMAIL['password'])
-
-#         job.result('error', message=str(e))
-
-#         raise e
-
-
-# print(results)
+if __name__ == "__main__":
+    main()

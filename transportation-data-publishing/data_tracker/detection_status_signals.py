@@ -1,67 +1,23 @@
 
-# Assign detection status to traffic signal based on status of its detectors. 
+# Assign detection status to traffic signal based on status of its detectors.
 # Update detection status log when signal detection status changes.
 
 # #TODO
 # - only process modified signals/detectors (currently processing all detectors)
 
-# Attributes
-# ----------
-# config_detectors : dict
-#     Description
-# config_signals : dict
-#     Description
-# config_status_log : dict
-#     Description
-# DET_DATE_LABEL : str
-#     Description
-# DET_STATUS_LABEL : str
-#     Description
-# fieldmap_status_log : TYPE
-#     Description
-# SIG_DATE_LABEL : str
-#     Description
-# SIG_STATUS_LABEL : str
-#     Description
-
 import argparse
 from collections import defaultdict
-import logging
-import os
-import traceback
 import pdb
 
 import arrow
 import knackpy
 
+import _setpath
 from config.secrets import *
-from config.public import *
+from config.knack.config import DETETECTION_STATUS_SIGNALS as cfg
 
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-# define config arguments
-
-config_detectors = {"scene": "scene_468", "view": "view_1333", "objects": ["object_98"]}
-
-config_signals = {"scene": "scene_73", "view": "view_197", "objects": ["object_12"]}
-
-config_status_log = {"objects": ["object_102"]}
-
-fieldmap_status_log = {
-    "EVENT": "field_1576",
-    "SIGNAL": "field_1577",
-    "EVENT_DATE": "field_1578",
-}
-
-DET_STATUS_LABEL = "DETECTOR_STATUS"
-DET_DATE_LABEL = "MODIFIED_DATE"
-
-SIG_STATUS_LABEL = "DETECTION_STATUS"
-SIG_DATE_LABEL = "DETECTION_STATUS_DATE"
 
 
 def groupBySignal(detector_data):
@@ -90,10 +46,14 @@ def groupBySignal(detector_data):
     det_status = defaultdict(dict)
 
     for det in detector_data:
-        if "SIGNAL_ID" in det and DET_STATUS_LABEL in det and DET_DATE_LABEL in det:
+        if (
+            "SIGNAL_ID" in det
+            and cfg["DET_STATUS_LABEL"] in det
+            and cfg["DET_DATE_LABEL"] in det
+        ):
             sig = "${}".format(det["SIGNAL_ID"])  #  format signal ID as string
-            status = det[DET_STATUS_LABEL]
-            status_date = det[DET_DATE_LABEL]
+            status = det[cfg["DET_STATUS_LABEL"]]
+            status_date = det[cfg["DET_DATE_LABEL"]]
 
             if sig not in det_status:
                 det_status[sig]["statuses"] = [status]
@@ -165,40 +125,50 @@ def getMaxDate(sig, det_status):
         return arrow.now().format("MM-DD-YYYY")
 
 
-def main(job, **kwargs):
+def cli_args():
+
+    parser = argutil.get_parser(
+        "detection_status_signals.py",
+        "Assign detection status to signals based on status of its detectors.",
+        "app_name",
+    )
+
+    parsed = parser.parse_args()
+
+    return parsed
+
+
+def main():
     """Summary
     
     Parameters
     ----------
-    job : Job class from job utils
-        a job class that handles job method to post information to job server
-    **kwargs : dict
-        **kwargs: a dictionary of arguements from user input and the public.py
-        dictionary file
+    None
     
     Returns
     -------
     count_sig
         number of signals that has been updated
     """
-    app_name = kwargs["app_name"]
+    args = cli_args()
+    app_name = args.app_name
 
     api_key = KNACK_CREDENTIALS[app_name]["api_key"]
     app_id = KNACK_CREDENTIALS[app_name]["app_id"]
 
     detectors = knackpy.Knack(
-        scene=config_detectors["scene"],
-        view=config_detectors["view"],
-        ref_obj=config_detectors["objects"],
+        scene=cfg["CONFIG_DETECTORS"]["scene"],
+        view=cfg["CONFIG_DETECTORS"]["view"],
+        ref_obj=cfg["CONFIG_DETECTORS"]["objects"],
         api_key=api_key,
         app_id=app_id,
         timeout=30,
     )
 
     signals = knackpy.Knack(
-        scene=config_signals["scene"],
-        view=config_signals["view"],
-        ref_obj=config_signals["objects"],
+        scene=cfg["CONFIG_SIGNALS"]["scene"],
+        view=cfg["CONFIG_SIGNALS"]["view"],
+        ref_obj=cfg["CONFIG_SIGNALS"]["objects"],
         api_key=api_key,
         app_id=app_id,
         timeout=30,
@@ -218,16 +188,16 @@ def main(job, **kwargs):
         new_status = getStatus(sig, lookup)
         new_status_date = getMaxDate(sig, lookup)
 
-        if SIG_STATUS_LABEL in sig:
-            old_status = sig[SIG_STATUS_LABEL]
+        if cfg["SIG_STATUS_LABEL"] in sig:
+            old_status = sig[cfg["SIG_STATUS_LABEL"]]
 
             if old_status == new_status:
                 continue
 
         payload_signals = {
             "id": sig["id"],
-            SIG_STATUS_LABEL: new_status,
-            SIG_DATE_LABEL: getMaxDate(sig, lookup),
+            cfg["SIG_STATUS_LABEL"]: new_status,
+            cfg["SIG_DATE_LABEL"]: getMaxDate(sig, lookup),
         }
 
         payload_signals = datautil.replace_keys([payload_signals], signals.field_map)
@@ -235,7 +205,7 @@ def main(job, **kwargs):
         #  update signal record with detection status and date
         res = knackpy.record(
             payload_signals[0],
-            obj_key=config_signals["objects"][0],
+            obj_key=cfg["CONFIG_SIGNALS"]["objects"][0],
             app_id=app_id,
             api_key=api_key,
             method="update",
@@ -244,3 +214,7 @@ def main(job, **kwargs):
         count_sig += 1
 
     return count_sig
+
+
+if __name__ == "__main__":
+    main()

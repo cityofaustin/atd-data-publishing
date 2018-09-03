@@ -55,11 +55,18 @@ def get_data(path, token):
     Returns:
         TYPE: Description
     """
-    logger.info(f"Get data for {path}")
+    # logger.info(f"Get data for {path}")
 
     dbx = dropbox.Dropbox(token)
 
-    metadata, res = dbx.files_download(path)
+    try:
+        metadata, res = dbx.files_download(path)
+
+    except dropbox.exceptions.ApiError:
+        raise Exception(
+            f"No data available at {path}. Dropbox data may not be current."
+        )
+
     res.raise_for_status()
 
     return res.text
@@ -77,7 +84,7 @@ def handle_data(data):
         TYPE: Description
     """
     #  assume fields in this order  :(
-    
+
     fieldnames = (
         "trip_id",
         "membership_type",
@@ -97,7 +104,7 @@ def handle_data(data):
     return list(reader)
 
 
-def main(job, **kwargs):
+def main():
     """
     Args:
         job
@@ -110,24 +117,25 @@ def main(job, **kwargs):
     
     """
 
-    script_name = kwargs["script_name"]
-
     dt_current = arrow.now().replace(months=-1)
     dt_current_formatted = dt_current.format("MM-YYYY")
     up_to_date = False
     results = None
 
     while not up_to_date:
+
         socrata_dt = max_date_socrata(resource_id)
         socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
 
         if dt_current_formatted == socrata_dt_formatted:
+
             up_to_date = True
-            job.result("success", records_processed=0)
+
             results = 0
 
         else:
             #  socrata data is at least one month old
+            print("entered else")
             dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
             dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
 
@@ -135,26 +143,26 @@ def main(job, **kwargs):
             root = "austinbcycletripdata"  # note the lowercase-ness
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
             date_fields = ["checkout_date"]
-
             try:
-                data = get_data(path, DROPBOX_BCYCLE_TOKEN)
-                results = len(data)
+                print("enter try")
+
+                try:
+                    data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                    results = len(data)
+
+                except TypeError:
+                    results = 0
 
             except dropbox.exceptions.ApiError as e:
 
                 if "LookupError" in str(e):
-                    #  end loop when no file can be found
-                    # logger.warning(f"No data found for {path}")
+                    # end loop when no file can be found
                     up_to_date = True
-                    job.result("success")
                     break
-
                 else:
-                    job.result("error", message=str(e))
                     raise e
 
             data = handle_data(data)
-            # logger.info("{} records found".format(len(data)))
 
             socratautil.Soda(
                 auth=SOCRATA_CREDENTIALS,
@@ -163,9 +171,10 @@ def main(job, **kwargs):
                 location_field=None,
             )
 
-            logger.info(res.json())
-
-            job.result("success", records_processed=len(data))
-
             results = len(data)
+
     return results
+
+
+if __name__ == "__main__":
+    main()

@@ -1,20 +1,7 @@
 # Update Data Tracker location records with council district, engineer area,
 # and jurisdiction attributes from from COA ArcGIS Online feature services
 
-# Attributes
-# ----------
-# field_maps : TYPE
-#     Description
-# filters : TYPE
-#     Description
-# knack_creds : TYPE
-#     Description
-# layers : TYPE
-#     Description
-# obj : str
-#     Description
 import argparse
-import os
 import pdb
 import traceback
 
@@ -23,71 +10,12 @@ import knackpy
 
 import _setpath
 from config.secrets import *
+from config.knack.config import LOCATION_UPDATER as cfg
+
 from tdutils import agolutil
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
 
-knack_creds = KNACK_CREDENTIALS
-obj = "object_11"
-
-field_maps = {
-    #  service name
-    "EXTERNAL_cmta_stops": {
-        "fields": {
-            #  AGOL Field : Knack Field
-            "ID": "BUS_STOPS"
-        }
-    }
-}
-
-layers = [
-    {
-        "service_name": "BOUNDARIES_single_member_districts",
-        "outFields": "COUNCIL_DISTRICT",
-        "updateFields": ["COUNCIL_DISTRICT"],  #
-        "layer_id": 0,
-        "distance": 33,  #  !!! this unit is interpreted as meters due to Esri bug !!!
-        "units": "esriSRUnit_Foot",  #  !!! this unit is interpreted as meters due to Esri bug !!!
-        #  how to handle query that returns multiple intersection features
-        "handle_features": "merge_all",
-    },
-    {
-        "service_name": "BOUNDARIES_jurisdictions",
-        #  will attempt secondary service if no results at primary
-        "service_name_secondary": "BOUNDARIES_jurisdictions_planning",
-        "outFields": "JURISDICTION_LABEL",
-        "updateFields": ["JURISDICTION_LABEL"],
-        "layer_id": 0,
-        "handle_features": "use_first",
-    },
-    {
-        "service_name": "ATD_signal_engineer_areas",
-        "outFields": "SIGNAL_ENG_AREA",
-        "updateFields": ["SIGNAL_ENG_AREA"],
-        "layer_id": 0,
-        "handle_features": "use_first",
-    },
-    {
-        "service_name": "EXTERNAL_cmta_stops",
-        "outFields": "ID",
-        "updateFields": ["BUS_STOPS"],
-        "layer_id": 0,
-        "distance": 107,  #  !!! this unit is interpreted as meters due to Esri bug !!!
-        "units": "esriSRUnit_Foot",  #  !!! this unit is interpreted as meters due to Esri bug !!!
-        "handle_features": "merge_all",
-        "apply_format": format_stringify_list,
-    },
-]
-
-filters = {
-    #  filter for records where
-    #  UPDATE_PROCESSED field is No
-    "match": "and",
-    "rules": [{"field": "field_1357", "operator": "is", "value": "No"}],
-}
 
 def format_stringify_list(input_list):
     """
@@ -104,12 +32,6 @@ def format_stringify_list(input_list):
         Description
     """
     return ", ".join(str(l) for l in input_list)
-
-
-# layer config for interacting with ArcGIS Online
-# see: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
-
-
 
 
 def map_fields(record, field_map):
@@ -219,19 +141,12 @@ def join_features_to_record(features, layer_config, record):
             #  apply special formatting function to attribute array
             for field in feature["attributes"].keys():
                 input_val = record[field]
-                record[field] = layer_config["apply_format"](input_val)
+                record[field] = format_stringify_list(input_val)
 
     return record
 
 
 def cli_args():
-    """Summary
-    
-    Returns
-    -------
-    TYPE
-        Description
-    """
     parser = argutil.get_parser(
         "location_updater.py",
         "Update location attributes via point-in-poly against various intersecting geospatial data layers.",
@@ -243,39 +158,21 @@ def cli_args():
     return args
 
 
-def main(job, **kwargs):
-    """
-    Knack database fields that will be updated. Payload is reduced to
-    these fields.
-    
-    Parameters
-    ----------
-    job : TYPE
-        Description
-    **kwargs
-        Description
-    
-    Returns
-    -------
-    TYPE
-        Description
-    
-    Raises
-    ------
-    Exception
-        Description
-    """
+def main():
 
-    script_name = kwargs["script_name"]
-    app_name = kwargs["app_name"]
+    args = cli_args()
 
-    update_fields = [field for layer in layers for field in layer["updateFields"]]
+    app_name = args.app_name
+
+    update_fields = [
+        field for layer in cfg["layers"] for field in layer["updateFields"]
+    ]
 
     kn = knackpy.Knack(
-        obj=obj,
+        obj=cfg["obj"],
         app_id=KNACK_CREDENTIALS[app_name]["app_id"],
         api_key=KNACK_CREDENTIALS[app_name]["api_key"],
-        filters=filters,
+        filters=cfg["filters"],
         timeout=30,
     )
 
@@ -296,9 +193,9 @@ def main(job, **kwargs):
 
         point = [location["LOCATION_longitude"], location["LOCATION_latitude"]]
 
-        for layer in layers:
+        for layer in cfg["layers"]:
             layer["geometry"] = point
-            field_map = field_maps.get(layer["service_name"])
+            field_map = cfg["field_maps"].get(layer["service_name"])
             params = get_params(layer)
 
             try:
@@ -346,6 +243,7 @@ def main(job, **kwargs):
                 continue
 
         location["UPDATE_PROCESSED"] = True
+
         location["MODIFIED_DATE"] = datautil.local_timestamp()
 
         location = datautil.reduce_to_keys(
@@ -355,14 +253,11 @@ def main(job, **kwargs):
 
         res = knackpy.record(
             location[0],
-            obj_key=obj,
+            obj_key=cfg["obj"],
             app_id=KNACK_CREDENTIALS[app_name]["app_id"],
             api_key=KNACK_CREDENTIALS[app_name]["api_key"],
             method="update",
         )
-
-    # logger.info('{} records updated'.format( len(kn.data) - len(
-    # unmatched_locations)))
 
     if len(unmatched_locations) > 0:
         error_text = "Location Point/Poly Match Failure(s): {}".format(
@@ -372,3 +267,7 @@ def main(job, **kwargs):
 
     else:
         return len(kn.data)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,42 +1,19 @@
 """
 Update traffic signal records with secondary signal relationships
-
-Attributes:
-    ref_obj (list): Description
-    scene (str): Description
-    update_field (str): Description
-    view (str): Description
 """
-import argparse
 import collections
-import os
 import pdb
-import traceback
 
 import arrow
 import knackpy
+from tdutils import argutil
 
 import _setpath
+from config.knack.config import SECONDARY_SIGNALS_UPDATER as cfg
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-# define config variables
-update_field = "field_1329"  # SECONDARY_SIGNALS field
-ref_obj = ["object_12"]  # signals object
-scene = "scene_73"
-view = "view_197"
 
 
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "secondary_signals_updater.py",
         "Update traffic signal records with secondary signal relationships.",
@@ -112,23 +89,17 @@ def get_old_prim_signals(signals):
     return signals_with_children
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    app_name = kwargs["app_name"]
+def main():
+
+    args = cli_args()
+
+    app_name = args.app_name
     knack_creds = KNACK_CREDENTIALS[app_name]
 
     kn = knackpy.Knack(
-        scene=scene,
-        view=view,
-        ref_obj=ref_obj,
+        scene=cfg["scene"],
+        view=cfg["view"],
+        ref_obj=cfg["ref_obj"],
         app_id=knack_creds["app_id"],
         api_key=knack_creds["api_key"],
         raw_connections=True,
@@ -150,12 +121,15 @@ def main(job, **kwargs):
             if old_secondaries != new_secondaries:
 
                 payload.append(
-                    {"id": signal_id, update_field: primary_signals_new[signal_id]}
+                    {
+                        "id": signal_id,
+                        cfg["update_field"]: primary_signals_new[signal_id],
+                    }
                 )
 
         else:
             payload.append(
-                {"id": signal_id, update_field: primary_signals_new[signal_id]}
+                {"id": signal_id, cfg["update_field"]: primary_signals_new[signal_id]}
             )
 
     for signal_id in primary_signals_old:
@@ -163,24 +137,23 @@ def main(job, **kwargs):
         identify primary-secondary relationships that have been removed
         """
         if signal_id not in primary_signals_new:
-            payload.append({"id": signal_id, update_field: []})
+            payload.append({"id": signal_id, cfg["update_field"]: []})
 
     if len(payload) == 0:
-        # logger.info("No new secondary signals.")
         return 0
-
-    # logger.info( "{} records to update".format(len(payload)) )
 
     for record in payload:
 
         res = knackpy.record(
             record,
-            obj_key=ref_obj[0],
+            obj_key=cfg["ref_obj"][0],
             app_id=knack_creds["app_id"],
             api_key=knack_creds["api_key"],
             method="update",
         )
 
-    # logger.info( "{} records processed".format( len(payload)) )
-
     return len(payload)
+
+
+if __name__ == "__main__":
+    main()

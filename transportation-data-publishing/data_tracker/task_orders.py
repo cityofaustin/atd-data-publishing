@@ -1,42 +1,19 @@
-# Scrap task orders from COA Controller webpage and upload to Data Tracker.
+# Scrape task orders from COA Controller webpage and upload to Data Tracker.
 
-# Attributes:
-#     CONFIG (TYPE): Description
-#     KNACK_CREDS (TYPE): Description
-
-import json
-import os
 import pdb
-import traceback
-import sys
 
-import arrow
 import knackpy
 from bs4 import BeautifulSoup
 import requests
+from tdutils import argutil
+from tdutils import datautil
 
 import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-CONFIG = cfg["task_orders"]
-KNACK_CREDS = KNACK_CREDENTIALS["data_tracker_prod"]
-
 
 def get_html(url):
-    """Summary
-    
-    Args:
-        url (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     form_data = {"DeptNumber": 2400, "Search": "Search", "TaskOrderName": ""}
     res = requests.post(url, data=form_data)
     res.raise_for_status()
@@ -44,14 +21,6 @@ def get_html(url):
 
 
 def handle_html(html):
-    """Summary
-    
-    Args:
-        html (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     soup = BeautifulSoup(html, "html.parser")
     rows = soup.find_all("tr")
 
@@ -66,15 +35,6 @@ def handle_html(html):
 
 
 def handle_rows(rows, cols=["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]):
-    """Summary
-    
-    Args:
-        rows (TYPE): Description
-        cols (list, optional): Description
-    
-    Returns:
-        TYPE: Description
-    """
     handled = []
 
     for row in rows:
@@ -86,30 +46,31 @@ def handle_rows(rows, cols=["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]):
 
 
 def compare(new_rows, existing_rows, key="TASK_ORDER"):
-    """Summary
-    
-    Args:
-        new_rows (TYPE): Description
-        existing_rows (TYPE): Description
-        key (str, optional): Description
-    
-    Returns:
-        TYPE: Description
-    """
     existing_ids = [str(row[key]) for row in existing_rows]
     return [row for row in new_rows if str(row[key]) not in existing_ids]
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
+def cli_args():
+
+    parser = argutil.get_parser(
+        "task_orders.py",
+        "Check controller's office for new task orders and upload to Data Tracker.",
+        "app_name",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+
+    args = cli_args()
+    app_name = args.app_name
+
+    CONFIG = cfg["task_orders"]
+    KNACK_CREDS = KNACK_CREDENTIALS[app_name]
+
     html = get_html(TASK_ORDERS_ENDPOINT)
     data = handle_html(html)
     rows = handle_rows(data)
@@ -137,3 +98,7 @@ def main(job, **kwargs):
         )
 
     return len(new_rows)
+
+
+if __name__ == "__main__":
+    main()

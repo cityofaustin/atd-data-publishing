@@ -1,29 +1,19 @@
 """
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
-
-Attributes:
-    cfg (TYPE): Description
 """
-import argparse
 import os
 import pdb
-import traceback
 
 import arrow
 import knackpy
 import requests
 
 import _setpath
-from config.esb.config import cfg
+from config.esb.config import cfg as CONFIG
 from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-cfg = cfg["tmc_activities"]
 
 
 def get_record_id_from_file(directory, file):
@@ -121,41 +111,28 @@ def send_msg(msg, endpoint, path_cert, path_key, timeout=20):
 
 
 def move_file(old_dir, new_dir, f):
-    """Summary
-    
-    Args:
-        old_dir (TYPE): Description
-        new_dir (TYPE): Description
-        f (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     infile = os.path.join(old_dir, f)
     outfile = os.path.join(new_dir, f)
     os.rename(infile, outfile)
     return True
 
 
-def create_payload(record_id):
-    """Summary
-    
-    Args:
-        record_id (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
-    payload = {"id": record_id, cfg["esb_status_field"]: "SENT"}
+def create_payload(record_id, status_field):
+    payload = {"id": record_id, status_field: "SENT"}
     return payload
 
 
+def set_workdir():
+    #  set the working directory to the location of this script
+    #  ensures file outputs go to their intended places when
+    #  script is run by an external  fine (e.g., the launcher)
+    path = os.path.dirname(__file__)
+
+    if path:
+        os.chdir(path)
+
+
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "esb_xml_send.py",
         "Update service requests in the CSR system from Knack via Enterprise Service Bus",
@@ -167,18 +144,16 @@ def cli_args():
     return args
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    app_name = kwargs["app_name"]
+def main():
+    set_workdir()
+
+    args = cli_args()
+
+    app_name = args.app_name
+
     knack_creds = KNACK_CREDENTIALS[app_name]
+
+    cfg = CONFIG["tmc_activities"]
 
     base_path = os.path.abspath(ESB_XML_DIRECTORY)
     inpath = "{}/{}".format(base_path, "ready_to_send")
@@ -210,7 +185,7 @@ def main(job, **kwargs):
 
         res.raise_for_status()
 
-        payload = create_payload(record_id)
+        payload = create_payload(record_id, cfg["esb_status_field"])
 
         res = knackpy.record(
             payload,
@@ -222,65 +197,9 @@ def main(job, **kwargs):
 
         move_file(inpath, outpath, filename)
 
-    # logger.info('{} records transmitted.'.format(len(files)))
-
     return len(files)
 
 
 if __name__ == "__main__":
-    # script_name = os.path.basename(__file__).replace('.py', '')
-    # logfile = f'{LOG_DIRECTORY}/{script_name}.log'
-    #
-    # logger = logutil.timed_rotating_log(logfile)
-    # logger.info('START AT {}'.format( arrow.now() ))
 
-    # args = cli_args()
-    # logger.info( 'args: {}'.format( str(args) ))
-
-    # app_name = args.app_name
-
-    # knack_creds = KNACK_CREDENTIALS[app_name]
-
-    base_path = os.path.abspath(ESB_XML_DIRECTORY)
-    inpath = "{}/{}".format(base_path, "ready_to_send")
-    outpath = "{}/{}".format(base_path, "sent")
-
-    try:
-        job = jobutil.Job(
-            name=script_name,
-            url=JOB_DB_API_URL,
-            source="knack",
-            destination="ESB",
-            auth=JOB_DB_API_TOKEN,
-        )
-
-        # if not os.path.exists(inpath):
-        #     os.makedirs(inpath)
-        #
-        # if not os.path.exists(outpath):
-        #     os.makedirs(outpath)
-
-        job.start()
-
-        results = main()
-
-        job.result("success", records_processed=results)
-
-        logger.info("END AT {}".format(arrow.now()))
-
-    except Exception as e:
-        error_text = traceback.format_exc()
-        logger.error(str(e))
-        logger.error(error_text)
-
-        emailutil.send_email(
-            ALERTS_DISTRIBUTION,
-            "ESB Publication Failure",
-            str(error_text),
-            EMAIL["user"],
-            EMAIL["password"],
-        )
-
-        job.result("error")
-
-        raise e
+    main()

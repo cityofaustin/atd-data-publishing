@@ -14,6 +14,7 @@ import traceback
 import arrow
 import knackpy
 
+import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
@@ -71,7 +72,21 @@ def build_payload(data, device_type):
     }
 
 
-def main(job, **kwargs):
+def cli_args():
+
+    parser = argutil.get_parser(
+        "device_status_log.py",
+        "Generate connectivity statistics and upload to Knack application.",
+        "device_type",
+        "app_name",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
     """Summary
     
     Args:
@@ -81,8 +96,11 @@ def main(job, **kwargs):
     Returns:
         TYPE: Description
     """
-    device_type = kwargs["device_type"]
-    app_name = kwargs["app_name"]
+
+    args = cli_args()
+
+    device_type = args.device_type
+    app_name = args.app_name
 
     primary_key = cfg[device_type]["primary_key"]
     status_field = cfg[device_type]["status_field"]
@@ -111,7 +129,7 @@ def main(job, **kwargs):
             status = device["IP_COMM_STATUS"]
             stats[status] += 1
 
-    payload = build_payload(stats, kwargs["device_type"])
+    payload = build_payload(stats, args.device_type)
     payload = datautil.replace_keys([payload], kn_log.field_map)
 
     res = knackpy.record(
@@ -124,3 +142,6 @@ def main(job, **kwargs):
 
     return len(payload)
 
+
+if __name__ == "__main__":
+    main()

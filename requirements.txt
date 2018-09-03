@@ -6,5 +6,6 @@ fulcrum
 knackpy==0.0.11
 pandas==0.22.0
 pymssql
-tdutils==0.0.3
-yagmail==0.10.21
+pyyaml
+tdutils==0.0.6
+yagmail

@@ -4,10 +4,7 @@
 # Attributes:
 #     socrata_resource (str): Description
 import hashlib
-import os
 import pdb
-import sys
-import traceback
 
 import arrow
 import knackpy
@@ -85,7 +82,24 @@ def get_direction(lane):
         return None
 
 
-def main(job, **kwargs):
+def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
+    parser = argutil.get_parser(
+        "radar_count_pub.py",
+        "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
+        "--replace",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
     """Summary
     
     Args:
@@ -95,7 +109,9 @@ def main(job, **kwargs):
     Returns:
         TYPE: Description
     """
-    replace = kwargs["replace"]
+    args = cli_args()
+
+    replace = args.replace
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
@@ -139,7 +155,6 @@ def main(job, **kwargs):
 
     # send new data if the socrata data is behind KITS data
     elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"]:
-
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
@@ -173,7 +188,7 @@ def main(job, **kwargs):
         )
 
     else:
-        # logger.info('No Data to export')
+        # No new data
         return 0
 
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, kits_query)
@@ -224,18 +239,5 @@ def main(job, **kwargs):
     return len(socrata_payload)
 
 
-def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
-    parser = argutil.get_parser(
-        "count_data_pub.py",
-        "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
-        "--replace",
-    )
-
-    args = parser.parse_args()
-
-    return args
+if __name__ == "__main__":
+    main()
