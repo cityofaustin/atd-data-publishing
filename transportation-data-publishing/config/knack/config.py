@@ -11,28 +11,28 @@ cfg = {
     },
     "backup": {
         "objects": [
-            "object_137", # admin_field_meta
-            "object_138", # admin_object_meta
-            "object_95", # csr_flex_notes
-            "object_67", # quote_of_the_week
-            "object_77", # signal_id_generator     
-            "object_148", # street_names 
-            "object_7", # street_segments
-            "object_83", # tmc_issues
-            "object_58", # tmc_issues_DEPRECTATED_HISTORICAL_DATA_ONLY
-            "object_10", # Asset editor
-            "object_19", # Viewer
-            "object_20", # System Administrator
-            "object_24", # Program Editor
-            "object_57", # Supervisor | AMD
-            "object_65", # Technician|AMD
-            "object_68", # Quote of the Week Editor
-            "object_76", # Inventory Editor
-            "object_97", # Account Administrator
-            "object_151", # Supervisor | Signs&Markings
-            "object_152", # Technician | Signs & Markings
-            "object_155", # Contractor | Detection
-        ],
+            "object_137",  # admin_field_meta
+            "object_138",  # admin_object_meta
+            "object_95",  # csr_flex_notes
+            "object_67",  # quote_of_the_week
+            "object_77",  # signal_id_generator
+            "object_148",  # street_names
+            "object_7",  # street_segments
+            "object_83",  # tmc_issues
+            "object_58",  # tmc_issues_DEPRECTATED_HISTORICAL_DATA_ONLY
+            "object_10",  # Asset editor
+            "object_19",  # Viewer
+            "object_20",  # System Administrator
+            "object_24",  # Program Editor
+            "object_57",  # Supervisor | AMD
+            "object_65",  # Technician|AMD
+            "object_68",  # Quote of the Week Editor
+            "object_76",  # Inventory Editor
+            "object_97",  # Account Administrator
+            "object_151",  # Supervisor | Signs&Markings
+            "object_152",  # Technician | Signs & Markings
+            "object_155",  # Contractor | Detection
+        ]
     },
     "cabinets": {
         "primary_key": "CABINET_ID",
@@ -359,4 +359,27 @@ cfg = {
         "pub_log_id": "",
         "status_field": "WORK_ORDER_STATUS",
     },
+}
+
+DETETECTION_STATUS_SIGNALS = {
+    "CONFIG_DETECTORS": {
+        "scene": "scene_468",
+        "view": "view_1333",
+        "objects": ["object_98"],
+    },
+    "CONFIG_SIGNALS": {
+        "scene": "scene_73",
+        "view": "view_197",
+        "objects": ["object_12"],
+    },
+    "CONFIG_STATUS_LOG": {"objects": ["object_102"]},
+    "FIELDMAP_STATUS_LOG": {
+        "EVENT": "field_1576",
+        "SIGNAL": "field_1577",
+        "EVENT_DATE": "field_1578",
+    },
+    "DET_STATUS_LABEL": "DETECTOR_STATUS",
+    "DET_DATE_LABEL": "MODIFIED_DATE",
+    "SIG_STATUS_LABEL": "DETECTION_STATUS",
+    "SIG_DATE_LABEL": "DETECTION_STATUS_DATE",
 }
