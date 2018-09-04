@@ -556,3 +556,13 @@ SIGNAL_REQUEST_RANKER = {
     "modified_date_key": "MODIFIED_DATE",
     "eval_types": {"traffic_signal": "object_27", "phb": "object_26"},
 }
+
+
+STREET_SEG_UPDATER = {
+    "modified_date_field_id": "field_144",
+    "modified_date_field": "MODIFIED_DATE",
+    "primary_key": "SEGMENT_ID_NUMBER",
+    "ref_obj": ["object_7"],
+    "scene": "scene_424",
+    "view": "view_1198",
+}

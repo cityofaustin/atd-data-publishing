@@ -1,75 +1,56 @@
 
-# Update Knack street segments with data from 
+# Update Knack street segments with data from
 # COA ArcGIS Online Street Segment Feature Service
 
-# Attributes:
-#     config (TYPE): Description
-
-import os
 import pdb
 
 import arrow
 import knackpy
+from tdutils import agolutil
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import jobutil
+from tdutils import knackutil
 
 import _setpath
 from config.secrets import *
-
-from tdutils import agolutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import knackutil
-from tdutils import logutil
-
-config = {
-    "modified_date_field_id": "field_144",
-    "modified_date_field": "MODIFIED_DATE",
-    "primary_key": "SEGMENT_ID_NUMBER",
-    "ref_obj": ["object_7"],
-    "scene": "scene_424",
-    "view": "view_1198",
-}
+from config.knack.config import STREET_SEG_UPDATER as config
 
 
 def filter_by_date(data, date_field, compare_date):
-    """
-    Date field and compare date should be unix timestamps with mills
-    
-    Args:
-        data (TYPE): Description
-        date_field (TYPE): Description
-        compare_date (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     return [record for record in data if record[date_field] >= compare_date]
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    
-    Raises:
-        Exception: Description
-    """
-    knack_creds = KNACK_CREDENTIALS[kwargs["app_name"]]
-    last_run_date = job.most_recent()
+def cli_args():
+
+    parser = argutil.get_parser(
+        "street_seg_updater.py",
+        "Update street segment attributes from authoritative GIS layer.",
+        "app_name",
+        "--last_run_date",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+
+    args = cli_args()
+    app_name = args.app_name
+    last_run_date = args.last_run_date
+
+    knack_creds = KNACK_CREDENTIALS[app_name]
 
     if not last_run_date:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1/1/2018"
+        # the arrow package needs a specific date and timeformat
+        last_run_date = "1970-01-01"
 
     filters = knackutil.date_filter_on_or_after(
         last_run_date, config["modified_date_field_id"]
     )
-
     """
     We include a filter in our API call to limit to records which have
     been modified on or after the date the last time this job ran
@@ -77,7 +58,6 @@ def main(job, **kwargs):
     (not time), so we must apply an additional filter on the data after
     we receive it.
     """
-
     kn = knackpy.Knack(
         scene=config["scene"],
         view=config["view"],
@@ -120,6 +100,10 @@ def main(job, **kwargs):
             continue
 
         segment_data["id"] = street_segment["id"]
+
+        #  preserve mod date in data tracker (otherwise will be
+        #  overwritten with modified date in GIS layer)
+        segment_data.pop(config["modified_date_field"])
         segment_data["MODIFIED_BY"] = "api-update"
         payload.append(segment_data)
 
@@ -153,7 +137,11 @@ def main(job, **kwargs):
         error_text = "Unmatched street segments: {}".format(
             ", ".join(str(x) for x in unmatched_segments)
         )
-        # logger.info(error_text)
+
         raise Exception(error_text)
 
     return count
+
+
+if __name__ == "__main__":
+    main()
