@@ -1,4 +1,4 @@
-cfg = {
+PGREST_PUB = {
     "traffic_reports": {
         "base_url": "http://transportation-data.austintexas.io/traffic_reports",
         "primary_key": "traffic_report_id",
@@ -11,4 +11,13 @@ cfg = {
             "location_field": "location",
         },
     }
+}
+
+TRAFFIC_REPORT_SCRAPER = {
+    "feed_url": "http://www.ci.austin.tx.us/qact/qact_rss.cfm",
+    "endpoint": "http://transportation-data.austintexas.io/traffic_reports",
+    "primary_key": "traffic_report_id",
+    "status_field": "traffic_report_status",
+    "date_field": "published_date",
+    "status_date_field": "traffic_report_status_date_time",
 }
