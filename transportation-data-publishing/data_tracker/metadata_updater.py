@@ -8,14 +8,12 @@ import pdb
 import arrow
 import knackpy
 import requests
+from tdutils import argutil
+from tdutils import datautil
 
 import _setpath
 from config.metadata.config import cfg
 from config.secrets import *
-
-from tdutils import argutil
-from tdutils import datautil
-
 
 def get_app_data(app_id):
     """Summary

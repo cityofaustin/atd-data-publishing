@@ -521,3 +521,11 @@ MARKINGS_AGOL = [
     },
 ]
 
+
+SECONDARY_SIGNALS_UPDATER = {
+    "update_field" : "field_1329",
+    "ref_obj" : ["object_12"],
+    "scene" : "scene_73",
+    "view" : "view_197",
+}
+
