@@ -1,6 +1,4 @@
 # Publish pavement markings work orders to ArcGIS Online
-
-import os
 import pdb
 import traceback
 

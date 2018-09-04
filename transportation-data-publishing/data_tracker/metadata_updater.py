@@ -1,16 +1,9 @@
 """
 Retrieve Knack app data and update new and changed object
 and field metadata records.
-
-Attributes:
-    record_types (list): Description
 """
-import argparse
 import json
-import logging
-import os
 import pdb
-import traceback
 
 import arrow
 import knackpy
@@ -19,15 +12,9 @@ import requests
 import _setpath
 from config.metadata.config import cfg
 from config.secrets import *
+
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-# define config variable
-
-record_types = ["objects", "fields"]
 
 
 def get_app_data(app_id):
@@ -256,11 +243,6 @@ def update_records(payload, obj, method, app_name):
 
 
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "metadata_updater.py",
         "Retrieve Knack app data and update new and changed object and field metadata records.",
@@ -272,20 +254,12 @@ def cli_args():
     return args
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    app_name = kwargs["app_name"]
+def main():
+    args = cli_args()
 
-    job.start()
-    results = []
+    app_name = args.app_name
+
+    records_processed = 0
 
     record_types = ["objects", "fields"]
 
@@ -366,16 +340,10 @@ def main(job, **kwargs):
 
             update_records(payload[method], cfg[record_type]["obj"], method, app_name)
 
-        message = "{}: create: {}; update: {}; delete: {}".format(
-            record_type,
-            len(payload["create"]),
-            len(payload["update"]),
-            len(payload["delete"]),
-            app_name,
-        )
+        records_processed += sum([len(payload["create"]), len(payload["update"]), len(payload["delete"])])
 
-        results.append(message)
+    return records_processed
 
-    results = " | ".join(results)
 
-    return results
+if __name__ == "__main__":
+    main()
