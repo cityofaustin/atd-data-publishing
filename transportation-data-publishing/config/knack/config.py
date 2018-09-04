@@ -523,9 +523,24 @@ MARKINGS_AGOL = [
 
 
 SECONDARY_SIGNALS_UPDATER = {
-    "update_field" : "field_1329",
-    "ref_obj" : ["object_12"],
-    "scene" : "scene_73",
-    "view" : "view_197",
+    "update_field": "field_1329",
+    "ref_obj": ["object_12"],
+    "scene": "scene_73",
+    "view": "view_197",
+}
+
+
+SIGNAL_PM_COPIER = {
+    "params_pm": {
+        "field_obj": ["object_84", "object_12"],
+        "scene": "scene_416",
+        "view": "view_1182",
+    },
+    "params_signal": {
+        "field_obj": ["object_12"],
+        "scene": "scene_73",
+        "view": "view_197",
+    },
+    "copy_fields": ["PM_COMPLETED_DATE", "WORK_ORDER", "PM_COMPLETED_BY"],
 }
 

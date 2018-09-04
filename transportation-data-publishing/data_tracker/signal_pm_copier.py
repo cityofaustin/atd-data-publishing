@@ -1,48 +1,19 @@
 # Check traffic signal prevent maintenance (PM) records and
 # insert copies of PM records to signals' secondary signals.
 
-# Attributes:
-#     copy_fields (list): Description
-#     params_pm (TYPE): Description
-#     params_signal (dict): Description
-
-import argparse
-import os
 import pdb
 
 import arrow
 import knackpy
+from tdutils import argutil
+from tdutils import datautil
 
 import _setpath
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-params_pm = {
-    "field_obj": ["object_84", "object_12"],
-    "scene": "scene_416",
-    "view": "view_1182",
-}
-
-params_signal = {"field_obj": ["object_12"], "scene": "scene_73", "view": "view_197"}
-
-copy_fields = ["PM_COMPLETED_DATE", "WORK_ORDER", "PM_COMPLETED_BY"]
+from config.knack.config import SIGNAL_PM_COPIER as cfg
 
 
 def get_prim_signals(list_of_signals):
-    """
-    Create a dict of primary signals with and the secondary signals they control.
-    List_of_signals must have a Knack datbase id.
-    
-    Args:
-        list_of_signals (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     signals_with_children = {}
 
     for signal in list_of_signals:
@@ -54,16 +25,7 @@ def get_prim_signals(list_of_signals):
 
 
 def copy_pm_record(destination_signal_id, source_record, copy_fields):
-    """Summary
-    
-    Args:
-        destination_signal_id (TYPE): Description
-        source_record (TYPE): Description
-        copy_fields (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
+
     new_record = {
         "SIGNAL": [destination_signal_id],
         "COPIED_FROM_ID": source_record["ATD_PM_ID"],
@@ -80,16 +42,6 @@ def copy_pm_record(destination_signal_id, source_record, copy_fields):
 
 
 def apply_modified_date(dicts, key="MODIFIED_DATE", offset=600000):
-    """Summary
-    
-    Args:
-        dicts (TYPE): Description
-        key (str, optional): Description
-        offset (int, optional): Description
-    
-    Returns:
-        TYPE: Description
-    """
     #  set the record modified date as a "local" timestamp (knack-friendly)
     #  also apply a forward offset to ensure modified records are picked up
     #  by the publishing scripts which are checking for recently modded data
@@ -100,11 +52,6 @@ def apply_modified_date(dicts, key="MODIFIED_DATE", offset=600000):
 
 
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "signal_pm_copier.py",
         "Check traffic signal prevent maintenance (PM) records and insert copies of PM records to signals' secondary signals",
@@ -116,59 +63,52 @@ def cli_args():
     return args
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    #  get preventative maintenance (pm) records
+def main():
 
-    knack_creds = KNACK_CREDENTIALS[kwargs["app_name"]]
+    args = cli_args()
+    app_name = args.app_name
 
+    knack_creds = KNACK_CREDENTIALS[app_name]
 
     knack_data_pm = knackpy.Knack(
-        view=params_pm['view'],
-        scene=params_pm['scene'],
-        ref_obj=params_pm['field_obj'],
-        app_id=knack_creds['app_id'],
-        api_key=knack_creds['api_key'],
-        raw_connections=True
+        view=cfg["params_pm"]["view"],
+        scene=cfg["params_pm"]["scene"],
+        ref_obj=cfg["params_pm"]["field_obj"],
+        app_id=knack_creds["app_id"],
+        api_key=knack_creds["api_key"],
+        raw_connections=True,
     )
-    
+
     data_pm = []
 
     if not knack_data_pm.data:
         return 0
-    
+
     for pm in knack_data_pm.data:
         #  verify there is data that needs to be processed
         #  the source view is also filtered by these conditions
         #  so this is a redundant check, to be safe
-        if (not pm['COPIED_TO_SECONDARY'] and
-            pm['PM_STATUS'] == 'COMPLETED' and
-            int(pm['SECONDARY_SIGNALS_COUNT']) > 0):
-            
+        if (
+            not pm["COPIED_TO_SECONDARY"]
+            and pm["PM_STATUS"] == "COMPLETED"
+            and int(pm["SECONDARY_SIGNALS_COUNT"]) > 0
+        ):
+
             data_pm.append(pm)
 
     if not data_pm:
-        # logger.info('No PM records to copy.')
         return 0
 
     #  get signal data
     #  TODO: filter for signals and their secondaries based on PM data
     #  this would reduce size of request
     knack_data_signals = knackpy.Knack(
-        view=params_signal['view'],
-        scene=params_signal['scene'],
-        ref_obj=params_signal['field_obj'],
-        app_id=knack_creds['app_id'],
-        api_key=knack_creds['api_key'],
-        raw_connections=True
+        view=cfg["params_signal"]["view"],
+        scene=cfg["params_signal"]["scene"],
+        ref_obj=cfg["params_signal"]["field_obj"],
+        app_id=knack_creds["app_id"],
+        api_key=knack_creds["api_key"],
+        raw_connections=True,
     )
 
     primary_signals_with_children = get_prim_signals(knack_data_signals.data)
@@ -178,76 +118,69 @@ def main(job, **kwargs):
     signals_update = []
 
     for pm in data_pm:
-        '''
+        """
         Check all preventative maintenance records at signals with secondary signals
         Copy pm record to secondary signal if needed
-        '''
-        if 'SIGNAL' in pm:
-            
-            primary_signal_id = pm['SIGNAL'][0]['id']
+        """
+        if "SIGNAL" in pm:
+
+            primary_signal_id = pm["SIGNAL"][0]["id"]
 
             if primary_signal_id in primary_signals_with_children:
                 #  update original pm record with copied to secondary = True
-                pm_payload_update.append({
-                    'id' : pm['id'],
-                    'COPIED_TO_SECONDARY' : True
-                })
+                pm_payload_update.append({"id": pm["id"], "COPIED_TO_SECONDARY": True})
 
                 for secondary in primary_signals_with_children[primary_signal_id]:
                     #  create new pm record for secondary signal(s)
-                    new_record = copy_pm_record(
-                        secondary['id'], pm,
-                        copy_fields
-                    )
+                    new_record = copy_pm_record(secondary["id"], pm, cfg["copy_fields"])
 
-                    signals_update.append( {'id' : secondary['id']})
+                    signals_update.append({"id": secondary["id"]})
                     pm_payload_insert.append(new_record)
 
     # update modified date of secondary signals which have a new PM
     signals_payload_update = apply_modified_date(signals_update)
 
     signals_payload_update = datautil.replace_keys(
-        signals_payload_update,
-        knack_data_signals.field_map
+        signals_payload_update, knack_data_signals.field_map
     )
 
     pm_payload_update = datautil.replace_keys(
-        pm_payload_update,
-        knack_data_pm.field_map
+        pm_payload_update, knack_data_pm.field_map
     )
 
     pm_payload_insert = datautil.replace_keys(
-        pm_payload_insert,
-        knack_data_pm.field_map
+        pm_payload_insert, knack_data_pm.field_map
     )
 
     for record in signals_payload_update:
         res = knackpy.record(
             record,
-            obj_key=params_signal['field_obj'][0],
-            app_id= knack_creds['app_id'],
-            api_key=knack_creds['api_key'],
-            method='update',
+            obj_key=cfg["params_signal"]["field_obj"][0],
+            app_id=knack_creds["app_id"],
+            api_key=knack_creds["api_key"],
+            method="update",
         )
 
     for record in pm_payload_update:
         res = knackpy.record(
             record,
-            obj_key=params_pm['field_obj'][0],
-            app_id= knack_creds['app_id'],
-            api_key=knack_creds['api_key'],
-            method='update',
+            obj_key=cfg["params_pm"]["field_obj"][0],
+            app_id=knack_creds["app_id"],
+            api_key=knack_creds["api_key"],
+            method="update",
         )
 
     for record in pm_payload_insert:
         res = knackpy.record(
             record,
-            obj_key=params_pm['field_obj'][0],
-            app_id= knack_creds['app_id'],
-            api_key=knack_creds['api_key'],
-            method='create',
+            obj_key=cfg["params_pm"]["field_obj"][0],
+            app_id=knack_creds["app_id"],
+            api_key=knack_creds["api_key"],
+            method="create",
         )
 
-    # logger.info('END AT {}'.format( arrow.now() ))
-    
     return len(pm_payload_insert) + len(pm_payload_update) + len(signals_payload_update)
+
+
+if __name__ == "__main__":
+    main()
