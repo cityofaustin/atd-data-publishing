@@ -441,3 +441,83 @@ LOCATION_UPDATER = {
         },
     ],
 }
+
+
+MARKINGS_AGOL = [
+    # Knack and AGOL source object defintions.
+    # Order of config elements matters! Work orders must be processed before
+    # jobs and attachments because work orders are the parent record to both.
+    {
+        "name": "signs_markings_work_orders",
+        "scene": "scene_774",
+        "view": "view_2226",
+        "ref_obj": ["object_140", "object_7"],
+        "modified_date_field_id": "field_2150",
+        "modified_date_field": "MODIFIED_DATE",
+        "geometry_service_id": "a78db5b7a72640bcbb181dcb88817652",  #  street segments
+        "geometry_layer_id": 0,
+        "geometry_record_id_field": "SEGMENT_ID",
+        "geometry_layer_spatial_ref": 102739,
+        "multi_source_geometry": True,
+        "primary_key": "ATD_WORK_ORDER_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 1,
+        "item_type": "layer",
+    },
+    {
+        "name": "signs_markings_jobs",
+        "scene": "scene_774",
+        "view": "view_2033",
+        "ref_obj": ["object_141", "object_7"],
+        "modified_date_field_id": "field_2196",
+        "modified_date_field": "MODIFIED_DATE",
+        "geometry_service_id": "a9f5be763a67442a98f684935d15729b",  #  work orders
+        "geometry_layer_id": 1,
+        "geometry_record_id_field": "ATD_WORK_ORDER_ID",
+        "geometry_layer_spatial_ref": 102739,
+        "multi_source_geometry": False,
+        "primary_key": "ATD_SAM_JOB_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 0,
+        "item_type": "layer",
+    },
+    {
+        "name": "attachments",
+        "scene": "scene_774",
+        "view": "view_2227",
+        "ref_obj": ["object_153"],
+        "modified_date_field_id": "field_2407",
+        "modified_date_field": "CREATED_DATE",
+        "multi_source_geometry": False,
+        "primary_key": "ATTACHMENT_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 0,
+        "item_type": "table",
+        "extract_attachment_url": True,
+    },
+    {
+        "name": ",specifications",
+        "scene": "scene_774",
+        "view": "view_2272",
+        "ref_obj": ["object_143", "object_140", "object_141"],
+        "modified_date_field_id": "field_2567",
+        "modified_date_field": "MODIFIED_DATE",
+        "primary_key": "SPECIFICATION_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 1,
+        "item_type": "table",
+    },
+    {
+        "name": ",materials",
+        "scene": "scene_774",
+        "view": "view_2273",
+        "ref_obj": ["object_36", "object_140", "object_141"],
+        "modified_date_field_id": "field_771",
+        "modified_date_field": "MODIFIED_DATE",
+        "primary_key": "TRANSACTION_ID",
+        "service_id": "a9f5be763a67442a98f684935d15729b",
+        "layer_id": 2,
+        "item_type": "table",
+    },
+]
+

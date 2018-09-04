@@ -1,7 +1,5 @@
 # Publish pavement markings work orders to ArcGIS Online
 
-# Attributes:
-#     config (TYPE): Description
 import os
 import pdb
 import traceback
@@ -11,103 +9,15 @@ import knackpy
 
 import _setpath
 from config.secrets import *
+from config.knack.config import MARKINGS_AGOL as config
+
 from tdutils import agolutil
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
 from tdutils import knackutil
-from tdutils import logutil
-
-
-config = [
-    # Knack and AGOL source object defintions.
-    # Order of config elements matters! Work orders must be processed before
-    # jobs and attachments because work orders are the parent record to both.
-    {
-        "name": "signs_markings_work_orders",
-        "scene": "scene_774",
-        "view": "view_2226",
-        "ref_obj": ["object_140", "object_7"],
-        "modified_date_field_id": "field_2150",
-        "modified_date_field": "MODIFIED_DATE",
-        "geometry_service_id": "a78db5b7a72640bcbb181dcb88817652",  #  street segments
-        "geometry_layer_id": 0,
-        "geometry_record_id_field": "SEGMENT_ID",
-        "geometry_layer_spatial_ref": 102739,
-        "multi_source_geometry": True,
-        "primary_key": "ATD_WORK_ORDER_ID",
-        "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 1,
-        "item_type": "layer",
-    },
-    {
-        "name": "signs_markings_jobs",
-        "scene": "scene_774",
-        "view": "view_2033",
-        "ref_obj": ["object_141", "object_7"],
-        "modified_date_field_id": "field_2196",
-        "modified_date_field": "MODIFIED_DATE",
-        "geometry_service_id": "a9f5be763a67442a98f684935d15729b",  #  work orders
-        "geometry_layer_id": 1,
-        "geometry_record_id_field": "ATD_WORK_ORDER_ID",
-        "geometry_layer_spatial_ref": 102739,
-        "multi_source_geometry": False,
-        "primary_key": "ATD_SAM_JOB_ID",
-        "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 0,
-        "item_type": "layer",
-    },
-    {
-        "name": "attachments",
-        "scene": "scene_774",
-        "view": "view_2227",
-        "ref_obj": ["object_153"],
-        "modified_date_field_id": "field_2407",
-        "modified_date_field": "CREATED_DATE",
-        "multi_source_geometry": False,
-        "primary_key": "ATTACHMENT_ID",
-        "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 0,
-        "item_type": "table",
-        "extract_attachment_url": True,
-    },
-    {
-        "name": ",specifications",
-        "scene": "scene_774",
-        "view": "view_2272",
-        "ref_obj": ["object_143", "object_140", "object_141"],
-        "modified_date_field_id": "field_2567",
-        "modified_date_field": "MODIFIED_DATE",
-        "primary_key": "SPECIFICATION_ID",
-        "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 1,
-        "item_type": "table",
-    },
-    {
-        "name": ",materials",
-        "scene": "scene_774",
-        "view": "view_2273",
-        "ref_obj": ["object_36", "object_140", "object_141"],
-        "modified_date_field_id": "field_771",
-        "modified_date_field": "MODIFIED_DATE",
-        "primary_key": "TRANSACTION_ID",
-        "service_id": "a9f5be763a67442a98f684935d15729b",
-        "layer_id": 2,
-        "item_type": "table",
-    },
-]
 
 
 def remove_empty_strings(records):
-    """Summary
-    
-    Args:
-        records (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
     new_records = []
     for record in records:
         new_record = {
@@ -134,12 +44,10 @@ def append_paths(
     """
     unmatched = ""
 
-    # pdb.set_trace()
-
     for record in records:
-        
-        path_id = record.get(path_id_field)   
-        
+
+        path_id = record.get(path_id_field)
+
         if path_id:
             paths = []
 
@@ -158,14 +66,11 @@ def append_paths(
                 for path_id in record[path_id_field]:
                     for feature in features:
                         if str(path_id) == str(feature.attributes.get(path_id_field)):
-                            # print('match!')
                             paths = paths + [path for path in feature.geometry["paths"]]
-                            # print(paths)
 
                 record[output_field] = paths
 
             if not record.get(output_field):
-                # pdb.set_trace()
                 unmatched += f"{path_id_field}: {path_id}\n"
 
     if unmatched:
@@ -176,8 +81,6 @@ def append_paths(
             EMAIL["user"],
             EMAIL["password"],
         )
-
-
 
     return records
 
@@ -221,16 +124,13 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
 
 
 def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
+
     parser = argutil.get_parser(
         "markings_agol.py",
         "Publish Signs and Markings Work Order Data to ArcGIS Online",
         "app_name",
         "--replace",
+        "--last_run_date",
     )
 
     args = parser.parse_args()
@@ -238,16 +138,19 @@ def cli_args():
     return args
 
 
-def main(job, **kwargs):
+def main():
+
+    args = cli_args()
+
+    auth = KNACK_CREDENTIALS[args.app_name]
+
     records_processed = 0
 
-    last_run_date = job.most_recent()
+    last_run_date = args.last_run_date
 
-    auth = KNACK_CREDENTIALS[kwargs["app_name"]]
-
-    if not last_run_date or kwargs["replace"]:
+    if not last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
-        # the arrow package needs a specific date and timeformat 
+        # the arrow package needs a specific date and timeformat
         last_run_date = "1970-01-01"
     """
     We include a filter in our API call to limit to records which have
@@ -277,8 +180,6 @@ def main(job, **kwargs):
 
         records = kn.data
 
-        # pdb.set_trace()
-
         if cfg.get("geometry_service_id"):
             #  dataset has geomteries to be retrieved from another dataset
             if cfg.get("multi_source_geometry"):
@@ -296,8 +197,6 @@ def main(job, **kwargs):
             if where_ids:
                 where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
 
-                # pdb.set_trace()
-
                 geometry_layer = agolutil.get_item(
                     auth=AGOL_CREDENTIALS,
                     service_id=cfg["geometry_service_id"],
@@ -308,10 +207,10 @@ def main(job, **kwargs):
                     where=where, outFields=cfg["geometry_record_id_field"]
                 )
 
-            # pdb.set_trace()
-            
                 if not source_geometries:
-                    raise Exception("No features returned from source geometry layer query")
+                    raise Exception(
+                        "No features returned from source geometry layer query"
+                    )
 
                 records = append_paths(
                     kn.data,
@@ -324,9 +223,9 @@ def main(job, **kwargs):
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
 
-        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
-        
-        # pdb.set_trace()
+        records = remove_empty_strings(
+            records
+        )  # AGOL has unexepected handling of empty values
 
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
@@ -335,7 +234,7 @@ def main(job, **kwargs):
             item_type=cfg["item_type"],
         )
 
-        if kwargs["replace"]:
+        if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
@@ -365,3 +264,7 @@ def main(job, **kwargs):
             records_processed += len(adds)
 
     return records_processed
+
+
+if __name__ == "__main__":
+    main()
