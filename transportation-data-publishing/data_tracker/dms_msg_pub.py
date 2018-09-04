@@ -8,28 +8,36 @@ import sys
 
 import arrow
 import knackpy
+from tdutils import argutil
+from tdutils import datautil
+from tdutils import kitsutil
 
+import _setpath
 from config.knack.config import cfg
 from config.secrets import *
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import kitsutil
-from tdutils import logutil
 
 
-def main(job, **kwargs):
-    """Summary
+
+def cli_args():
+    parser = argutil.get_parser(
+        "dms_message_pub.py",
+        "Extract DMS message from traffic management system and load into Data Tracker.",
+        "app_name",
+    )
+
+    args = parser.parse_args()
+
+    return args
+
+
+def main():
+
+    args = cli_args()
     
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
+    app_name = args.app_name
+
     CONFIG = cfg["dms"]
-    KNACK_CREDS = KNACK_CREDENTIALS[kwargs["app_name"]]
+    KNACK_CREDS = KNACK_CREDENTIALS[app_name]
 
     kits_query = """
         SELECT DMSID as KITS_ID
@@ -98,3 +106,6 @@ def main(job, **kwargs):
         )
 
     return len(new_data)
+
+if __name__ == "__main__":
+    main()

@@ -118,14 +118,7 @@ def cli_args():
         "dataset",
         "--destination",
         "--replace",
-    )
-
-    parser.add_argument(
-        "-l",
-        "--last_run_date",
-        type=int,
-        required=False,
-        help="A unix timestamp representing the last date the job was run. Will be applied as a temporal filter when querying data for processing.",
+        "--last_run_date"
     )
 
     args = parser.parse_args()
