@@ -383,3 +383,61 @@ DETETECTION_STATUS_SIGNALS = {
     "SIG_STATUS_LABEL": "DETECTION_STATUS",
     "SIG_DATE_LABEL": "DETECTION_STATUS_DATE",
 }
+
+
+LOCATION_UPDATER = {
+    "filters": {
+        "match": "and",
+        "rules": [{"field": "field_1357", "operator": "is", "value": "No"}],
+    },
+    "obj": "object_11",
+    "field_maps": {
+        #  service name
+        "EXTERNAL_cmta_stops": {
+            "fields": {
+                #  AGOL Field : Knack Field
+                "ID": "BUS_STOPS"
+            }
+        }
+    },
+    "layers": [
+        # layer config for interacting with ArcGIS Online
+        # see: http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000
+        {
+            "service_name": "BOUNDARIES_single_member_districts",
+            "outFields": "COUNCIL_DISTRICT",
+            "updateFields": ["COUNCIL_DISTRICT"],  #
+            "layer_id": 0,
+            "distance": 33,  #  !!! this unit is interpreted as meters due to Esri bug !!!
+            "units": "esriSRUnit_Foot",  #  !!! this unit is interpreted as meters due to Esri bug !!!
+            #  how to handle query that returns multiple intersection features
+            "handle_features": "merge_all",
+        },
+        {
+            "service_name": "BOUNDARIES_jurisdictions",
+            #  will attempt secondary service if no results at primary
+            "service_name_secondary": "BOUNDARIES_jurisdictions_planning",
+            "outFields": "JURISDICTION_LABEL",
+            "updateFields": ["JURISDICTION_LABEL"],
+            "layer_id": 0,
+            "handle_features": "use_first",
+        },
+        {
+            "service_name": "ATD_signal_engineer_areas",
+            "outFields": "SIGNAL_ENG_AREA",
+            "updateFields": ["SIGNAL_ENG_AREA"],
+            "layer_id": 0,
+            "handle_features": "use_first",
+        },
+        {
+            "service_name": "EXTERNAL_cmta_stops",
+            "outFields": "ID",
+            "updateFields": ["BUS_STOPS"],
+            "layer_id": 0,
+            "distance": 107,  #  !!! this unit is interpreted as meters due to Esri bug !!!
+            "units": "esriSRUnit_Foot",  #  !!! this unit is interpreted as meters due to Esri bug !!!
+            "handle_features": "merge_all",
+            "apply_format": True,
+        },
+    ],
+}
