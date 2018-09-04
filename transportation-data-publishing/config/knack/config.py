@@ -544,3 +544,15 @@ SIGNAL_PM_COPIER = {
     "copy_fields": ["PM_COMPLETED_DATE", "WORK_ORDER", "PM_COMPLETED_BY"],
 }
 
+
+SIGNAL_REQUEST_RANKER = {
+    "primary_key": "ATD_EVAL_ID",
+    "status_key": "EVAL_STATUS",
+    "group_key": "YR_MO_RND",
+    "score_key": "EVAL_SCORE",
+    "concat_keys": ["RANK_ROUND_MO", "RANK_ROUND_YR"],
+    "rank_key": "EVAL_RANK",
+    "status_vals": ["NEW", "IN PROGRESS", "COMPLETED"],
+    "modified_date_key": "MODIFIED_DATE",
+    "eval_types": {"traffic_signal": "object_27", "phb": "object_26"},
+}

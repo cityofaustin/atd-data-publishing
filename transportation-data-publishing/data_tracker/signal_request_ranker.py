@@ -1,76 +1,43 @@
 # Assign traffic and PHB request rankings based on evaluation score
 # dataset argument is required and must be either 'phb' or 'traffic_signal'
 
-# Attributes:
-#     concat_keys (list): Description
-#     eval_types (dict): Description
-#     group_key (str): Description
-#     modified_date_key (str): Description
-#     primary_key (str): Description
-#     rank_key (str): Description
-#     score_key (str): Description
-#     status_key (str): Description
-#     status_vals (list): Description
-
-import argparse
-import os
 import pdb
-import traceback
 
 import arrow
 import knackpy
+from tdutils import argutil
+from tdutils import datautil
 
 import _setpath
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-primary_key = "ATD_EVAL_ID"
-status_key = "EVAL_STATUS"
-group_key = "YR_MO_RND"
-score_key = "EVAL_SCORE"
-concat_keys = ["RANK_ROUND_MO", "RANK_ROUND_YR"]
-rank_key = "EVAL_RANK"
-status_vals = ["NEW", "IN PROGRESS", "COMPLETED"]
-modified_date_key = "MODIFIED_DATE"
+from config.knack.config import SIGNAL_REQUEST_RANKER as cfg
 
 
-eval_types = {"traffic_signal": "object_27", "phb": "object_26"}
+def main():
 
+    args = cli_args()
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    app_name = kwargs["app_name"]
-    eval_type = kwargs["eval_type"]
+    app_name = args.app_name
 
-    obj = eval_types[eval_type]
+    eval_type = args.eval_type
+
+    obj = cfg["eval_types"][eval_type]
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
     kn = knackpy.Knack(
-        obj=eval_types[eval_type],
+        obj=cfg["eval_types"][eval_type],
         app_id=knack_creds["app_id"],
         api_key=knack_creds["api_key"],
     )
 
-    data = datautil.filter_by_val(kn.data, status_key, status_vals)
+    data = datautil.filter_by_val(kn.data, cfg["status_key"], cfg["status_vals"])
 
     #  new records will not have a score key. add it here.
-    data = datautil.add_missing_keys(data, {score_key: 0})
+    data = datautil.add_missing_keys(data, {cfg["score_key"]: 0})
 
     #  create a ranking month_year field
-    data = datautil.concat_key_values(data, concat_keys, group_key, "_")
+    data = datautil.concat_key_values(data, cfg["concat_keys"], cfg["group_key"], "_")
 
     knack_data_exclude = [
         record for record in data if record["EXCLUDE_FROM_RANKING"] == True
@@ -83,8 +50,8 @@ def main(job, **kwargs):
     score_dict = {}
 
     for row in knack_data_include:
-        key = row[group_key]
-        score = int(row[score_key])
+        key = row[cfg["group_key"]]
+        score = int(row[cfg["score_key"]])
 
         if key not in score_dict:
             score_dict[key] = []
@@ -99,34 +66,35 @@ def main(job, **kwargs):
     payload = []
 
     for record in knack_data_include:
-        score = int(record[score_key])
-        key = record[group_key]
+        score = int(record[cfg["score_key"]])
+        key = record[cfg["group_key"]]
         rank = (
             datautil.min_index(score_dict[key], score) + 1
         )  #  add one because list indices start at 0
 
-        if rank_key in record:
-            if record[rank_key] != rank:
-                record[rank_key] = rank
-                record[modified_date_key] = datautil.local_timestamp()
+        if cfg["rank_key"] in record:
+            if record[cfg["rank_key"]] != rank:
+                record[cfg["rank_key"]] = rank
+                record[cfg["modified_date_key"]] = datautil.local_timestamp()
                 payload.append(record)
 
         else:
-            record[rank_key] = rank
+            record[cfg["rank_key"]] = rank
 
     #  assign null ranks to records flagged as exclude from ranking
     for record in knack_data_exclude:
 
-        if rank_key in record:
+        if cfg["rank_key"] in record:
             #  update excluded records if rank found
-            if record[rank_key] != "":
-                record[rank_key] = ""
-                record[modified_date_key] = datautil.local_timestamp()
+            if record[cfg["rank_key"]] != "":
+                record[cfg["rank_key"]] = ""
+                record[cfg["modified_date_key"]] = datautil.local_timestamp()
                 payload.append(record)
 
     if payload:
-
-        payload = datautil.reduce_to_keys(payload, [rank_key, "id", modified_date_key])
+        payload = datautil.reduce_to_keys(
+            payload, [cfg["rank_key"], "id", cfg["modified_date_key"]]
+        )
 
         payload = datautil.replace_keys(payload, kn.field_map)
 
@@ -155,12 +123,6 @@ def main(job, **kwargs):
 
 
 def cli_args():
-    """
-    Parse command-line arguments using argparse module.
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "signal_requests_ranker.py",
         "Assign traffic and PHB request based on evaluation score.",
@@ -171,3 +133,6 @@ def cli_args():
     args = parser.parse_args()
 
     return args
+
+if __name__ == "__main__":
+    main()
