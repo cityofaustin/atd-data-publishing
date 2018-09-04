@@ -3,43 +3,18 @@
 # Developed specifically for measuring Traffic Control Plan (TCP) permit
 # application reviews in the Right-of-Way Management division. 
 
-# Attributes:
-#     elapsed_key (str): Description
-#     end_key (str): Description
-#     obj (str): Description
-#     scene (str): Description
-#     start_key (str): Description
-#     update_fields (list): Description
-#     view (str): Description
-
-import argparse
 from datetime import datetime
-import os
-import pdb
-import traceback
 
 import knackpy
 import pandas as pd
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
+from tdutils import argutil
+from tdutils import datautil
 
 import _setpath
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-
-# define config variables
-scene = "scene_754"
-view = "view_1987"
-obj = "object_147"
-start_key = "SUBMITTED_DATE"
-end_key = "REVIEW_COMPLETED_DATE"
-elapsed_key = "DAYS_ELAPSED"
-
-update_fields = ["DAYS_ELAPSED", "id"]
+from config.knack.config import TCP_BUSINESS_DAYS as config
 
 
 def get_calendar():
@@ -138,12 +113,6 @@ def business_days_elapsed(start, end, calendar):
 
 
 def cli_args():
-    """
-    Parse command-line arguments using argparse module.
-    
-    Returns:
-        TYPE: Description
-    """
     parser = argutil.get_parser(
         "tcp_business_days.py",
         "Calculate # of business days elapsed and update records accordingly.",
@@ -177,36 +146,29 @@ def update_record(record, obj_key, creds):
     return res
 
 
-def main(job, **kwargs):
-    """Summary
-    
-    Args:
-        job (TYPE): Description
-        **kwargs: Description
-    
-    Returns:
-        TYPE: Description
-    """
-    app_name = kwargs["app_name"]
+def main():
+
+    args = cli_args()
+    app_name = args.app_name
 
     creds = KNACK_CREDENTIALS[app_name]
 
     kn = knackpy.Knack(
-        scene=scene,
-        view=view,
-        ref_obj=[obj],
+        scene=config["scene"],
+        view=config["view"],
+        ref_obj=[config["obj"]],
         app_id=creds["app_id"],
         api_key=creds["api_key"],
     )
 
     calendar = get_calendar()
 
-    kn.data = handle_records(kn.data, start_key, end_key, elapsed_key, calendar)
+    kn.data = handle_records(kn.data, config["start_key"], config["end_key"], config["elapsed_key"], calendar)
 
     # logger.info( '{} Records to Update'.format(len(kn.data) ))
 
     if kn.data:
-        kn.data = datautil.reduce_to_keys(kn.data, update_fields)
+        kn.data = datautil.reduce_to_keys(kn.data, config["update_fields"])
         kn.data = datautil.replace_keys(kn.data, kn.field_map)
 
         for i, record in enumerate(kn.data):
@@ -215,3 +177,5 @@ def main(job, **kwargs):
 
     return len(kn.data)
 
+if __name__ == "__main__":
+    main()

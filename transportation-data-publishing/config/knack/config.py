@@ -566,3 +566,15 @@ STREET_SEG_UPDATER = {
     "scene": "scene_424",
     "view": "view_1198",
 }
+
+
+TCP_BUSINESS_DAYS = {
+    "scene" : "scene_754",
+    "view" : "view_1987",
+    "obj" : "object_147",
+    "start_key" : "SUBMITTED_DATE",
+    "end_key" : "REVIEW_COMPLETED_DATE",
+    "elapsed_key" : "DAYS_ELAPSED",
+    "update_fields" : ["DAYS_ELAPSED", "id"]
+}
+
