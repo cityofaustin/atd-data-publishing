@@ -15,6 +15,7 @@ import dropbox
 import requests
 
 
+import _setpath
 from config.secrets import *
 from tdutils import agolutil
 from tdutils import datautil
@@ -64,7 +65,7 @@ def handle_data(data):
     return list(reader)
 
 
-def main(jobs, **kwargs):
+def main():
     """Summary
     
     Args:
@@ -72,29 +73,29 @@ def main(jobs, **kwargs):
         **kwargs: Description
     
     Returns:
-        TYPE: Description
+        TYPE: Descriptio
     """
-    script_name = kwargs["script_name"]
+    script_name = os.path.basename(__file__).replace(".py", "")
 
-    job_agol = jobutil.Job(
-        name=f"{script_name}_agol",
-        url=JOB_DB_API_URL,
-        source="dropbox",
-        destination="agol",
-        auth=JOB_DB_API_TOKEN,
-    )
+    # job_agol = jobutil.Job(
+    #     name=f"{script_name}_agol",
+    #     url=JOB_DB_API_URL,
+    #     source="dropbox",
+    #     destination="agol",
+    #     auth=JOB_DB_API_TOKEN,
+    # )
 
-    job_agol.start()
+    # job_agol.start()
 
-    job_socrata = jobutil.Job(
-        name=f"{script_name}_socrata",
-        url=JOB_DB_API_URL,
-        source="dropbox",
-        destination="socrata",
-        auth=JOB_DB_API_TOKEN,
-    )
+    # job_socrata = jobutil.Job(
+    #     name=f"{script_name}_socrata",
+    #     url=JOB_DB_API_URL,
+    #     source="dropbox",
+    #     destination="socrata",
+    #     auth=JOB_DB_API_TOKEN,
+    # )
 
-    job_socrata.start()
+    # job_socrata.start()
 
     data = get_data(dropbox_path, DROPBOX_BCYCLE_TOKEN)
     data = handle_data(data)
@@ -113,10 +114,10 @@ def main(jobs, **kwargs):
         res = layer.edit_features(adds=adds)
         agolutil.handle_response(res)
 
-        job_agol.result("success", records_processed=len(data))
+        # job_agol.result("success", records_processed=len(data))
 
     except Exception as e:
-        job_agol.result("error", message=str(e))
+        # job_agol.result("error", message=str(e))
         pass
 
     try:
@@ -130,10 +131,13 @@ def main(jobs, **kwargs):
             replace=True,
         )
 
-        job_socrata.result("success", records_processed=len(data))
+        # job_socrata.result("success", records_processed=len(data))
 
     except Exception as e:
-        job_socrata.result("error", message=str(e))
+        # job_socrata.result("error", message=str(e))
         pass
 
     return len(data)
+
+if __name__ == "__main__":
+    main()
