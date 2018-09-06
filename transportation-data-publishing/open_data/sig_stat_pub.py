@@ -65,7 +65,7 @@ def add_timestamps(records, timestamp_field="processed_datetime"):
     return records
 
 
-def main(jobs, **kwargs):
+def main():
     """Summary
     
     Args:
@@ -165,3 +165,7 @@ def main(jobs, **kwargs):
 
     else:
         return 0
+
+        
+if __name__ == "__main__":
+    main()

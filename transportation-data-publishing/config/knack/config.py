@@ -10,7 +10,7 @@ cfg = {
         "socrata_resource_id": "tkk5-uugs",
     },
     "backup": {
-        "objects": [
+        "objects": [ # NOTICE: These objects will not be included in backup 
             "object_137",  # admin_field_meta
             "object_138",  # admin_object_meta
             "object_95",  # csr_flex_notes

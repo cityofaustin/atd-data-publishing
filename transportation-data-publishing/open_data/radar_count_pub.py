@@ -81,8 +81,24 @@ def get_direction(lane):
     else:
         return None
 
+def cli_args():
+    """Summary
+    
+    Returns:
+        TYPE: Description
+    """
+    parser = argutil.get_parser(
+        "count_data_pub.py",
+        "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
+        "--replace",
+    )
 
-def main(job, **kwargs):
+    args = parser.parse_args()
+
+    return args
+
+    
+def main():
     """Summary
     
     Args:
@@ -92,7 +108,7 @@ def main(job, **kwargs):
     Returns:
         TYPE: Description
     """
-    replace = kwargs["replace"]
+    
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
@@ -221,18 +237,5 @@ def main(job, **kwargs):
     return len(socrata_payload)
 
 
-def cli_args():
-    """Summary
-    
-    Returns:
-        TYPE: Description
-    """
-    parser = argutil.get_parser(
-        "count_data_pub.py",
-        "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
-        "--replace",
-    )
-
-    args = parser.parse_args()
-
-    return args
+if __name__ == "__main__":
+    main()

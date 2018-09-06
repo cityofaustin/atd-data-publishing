@@ -55,7 +55,7 @@ def get_data(path, token):
     Returns:
         TYPE: Description
     """
-    logger.info(f"Get data for {path}")
+    # logger.info(f"Get data for {path}")
 
     dbx = dropbox.Dropbox(token)
 
@@ -97,7 +97,7 @@ def handle_data(data):
     return list(reader)
 
 
-def main(job, **kwargs):
+def main():
     """
     Args:
         job
@@ -110,20 +110,21 @@ def main(job, **kwargs):
     
     """
 
-    script_name = kwargs["script_name"]
-
     dt_current = arrow.now().replace(months=-1)
     dt_current_formatted = dt_current.format("MM-YYYY")
     up_to_date = False
     results = None
+    
 
     while not up_to_date:
+
         socrata_dt = max_date_socrata(resource_id)
         socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
 
         if dt_current_formatted == socrata_dt_formatted:
+            # pdb.set_trace()
             up_to_date = True
-            job.result("success", records_processed=0)
+            # job.result("success", records_processed=0)
             results = 0
 
         else:
@@ -135,24 +136,28 @@ def main(job, **kwargs):
             root = "austinbcycletripdata"  # note the lowercase-ness
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
             date_fields = ["checkout_date"]
-
+            pdb.set_trace()    
             try:
+
                 data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                print(data)
                 results = len(data)
+                pdb.set_trace()
 
             except dropbox.exceptions.ApiError as e:
 
                 if "LookupError" in str(e):
-                    #  end loop when no file can be found
+                    # end loop when no file can be found
                     # logger.warning(f"No data found for {path}")
                     up_to_date = True
-                    job.result("success")
+                    # job.result("success")
                     break
 
                 else:
-                    job.result("error", message=str(e))
+                    # job.result("error", message=str(e))
                     raise e
 
+                        
             data = handle_data(data)
             # logger.info("{} records found".format(len(data)))
 
@@ -163,9 +168,13 @@ def main(job, **kwargs):
                 location_field=None,
             )
 
-            logger.info(res.json())
+            # logger.info(res.json())
 
-            job.result("success", records_processed=len(data))
+            # job.result("success", records_processed=len(data))
 
             results = len(data)
+
     return results
+
+if __name__ == "__main__":
+    main()

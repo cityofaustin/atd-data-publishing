@@ -27,6 +27,7 @@ import arrow
 import knackpy
 
 import _setpath
+from config.kits.config import *
 from config.secrets import *
 
 from tdutils import datautil
@@ -34,125 +35,6 @@ from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import kitsutil
 from tdutils import logutil
-
-# define config variables
-
-kits_table_geom = "KITSDB.KITS.CameraSpatialData"
-kits_table_camera = "KITSDB.KITS.CAMERA"
-kits_table_web = "KITSDB.KITS.WEBCONFIG_MAIN"
-
-fieldmap = {
-    # kits_field : data_tracker_field
-    "CAMNUMBER": {
-        "knack_id": "CAMERA_ID",
-        "type": int,
-        "detect_changes": True,
-        "table": kits_table_camera,
-    },
-    "CAMNAME": {
-        "knack_id": "CAMNAME",
-        "type": str,
-        "detect_changes": True,
-        "table": kits_table_camera,
-    },
-    "CAMCOMMENT": {
-        "knack_id": None,
-        "type": str,
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_camera,
-    },
-    "LATITUDE": {
-        "knack_id": "LOCATION_latitude",
-        "type": float,
-        "detect_changes": False,
-        "table": kits_table_camera,
-    },
-    "LONGITUDE": {
-        "knack_id": "LOCATION_longitude",
-        "type": float,
-        "detect_changes": False,
-        "table": kits_table_camera,
-    },
-    "VIDEOIP": {
-        "knack_id": "CAMERA_IP",
-        "type": str,
-        "detect_changes": True,
-        "table": kits_table_camera,
-    },
-    "CAMID": {
-        "knack_id": None,
-        "type": str,
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_camera,
-    },
-    "CAMTYPE": {
-        "knack_id": None,
-        "type": int,
-        "detect_changes": False,
-        "default": 0,
-        "table": kits_table_camera,
-    },
-    "CAPTURE": {
-        "knack_id": None,
-        "type": int,
-        "detect_changes": False,
-        "default": 1,
-        "table": kits_table_camera,
-    },
-    "SkipDownload": {
-        "knack_id": "DISABLE_IMAGE_PUBLISH",
-        "type": bool,
-        "detect_changes": True,
-        "default": None,
-        "table": kits_table_camera,
-    },
-    "WebID": {
-        "knack_id": None,
-        "type": int,
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_web,
-    },
-    "WebURL": {
-        "knack_id": None,
-        "type": str,
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_web,
-    },
-    "CamID": {
-        "knack_id": None,
-        "type": int,
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_geom,
-    },
-    "GeometryItem": {
-        "knack_id": None,
-        "type": "geometry",
-        "detect_changes": False,
-        "default": None,
-        "table": kits_table_geom,
-    },
-}
-
-
-primary_key_knack = "CAMERA_ID"
-app_name = "data_tracker_prod"
-knack_view = "view_395"
-knack_scene = "view_144"
-knack_objects = ["object_53", "object_11"]
-knack_creds = KNACK_CREDENTIALS
-kits_creds = KITS_CREDENTIALS
-
-max_cam_id = 0
-
-filters = {
-    "CAMERA_STATUS": ["TURNED_ON"],
-    "CAMERA_MFG": ["Axis", "Sarix", "Spectra Enhanced"],
-}
 
 
 def map_bools(dicts):
@@ -363,7 +245,7 @@ def create_delete_query(table, match_key, match_val):
     )
 
 
-def main(job, **kwargs):
+def main():
     """Summary
     
     Args:
@@ -434,7 +316,7 @@ def main(job, **kwargs):
             )
             record_geom["GeometryItem"] = geometry
             record_geom["CamID"] = max_cam_id
-            query_geom = create_insert_query(kits_table_geom, record_geom)
+            query_geom = create_insert_query(KITS_CONFIG.get("kits_table_geom"), record_geom)
             query_geom = query_geom.replace(
                 "'", ""
             )  #  strip single quotes from geometry value
@@ -473,7 +355,7 @@ def main(job, **kwargs):
             )
             record_geom["GeometryItem"] = geometry
             record_geom["CamID"] = match_id
-            query_geom = create_update_query(kits_table_geom, record_geom, "CamID")
+            query_geom = create_update_query(KITS_CONFIG.get("kits_table_geom"), record_geom, "CamID")
 
             record_web = {}
             record_web["WebType"] = 2
@@ -500,7 +382,7 @@ def main(job, **kwargs):
 
             query_camera = create_delete_query(kits_table_camera, "CAMID", match_id)
 
-            query_geo = create_delete_query(kits_table_geom, "CamID", match_id)
+            query_geo = create_delete_query(KITS_CONFIG.get("kits_table_geom"), "CamID", match_id)
 
             query_web = create_delete_query(kits_table_web, "WebID", match_id)
 
@@ -520,3 +402,6 @@ def main(job, **kwargs):
         results[result] = len(data_cd[result])
 
     return results
+
+if __name__ == '__main__':
+    main()
