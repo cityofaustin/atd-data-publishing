@@ -11,6 +11,8 @@ import arrow
 
 # import _setpath
 from config.knack.config import cfg
+
+import _setpath
 from config.secrets import *
 from tdutils import kitsutil
 from tdutils import datautil
