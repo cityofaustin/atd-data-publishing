@@ -57,9 +57,16 @@ def get_data(path, token):
     """
     # logger.info(f"Get data for {path}")
 
+    
+
     dbx = dropbox.Dropbox(token)
 
+    pdb.set_trace()
+
     metadata, res = dbx.files_download(path)
+
+    pdb.set_trace()
+
     res.raise_for_status()
 
     return res.text
@@ -129,37 +136,35 @@ def main():
 
         else:
             #  socrata data is at least one month old
+            print("entered else")
             dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
             dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
 
             current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
             root = "austinbcycletripdata"  # note the lowercase-ness
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
-            date_fields = ["checkout_date"]
-            pdb.set_trace()    
+            date_fields = ["checkout_date"]  
             try:
+                print("enter try")
 
-                data = get_data(path, DROPBOX_BCYCLE_TOKEN)
-                print(data)
-                results = len(data)
-                pdb.set_trace()
+                try:
+                    data = get_data(path, DROPBOX_BCYCLE_TOKEN)
+                    results = len(data)
+
+                except TypeError:
+                    results = 0
 
             except dropbox.exceptions.ApiError as e:
 
                 if "LookupError" in str(e):
                     # end loop when no file can be found
-                    # logger.warning(f"No data found for {path}")
                     up_to_date = True
-                    # job.result("success")
                     break
-
                 else:
-                    # job.result("error", message=str(e))
                     raise e
 
                         
             data = handle_data(data)
-            # logger.info("{} records found".format(len(data)))
 
             socratautil.Soda(
                 auth=SOCRATA_CREDENTIALS,
@@ -167,10 +172,6 @@ def main():
                 resource=resource_id,
                 location_field=None,
             )
-
-            # logger.info(res.json())
-
-            # job.result("success", records_processed=len(data))
 
             results = len(data)
 
