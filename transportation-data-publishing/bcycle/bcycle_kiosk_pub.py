@@ -103,39 +103,28 @@ def main():
 
     data = datautil.replace_keys(data, {"STATUS": "KIOSK_STATUS"})
 
-    try:
-        layer = agolutil.get_item(auth=AGOL_CREDENTIALS, service_id=service_id)
+    layer = agolutil.get_item(auth=AGOL_CREDENTIALS, service_id=service_id)
 
-        res = layer.manager.truncate()
-        agolutil.handle_response(res)
+    res = layer.manager.truncate()
+    agolutil.handle_response(res)
 
-        adds = agolutil.feature_collection(data)
+    adds = agolutil.feature_collection(data)
 
-        res = layer.edit_features(adds=adds)
-        agolutil.handle_response(res)
+    res = layer.edit_features(adds=adds)
+    agolutil.handle_response(res)
 
-        # job_agol.result("success", records_processed=len(data))
 
-    except Exception as e:
-        # job_agol.result("error", message=str(e))
-        pass
+    socratautil.Soda(
+        auth=SOCRATA_CREDENTIALS,
+        records=data,
+        resource=socrata_resource_id,
+        lat_field="latitude",
+        lon_field="longitude",
+        location_field="location",
+        replace=True,
+    )
 
-    try:
-        socratautil.Soda(
-            auth=SOCRATA_CREDENTIALS,
-            records=data,
-            resource=socrata_resource_id,
-            lat_field="latitude",
-            lon_field="longitude",
-            location_field="location",
-            replace=True,
-        )
 
-        # job_socrata.result("success", records_processed=len(data))
-
-    except Exception as e:
-        # job_socrata.result("error", message=str(e))
-        pass
 
     return len(data)
 
