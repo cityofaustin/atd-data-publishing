@@ -130,8 +130,7 @@ def main():
         """
 
     kits_data_recent = kitsutil.data_as_dict(KITS_CREDENTIALS, kits_query_recent)
-    import pdb
-    pdb.set_trace()
+
     for record in kits_data_recent:
         new_date = arrow.get(record["dettime"], "US/Central")
         record["dettime"] = new_date.timestamp
@@ -154,8 +153,7 @@ def main():
         """
 
     # send new data if the socrata data is behind KITS data
-    elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"]:
-
+    elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"].timestamp():
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
