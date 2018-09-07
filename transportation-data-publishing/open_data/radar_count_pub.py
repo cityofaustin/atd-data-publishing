@@ -187,6 +187,7 @@ def main():
         )
 
     else:
+        print("NO NEW DATA")
         # logger.info('No Data to export')
         return 0
 
