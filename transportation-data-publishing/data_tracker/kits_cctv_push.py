@@ -1,19 +1,19 @@
 # Copy CCTV records from Data Tracker to KITS traffic management system.
 
 # Attributes:
-#     app_name (str): Description
+#     KITS_CONFIG.get("app_name") (str): Description
 #     fieldmap (TYPE): Description
-#     filters (TYPE): Description
-#     kits_creds (TYPE): Description
-#     kits_table_camera (str): Description
+#     KITS_CONFIG["filters"] (TYPE): Description
+#     KITS_CREDENTIALS (TYPE): Description
+#     KITS_CONFIG.get("kits_table_camera") (str): Description
 #     kits_table_geom (str): Description
-#     kits_table_web (str): Description
+#     KITS_CONFIG.get("kits_table_web") (str): Description
 #     knack_creds (TYPE): Description
 #     knack_objects (list): Description
-#     knack_scene (str): Description
-#     knack_view (str): Description
+#     KITS_CONFIG.get("knack_scene") (str): Description
+#     KITS_CONFIG.get("knack_view") (str): Description
 #     max_cam_id (int): Description
-#     primary_key_knack (str): Description
+#     KITS_CONFIG.get("primary_key_knack") (str): Description
 
 
 from copy import deepcopy
@@ -36,6 +36,8 @@ from tdutils import jobutil
 from tdutils import kitsutil
 from tdutils import logutil
 
+
+fieldmap = KITS_CONFIG["fieldmap"]
 
 def map_bools(dicts):
     """Summary
@@ -110,7 +112,7 @@ def setDefaults(dicts, fieldmap):
             if (
                 field not in row
                 and fieldmap[field]["default"] != None
-                and fieldmap[field]["table"] == kits_table_camera
+                and fieldmap[field]["table"] == KITS_CONFIG.get("kits_table_camera")
             ):
 
                 row[field] = fieldmap[field]["default"]
@@ -149,7 +151,7 @@ def get_max_id(table, id_field):
         id_field, table
     )
     print(query)
-    max_id = kitsutil.data_as_dict(kits_creds, query)
+    max_id = kitsutil.data_as_dict(KITS_CREDENTIALS, query)
     return int(max_id[0]["max_id"])
 
 
@@ -256,27 +258,27 @@ def main():
         TYPE: Description
     """
     kn = knackpy.Knack(
-        scene=knack_scene,
-        view=knack_view,
+        scene=KITS_CONFIG.get("knack_scene"),
+        view=KITS_CONFIG.get("knack_view"),
         ref_obj=["object_53", "object_11"],
-        app_id=KNACK_CREDENTIALS[app_name]["app_id"],
-        api_key=KNACK_CREDENTIALS[app_name]["api_key"],
+        app_id=KNACK_CREDENTIALS[KITS_CONFIG.get("app_name")]["app_id"],
+        api_key=KNACK_CREDENTIALS[KITS_CONFIG.get("app_name")]["api_key"],
     )
 
     field_names = kn.fieldnames
-    kn.data = datautil.filter_by_key_exists(kn.data, primary_key_knack)
+    kn.data = datautil.filter_by_key_exists(kn.data, KITS_CONFIG.get("primary_key_knack"))
     fieldmap_knack_kits = {
         fieldmap[x]["knack_id"]: x
         for x in fieldmap.keys()
         if fieldmap[x]["knack_id"] != None
     }
 
-    for key in filters.keys():
+    for key in KITS_CONFIG["filters"].keys():
         knack_data_filtered = datautil.filter_by_key_exists(kn.data, key)
 
-    for key in filters.keys():
+    for key in KITS_CONFIG["filters"].keys():
         knack_data_filtered = datautil.filter_by_val(
-            knack_data_filtered, key, filters[key]
+            knack_data_filtered, key, KITS_CONFIG["filters"][key]
         )
 
     knack_data_repl = datautil.replace_keys(knack_data_filtered, fieldmap_knack_kits)
@@ -288,8 +290,9 @@ def main():
     knack_data_def = setDefaults(knack_data_repl, fieldmap)
     knack_data_repl = create_cam_comment(knack_data_repl)
 
-    camera_query = create_camera_query(kits_table_camera)
-    kits_data = kitsutil.data_as_dict(kits_creds, camera_query)
+    camera_query = create_camera_query(KITS_CONFIG.get("kits_table_camera"))
+    kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, camera_query)
+    
     kits_data_conv = convert_data(kits_data, fieldmap)
 
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]["detect_changes"]]
@@ -300,7 +303,7 @@ def main():
     if data_cd["new"]:
         # logger.info('new: {}'.format( len(data_cd['new']) ))
 
-        max_cam_id = get_max_id(kits_table_camera, "CAMID")
+        max_cam_id = get_max_id(KITS_CONFIG.get("kits_table_camera"), "CAMID")
         data_cd["new"] = map_bools(data_cd["new"])
 
         for record in data_cd["new"]:
@@ -308,7 +311,7 @@ def main():
 
             max_cam_id += 1
             record["CAMID"] = max_cam_id
-            query_camera = create_insert_query(kits_table_camera, record)
+            query_camera = create_insert_query(KITS_CONFIG.get("kits_table_camera"), record)
 
             record_geom = {}
             geometry = "geometry::Point({}, {}, 4326)".format(
@@ -326,10 +329,10 @@ def main():
             record_web["WebComments"] = ""
             record_web["WebID"] = max_cam_id
             record_web["WebURL"] = "http://{}".format(record["VIDEOIP"])
-            query_web = create_insert_query(kits_table_web, record_web)
+            query_web = create_insert_query(KITS_CONFIG.get("kits_table_web"), record_web)
 
             insert_results = kitsutil.insert_multi_table(
-                kits_creds, [query_camera, query_geom, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geom, query_web]
             )
 
     if data_cd["change"]:
@@ -342,12 +345,12 @@ def main():
             time.sleep(1)  #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
             match_query = create_match_query(
-                kits_table_camera, "CAMID", "CAMNUMBER", record["CAMNUMBER"]
+                KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
             )
-            match_id = kitsutil.data_as_dict(kits_creds, match_query)
+            match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
-            query_camera = create_update_query(kits_table_camera, record, "CAMNUMBER")
+            query_camera = create_update_query(KITS_CONFIG.get("kits_table_camera"), record, "CAMNUMBER")
 
             record_geom = {}
             geometry = "geometry::Point({}, {}, 4326)".format(
@@ -361,10 +364,10 @@ def main():
             record_web["WebType"] = 2
             record_web["WebID"] = match_id
             record_web["WebURL"] = "http://{}".format(record["VIDEOIP"])
-            query_web = create_update_query(kits_table_web, record_web, "WebID")
+            query_web = create_update_query(KITS_CONFIG.get("kits_table_web"), record_web, "WebID")
 
             insert_results = kitsutil.insert_multi_table(
-                kits_creds, [query_camera, query_geom, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geom, query_web]
             )
 
     if data_cd["delete"]:
@@ -375,19 +378,19 @@ def main():
             time.sleep(1)  #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
             match_query = create_match_query(
-                kits_table_camera, "CAMID", "CAMNUMBER", record["CAMNUMBER"]
+                KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
             )
-            match_id = kitsutil.data_as_dict(kits_creds, match_query)
+            match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
-            query_camera = create_delete_query(kits_table_camera, "CAMID", match_id)
+            query_camera = create_delete_query(KITS_CONFIG.get("kits_table_camera"), "CAMID", match_id)
 
             query_geo = create_delete_query(KITS_CONFIG.get("kits_table_geom"), "CamID", match_id)
 
-            query_web = create_delete_query(kits_table_web, "WebID", match_id)
+            query_web = create_delete_query(KITS_CONFIG.get("kits_table_web"), "WebID", match_id)
 
             insert_results = kitsutil.insert_multi_table(
-                kits_creds, [query_camera, query_geo, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geo, query_web]
             )
 
     # if data_cd['no_change']:
@@ -400,8 +403,8 @@ def main():
     for result in ["new", "change", "no_change", "delete"]:
         results["total"] += len(data_cd[result])
         results[result] = len(data_cd[result])
-
-    return results
+    
+    return results.get("change")
 
 if __name__ == '__main__':
     main()
