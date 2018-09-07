@@ -130,7 +130,8 @@ def main():
         """
 
     kits_data_recent = kitsutil.data_as_dict(KITS_CREDENTIALS, kits_query_recent)
-
+    import pdb
+    pdb.set_trace()
     for record in kits_data_recent:
         new_date = arrow.get(record["dettime"], "US/Central")
         record["dettime"] = new_date.timestamp
