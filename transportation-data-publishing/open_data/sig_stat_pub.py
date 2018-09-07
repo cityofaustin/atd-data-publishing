@@ -8,18 +8,16 @@ import pdb
 import sys
 
 import arrow
-
-# import _setpath
-from config.knack.config import cfg
-
-import _setpath
-from config.secrets import *
 from tdutils import kitsutil
 from tdutils import datautil
 from tdutils import emailutil
 from tdutils import jobutil
 from tdutils import logutil
 from tdutils import socratautil
+
+import _setpath
+from config.knack.config import cfg
+from config.secrets import *
 
 # define config variables
 
