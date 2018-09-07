@@ -117,8 +117,8 @@ def move_file(old_dir, new_dir, f):
     return True
 
 
-def create_payload(record_id):
-    payload = {"id": record_id, cfg["esb_status_field"]: "SENT"}
+def create_payload(record_id, status_field):
+    payload = {"id": record_id, status_field: "SENT"}
     return payload
 
 
@@ -185,7 +185,7 @@ def main():
 
         res.raise_for_status()
 
-        payload = create_payload(record_id)
+        payload = create_payload(record_id, cfg["esb_status_field"])
 
         res = knackpy.record(
             payload,
