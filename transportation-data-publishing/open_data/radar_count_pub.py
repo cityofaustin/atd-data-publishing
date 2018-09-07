@@ -153,7 +153,7 @@ def main():
         """
 
     # send new data if the socrata data is behind KITS data
-    elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"].timestamp():
+    elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"]:
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
