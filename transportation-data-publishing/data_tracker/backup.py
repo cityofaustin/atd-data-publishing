@@ -27,7 +27,7 @@ def mask_objects(app_name, blacklist):
     obj_count = knackpy.get_app_data(KNACK_CREDENTIALS[app_name]["app_id"])
 
     obj_all = list(obj_count["counts"].keys())
-    
+
     objects_for_backup = [x for x in obj_all if x not in blacklist and "object_" in x]
 
     return objects_for_backup
@@ -36,14 +36,13 @@ def mask_objects(app_name, blacklist):
 def cli_args():
 
     parser = argutil.get_parser(
-        "backup.py",
-        "Backup objects from knack application to csv.",
-        "app_name",
+        "backup.py", "Backup objects from knack application to csv.", "app_name"
     )
 
     parsed = parser.parse_args()
 
     return parsed
+
 
 def set_workdir():
     #  set the working directory to the location of this script
@@ -64,7 +63,7 @@ def main():
     """
 
     args = cli_args()
-    
+
     set_workdir()
 
     app_name = args.app_name
@@ -110,8 +109,6 @@ def main():
 
     return count
 
+
 if __name__ == "__main__":
     main()
-
-
-

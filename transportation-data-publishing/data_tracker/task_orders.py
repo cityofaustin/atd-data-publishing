@@ -49,6 +49,7 @@ def compare(new_rows, existing_rows, key="TASK_ORDER"):
     existing_ids = [str(row[key]) for row in existing_rows]
     return [row for row in new_rows if str(row[key]) not in existing_ids]
 
+
 def cli_args():
 
     parser = argutil.get_parser(
@@ -97,6 +98,7 @@ def main():
         )
 
     return len(new_rows)
+
 
 if __name__ == "__main__":
     main()

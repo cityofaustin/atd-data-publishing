@@ -81,6 +81,7 @@ def get_direction(lane):
     else:
         return None
 
+
 def cli_args():
     """Summary
     
@@ -97,7 +98,7 @@ def cli_args():
 
     return args
 
-    
+
 def main():
     """Summary
     

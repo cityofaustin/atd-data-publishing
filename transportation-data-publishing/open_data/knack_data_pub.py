@@ -244,7 +244,7 @@ def cli_args():
         "app_name",
         "--destination",
         "--replace",
-        "--last_run_date"
+        "--last_run_date",
     )
 
     parsed = parser.parse_args()

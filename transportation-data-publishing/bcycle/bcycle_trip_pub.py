@@ -57,15 +57,15 @@ def get_data(path, token):
     """
     # logger.info(f"Get data for {path}")
 
-    
-
     dbx = dropbox.Dropbox(token)
-    
+
     try:
         metadata, res = dbx.files_download(path)
-    
+
     except dropbox.exceptions.ApiError:
-        raise Exception(f'No data available at {path}. Dropbox data may not be current.')
+        raise Exception(
+            f"No data available at {path}. Dropbox data may not be current."
+        )
 
     res.raise_for_status()
 
@@ -84,7 +84,7 @@ def handle_data(data):
         TYPE: Description
     """
     #  assume fields in this order  :(
-    
+
     fieldnames = (
         "trip_id",
         "membership_type",
@@ -121,7 +121,6 @@ def main():
     dt_current_formatted = dt_current.format("MM-YYYY")
     up_to_date = False
     results = None
-    
 
     while not up_to_date:
 
@@ -143,7 +142,7 @@ def main():
             current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
             root = "austinbcycletripdata"  # note the lowercase-ness
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
-            date_fields = ["checkout_date"]  
+            date_fields = ["checkout_date"]
             try:
                 print("enter try")
 
@@ -163,7 +162,6 @@ def main():
                 else:
                     raise e
 
-                        
             data = handle_data(data)
 
             socratautil.Soda(
@@ -176,6 +174,7 @@ def main():
             results = len(data)
 
     return results
+
 
 if __name__ == "__main__":
     main()
