@@ -60,12 +60,12 @@ def get_data(path, token):
     
 
     dbx = dropbox.Dropbox(token)
-
-    pdb.set_trace()
-
-    metadata, res = dbx.files_download(path)
-
-    pdb.set_trace()
+    
+    try:
+        metadata, res = dbx.files_download(path)
+    
+    except dropbox.exceptions.ApiError:
+        raise Exception(f'No data available at {path}. Dropbox data may not be current.')
 
     res.raise_for_status()
 
@@ -129,9 +129,9 @@ def main():
         socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
 
         if dt_current_formatted == socrata_dt_formatted:
-            # pdb.set_trace()
+
             up_to_date = True
-            # job.result("success", records_processed=0)
+
             results = 0
 
         else:
