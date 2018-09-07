@@ -1,5 +1,4 @@
-"""
-Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
+"""Extract data from postgrest database and publish to Socrata, ArcGIS Online, 
 or CSV.
 
 By default, destination data is incrementally updated based on a
@@ -8,36 +7,52 @@ modified date field defined in the configuration file. Alternatively use
 with --replace.
 
 #TODO: agol pub
+
 """
 import argparse
-from copy import deepcopy
-import os
 import pdb
-import traceback
+import sys
 import urllib.parse
 
 import arrow
-
-import _setpath
-from config.postgrest.config import cfg as CFG
-from config.secrets import *
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
 from tdutils import pgrestutil
 from tdutils import socratautil
 
+import _setpath
+from config.postgrest.config import PGREST_PUB as cfg
+from config.secrets import *
 
 def after_date_query(date_field, date):
+    """Summary
+    
+    Args:
+        date_field (TYPE): Description
+        date (TYPE): Description
+    
+    Returns:
+        TYPE: Description
+    """
     return f"{date_field}=gte.{date}"
 
-def socrata_pub(records, cfg, date_fields=None):
-    if cfg.get("location_fields"):
-        lat_field = cfg["location_fields"]["lat"].lower()
-        lon_field = cfg["location_fields"]["lon"].lower()
-        location_field = cfg["location_fields"]["location_field"].lower()
+
+def socrata_pub(records, cfg_dataset, replace, date_fields=None):
+    """Summary
+    
+    Args:
+        records (TYPE): Description
+        cfg_dataset (TYPE): Description
+        replace (TYPE): Description
+        date_fields (None, optional): Description
+    
+    Returns:
+        TYPE: Description
+    """
+    if cfg_dataset.get("location_fields"):
+        lat_field = cfg_dataset["location_fields"]["lat"].lower()
+        lon_field = cfg_dataset["location_fields"]["lon"].lower()
+        location_field = cfg_dataset["location_fields"]["location_field"].lower()
     else:
         lat_field = None
         lon_field = None
@@ -46,29 +61,40 @@ def socrata_pub(records, cfg, date_fields=None):
     return socratautil.Soda(
         auth=SOCRATA_CREDENTIALS,
         records=records,
-        resource=cfg["socrata_resource_id"],
+        resource=cfg_dataset["socrata_resource_id"],
         date_fields=date_fields,
         lat_field=lat_field,
         lon_field=lon_field,
         location_field=location_field,
         source="postgrest",
-        replace=args.replace,
+        replace=replace,
     )
 
 
-def main(cfg, job, args):
+def main():
+    """
+    Args:
+        args (list, required): Command line arguments.
+    
+    Returns:
+        int: The number of records processed.
+        
+    """
+    args = cli_args()
 
-    last_run_date = job.most_recent()
+    cfg_dataset = cfg[args.dataset]
 
-    if not last_run_date or args.replace or job.destination == "csv":
+    last_run_date = args.last_run_date
+
+    if not last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1900-01-01"
+        last_run_date = "1970-01-01"
 
-    last_run_date = urllib.parse.quote_plus( arrow.get(last_run_date).format() )
+    last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
 
-    pgrest = pgrestutil.Postgrest(cfg["base_url"], auth=JOB_DB_API_TOKEN)
+    pgrest = pgrestutil.Postgrest(cfg_dataset["base_url"], auth=JOB_DB_API_TOKEN)
 
-    query_string = after_date_query(cfg["modified_date_field"], last_run_date)
+    query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
     records = pgrest.select(query_string)
 
     if not records:
@@ -79,23 +105,20 @@ def main(cfg, job, args):
         "published_date",
     ]  # TODO: extract from API definition
 
-    if job.destination == "socrata":
-        pub = socrata_pub(records, cfg, date_fields=date_fields)
-
-    logger.info("END AT {}".format(arrow.now()))
+    if args.destination[0] == "socrata":
+        pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)
 
     return len(records)
 
 
 def cli_args():
-
     parser = argutil.get_parser(
         "pgrest_data_pub.py",
         "Publish PostgREST data to Socrata and ArcGIS Online",
         "dataset",
-        "app_name",
         "--destination",
         "--replace",
+        "--last_run_date"
     )
 
     args = parser.parse_args()
@@ -104,53 +127,4 @@ def cli_args():
 
 
 if __name__ == "__main__":
-    script_name = os.path.basename(__file__).replace(".py", "")
-    logfile = f"{LOG_DIRECTORY}/{script_name}.log"
-
-    logger = logutil.timed_rotating_log(logfile)
-    logger.info("START AT {}".format(arrow.now()))
-
-    args = cli_args()
-    logger.info("args: {}".format(str(args)))
-
-    cfg = CFG[args.dataset]
-
-    for dest in args.destination:
-
-        try:
-            script_id = "{}_{}_{}_{}".format(
-                script_name, args.dataset, "postgres", dest
-            )
-
-            job = jobutil.Job(
-                name=script_id,
-                url=JOB_DB_API_URL,
-                source="postgrest",
-                destination=dest,
-                auth=JOB_DB_API_TOKEN,
-            )
-
-            job.start()
-
-            results = main(cfg, job, args)
-
-            job.result("success", records_processed=results)
-
-        except Exception as e:
-            error_text = traceback.format_exc()
-
-            logger.error(error_text)
-
-            email_subject = "Knack Data Pub Failure: {}".format(args.dataset)
-
-            emailutil.send_email(
-                ALERTS_DISTRIBUTION,
-                email_subject,
-                error_text,
-                EMAIL["user"],
-                EMAIL["password"],
-            )
-
-            job.result("error", message=str(e))
-
-            raise e
+    main()

@@ -19,3 +19,9 @@ transportation-data-publishing/data/*
 transportation-data-publishing/log/*
 transportation-data-publishing/xml/*
 !*.md
+<<<<<<< HEAD
+.idea/
+log/
+data/
+=======
+>>>>>>> origin/sig-pm-mod
