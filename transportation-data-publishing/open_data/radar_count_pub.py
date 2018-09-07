@@ -88,7 +88,7 @@ def cli_args():
         TYPE: Description
     """
     parser = argutil.get_parser(
-        "count_data_pub.py",
+        "radar_count_pub.py",
         "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
         "--replace",
     )
@@ -108,7 +108,9 @@ def main():
     Returns:
         TYPE: Description
     """
-    
+    args = cli_args()
+
+    replace = args.replace
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
@@ -152,7 +154,6 @@ def main():
 
     # send new data if the socrata data is behind KITS data
     elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"]:
-
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
@@ -186,7 +187,7 @@ def main():
         )
 
     else:
-        # logger.info('No Data to export')
+        # No new data
         return 0
 
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, kits_query)
