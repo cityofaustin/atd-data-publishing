@@ -108,7 +108,9 @@ def main():
     Returns:
         TYPE: Description
     """
+    args = cli_args()
     
+    replace = args.replace()
 
     #  get most recent traffic count record from socrata
     socrata_data = socratautil.Soda(
