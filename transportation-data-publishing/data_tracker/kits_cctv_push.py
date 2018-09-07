@@ -4,7 +4,7 @@
 #     KITS_CONFIG.get("app_name") (str): Description
 #     fieldmap (TYPE): Description
 #     KITS_CONFIG["filters"] (TYPE): Description
-#     KITS_CONFIG.get("kits_creds") (TYPE): Description
+#     KITS_CREDENTIALS (TYPE): Description
 #     KITS_CONFIG.get("kits_table_camera") (str): Description
 #     kits_table_geom (str): Description
 #     KITS_CONFIG.get("kits_table_web") (str): Description
@@ -151,7 +151,7 @@ def get_max_id(table, id_field):
         id_field, table
     )
     print(query)
-    max_id = kitsutil.data_as_dict(KITS_CONFIG.get("kits_creds"), query)
+    max_id = kitsutil.data_as_dict(KITS_CREDENTIALS, query)
     return int(max_id[0]["max_id"])
 
 
@@ -291,7 +291,8 @@ def main():
     knack_data_repl = create_cam_comment(knack_data_repl)
 
     camera_query = create_camera_query(KITS_CONFIG.get("kits_table_camera"))
-    kits_data = kitsutil.data_as_dict(KITS_CONFIG.get("kits_creds"), camera_query)
+    kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, camera_query)
+    
     kits_data_conv = convert_data(kits_data, fieldmap)
 
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]["detect_changes"]]
@@ -331,7 +332,7 @@ def main():
             query_web = create_insert_query(KITS_CONFIG.get("kits_table_web"), record_web)
 
             insert_results = kitsutil.insert_multi_table(
-                KITS_CONFIG.get("kits_creds"), [query_camera, query_geom, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geom, query_web]
             )
 
     if data_cd["change"]:
@@ -346,7 +347,7 @@ def main():
             match_query = create_match_query(
                 KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
             )
-            match_id = kitsutil.data_as_dict(KITS_CONFIG.get("kits_creds"), match_query)
+            match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
             query_camera = create_update_query(KITS_CONFIG.get("kits_table_camera"), record, "CAMNUMBER")
@@ -366,7 +367,7 @@ def main():
             query_web = create_update_query(KITS_CONFIG.get("kits_table_web"), record_web, "WebID")
 
             insert_results = kitsutil.insert_multi_table(
-                KITS_CONFIG.get("kits_creds"), [query_camera, query_geom, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geom, query_web]
             )
 
     if data_cd["delete"]:
@@ -379,7 +380,7 @@ def main():
             match_query = create_match_query(
                 KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
             )
-            match_id = kitsutil.data_as_dict(KITS_CONFIG.get("kits_creds"), match_query)
+            match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
             query_camera = create_delete_query(KITS_CONFIG.get("kits_table_camera"), "CAMID", match_id)
@@ -389,7 +390,7 @@ def main():
             query_web = create_delete_query(KITS_CONFIG.get("kits_table_web"), "WebID", match_id)
 
             insert_results = kitsutil.insert_multi_table(
-                KITS_CONFIG.get("kits_creds"), [query_camera, query_geo, query_web]
+                KITS_CREDENTIALS, [query_camera, query_geo, query_web]
             )
 
     # if data_cd['no_change']:
@@ -402,8 +403,8 @@ def main():
     for result in ["new", "change", "no_change", "delete"]:
         results["total"] += len(data_cd[result])
         results[result] = len(data_cd[result])
-
-    return results
+    
+    return results.get("change")
 
 if __name__ == '__main__':
     main()
