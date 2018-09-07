@@ -113,7 +113,6 @@ def main():
     res = layer.edit_features(adds=adds)
     agolutil.handle_response(res)
 
-
     socratautil.Soda(
         auth=SOCRATA_CREDENTIALS,
         records=data,
@@ -124,9 +123,8 @@ def main():
         replace=True,
     )
 
-
-
     return len(data)
+
 
 if __name__ == "__main__":
     main()

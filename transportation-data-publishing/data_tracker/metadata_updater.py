@@ -15,6 +15,7 @@ import _setpath
 from config.metadata.config import cfg
 from config.secrets import *
 
+
 def get_app_data(app_id):
     """Summary
     
@@ -338,7 +339,9 @@ def main():
 
             update_records(payload[method], cfg[record_type]["obj"], method, app_name)
 
-        records_processed += sum([len(payload["create"]), len(payload["update"]), len(payload["delete"])])
+        records_processed += sum(
+            [len(payload["create"]), len(payload["update"]), len(payload["delete"])]
+        )
 
     return records_processed
 

@@ -71,18 +71,20 @@ def build_payload(data, device_type):
         "RECORD_ID": record_id,
     }
 
+
 def cli_args():
 
     parser = argutil.get_parser(
-        'device_status_log.py',
-        'Generate connectivity statistics and upload to Knack application.',
-        'device_type',
-        'app_name'
+        "device_status_log.py",
+        "Generate connectivity statistics and upload to Knack application.",
+        "device_type",
+        "app_name",
     )
-    
+
     args = parser.parse_args()
-    
+
     return args
+
 
 def main():
     """Summary
@@ -139,6 +141,7 @@ def main():
     )
 
     return len(payload)
+
 
 if __name__ == "__main__":
     main()

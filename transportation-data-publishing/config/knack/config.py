@@ -10,7 +10,7 @@ cfg = {
         "socrata_resource_id": "tkk5-uugs",
     },
     "backup": {
-        "objects": [ # NOTICE: These objects will not be included in backup 
+        "objects": [  # NOTICE: These objects will not be included in backup
             "object_137",  # admin_field_meta
             "object_138",  # admin_object_meta
             "object_95",  # csr_flex_notes
@@ -569,12 +569,11 @@ STREET_SEG_UPDATER = {
 
 
 TCP_BUSINESS_DAYS = {
-    "scene" : "scene_754",
-    "view" : "view_1987",
-    "obj" : "object_147",
-    "start_key" : "SUBMITTED_DATE",
-    "end_key" : "REVIEW_COMPLETED_DATE",
-    "elapsed_key" : "DAYS_ELAPSED",
-    "update_fields" : ["DAYS_ELAPSED", "id"]
+    "scene": "scene_754",
+    "view": "view_1987",
+    "obj": "object_147",
+    "start_key": "SUBMITTED_DATE",
+    "end_key": "REVIEW_COMPLETED_DATE",
+    "elapsed_key": "DAYS_ELAPSED",
+    "update_fields": ["DAYS_ELAPSED", "id"],
 }
-

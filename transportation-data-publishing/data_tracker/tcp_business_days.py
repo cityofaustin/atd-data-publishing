@@ -1,7 +1,7 @@
 # Calculate # of business days elapsed and update records accordingly.
 
 # Developed specifically for measuring Traffic Control Plan (TCP) permit
-# application reviews in the Right-of-Way Management division. 
+# application reviews in the Right-of-Way Management division.
 
 from datetime import datetime
 
@@ -15,6 +15,7 @@ from tdutils import datautil
 import _setpath
 from config.secrets import *
 from config.knack.config import TCP_BUSINESS_DAYS as config
+
 
 def get_calendar():
     """Summary
@@ -162,7 +163,9 @@ def main():
 
     calendar = get_calendar()
 
-    kn.data = handle_records(kn.data, config["start_key"], config["end_key"], config["elapsed_key"], calendar)
+    kn.data = handle_records(
+        kn.data, config["start_key"], config["end_key"], config["elapsed_key"], calendar
+    )
 
     # logger.info( '{} Records to Update'.format(len(kn.data) ))
 
@@ -174,6 +177,7 @@ def main():
             print("Update record {} of {}".format(i, len(kn.data)))
             update_record(record, config["obj"], creds)
     return len(kn.data)
+
 
 if __name__ == "__main__":
     main()

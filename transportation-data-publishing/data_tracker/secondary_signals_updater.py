@@ -121,7 +121,10 @@ def main():
             if old_secondaries != new_secondaries:
 
                 payload.append(
-                    {"id": signal_id, cfg["update_field"]: primary_signals_new[signal_id]}
+                    {
+                        "id": signal_id,
+                        cfg["update_field"]: primary_signals_new[signal_id],
+                    }
                 )
 
         else:
@@ -150,6 +153,7 @@ def main():
         )
 
     return len(payload)
+
 
 if __name__ == "__main__":
     main()

@@ -3,7 +3,7 @@
 
 # command ex: device_status_check.py travel_sensors data_tracker_prod
 
-#TODO: move write to JSON to a separate script. it doesn't belong here.
+# TODO: move write to JSON to a separate script. it doesn't belong here.
 
 
 import json
@@ -106,6 +106,7 @@ def get_status(device):
 
     else:
         return None
+
 
 def set_workdir():
     #  set the working directory to the location of this script

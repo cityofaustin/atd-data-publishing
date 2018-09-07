@@ -1,5 +1,5 @@
 
-# Assign detection status to traffic signal based on status of its detectors. 
+# Assign detection status to traffic signal based on status of its detectors.
 # Update detection status log when signal detection status changes.
 
 # #TODO
@@ -46,7 +46,11 @@ def groupBySignal(detector_data):
     det_status = defaultdict(dict)
 
     for det in detector_data:
-        if "SIGNAL_ID" in det and cfg["DET_STATUS_LABEL"] in det and cfg["DET_DATE_LABEL"] in det:
+        if (
+            "SIGNAL_ID" in det
+            and cfg["DET_STATUS_LABEL"] in det
+            and cfg["DET_DATE_LABEL"] in det
+        ):
             sig = "${}".format(det["SIGNAL_ID"])  #  format signal ID as string
             status = det[cfg["DET_STATUS_LABEL"]]
             status_date = det[cfg["DET_DATE_LABEL"]]
@@ -120,6 +124,7 @@ def getMaxDate(sig, det_status):
     else:
         return arrow.now().format("MM-DD-YYYY")
 
+
 def cli_args():
 
     parser = argutil.get_parser(
@@ -131,6 +136,7 @@ def cli_args():
     parsed = parser.parse_args()
 
     return parsed
+
 
 def main():
     """Summary
@@ -149,7 +155,7 @@ def main():
 
     api_key = KNACK_CREDENTIALS[app_name]["api_key"]
     app_id = KNACK_CREDENTIALS[app_name]["app_id"]
-    
+
     detectors = knackpy.Knack(
         scene=cfg["CONFIG_DETECTORS"]["scene"],
         view=cfg["CONFIG_DETECTORS"]["view"],
@@ -158,7 +164,7 @@ def main():
         app_id=app_id,
         timeout=30,
     )
-    
+
     signals = knackpy.Knack(
         scene=cfg["CONFIG_SIGNALS"]["scene"],
         view=cfg["CONFIG_SIGNALS"]["view"],
@@ -209,6 +215,6 @@ def main():
 
     return count_sig
 
-if __name__=="__main__":
-    main()
 
+if __name__ == "__main__":
+    main()

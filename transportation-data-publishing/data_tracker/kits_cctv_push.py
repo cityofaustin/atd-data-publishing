@@ -39,6 +39,7 @@ from tdutils import logutil
 
 fieldmap = KITS_CONFIG["fieldmap"]
 
+
 def map_bools(dicts):
     """Summary
     
@@ -266,7 +267,9 @@ def main():
     )
 
     field_names = kn.fieldnames
-    kn.data = datautil.filter_by_key_exists(kn.data, KITS_CONFIG.get("primary_key_knack"))
+    kn.data = datautil.filter_by_key_exists(
+        kn.data, KITS_CONFIG.get("primary_key_knack")
+    )
     fieldmap_knack_kits = {
         fieldmap[x]["knack_id"]: x
         for x in fieldmap.keys()
@@ -292,7 +295,7 @@ def main():
 
     camera_query = create_camera_query(KITS_CONFIG.get("kits_table_camera"))
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, camera_query)
-    
+
     kits_data_conv = convert_data(kits_data, fieldmap)
 
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]["detect_changes"]]
@@ -311,7 +314,9 @@ def main():
 
             max_cam_id += 1
             record["CAMID"] = max_cam_id
-            query_camera = create_insert_query(KITS_CONFIG.get("kits_table_camera"), record)
+            query_camera = create_insert_query(
+                KITS_CONFIG.get("kits_table_camera"), record
+            )
 
             record_geom = {}
             geometry = "geometry::Point({}, {}, 4326)".format(
@@ -319,7 +324,9 @@ def main():
             )
             record_geom["GeometryItem"] = geometry
             record_geom["CamID"] = max_cam_id
-            query_geom = create_insert_query(KITS_CONFIG.get("kits_table_geom"), record_geom)
+            query_geom = create_insert_query(
+                KITS_CONFIG.get("kits_table_geom"), record_geom
+            )
             query_geom = query_geom.replace(
                 "'", ""
             )  #  strip single quotes from geometry value
@@ -329,7 +336,9 @@ def main():
             record_web["WebComments"] = ""
             record_web["WebID"] = max_cam_id
             record_web["WebURL"] = "http://{}".format(record["VIDEOIP"])
-            query_web = create_insert_query(KITS_CONFIG.get("kits_table_web"), record_web)
+            query_web = create_insert_query(
+                KITS_CONFIG.get("kits_table_web"), record_web
+            )
 
             insert_results = kitsutil.insert_multi_table(
                 KITS_CREDENTIALS, [query_camera, query_geom, query_web]
@@ -345,12 +354,17 @@ def main():
             time.sleep(1)  #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
             match_query = create_match_query(
-                KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
+                KITS_CONFIG.get("kits_table_camera"),
+                "CAMID",
+                "CAMNUMBER",
+                record["CAMNUMBER"],
             )
             match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
-            query_camera = create_update_query(KITS_CONFIG.get("kits_table_camera"), record, "CAMNUMBER")
+            query_camera = create_update_query(
+                KITS_CONFIG.get("kits_table_camera"), record, "CAMNUMBER"
+            )
 
             record_geom = {}
             geometry = "geometry::Point({}, {}, 4326)".format(
@@ -358,13 +372,17 @@ def main():
             )
             record_geom["GeometryItem"] = geometry
             record_geom["CamID"] = match_id
-            query_geom = create_update_query(KITS_CONFIG.get("kits_table_geom"), record_geom, "CamID")
+            query_geom = create_update_query(
+                KITS_CONFIG.get("kits_table_geom"), record_geom, "CamID"
+            )
 
             record_web = {}
             record_web["WebType"] = 2
             record_web["WebID"] = match_id
             record_web["WebURL"] = "http://{}".format(record["VIDEOIP"])
-            query_web = create_update_query(KITS_CONFIG.get("kits_table_web"), record_web, "WebID")
+            query_web = create_update_query(
+                KITS_CONFIG.get("kits_table_web"), record_web, "WebID"
+            )
 
             insert_results = kitsutil.insert_multi_table(
                 KITS_CREDENTIALS, [query_camera, query_geom, query_web]
@@ -378,16 +396,25 @@ def main():
             time.sleep(1)  #  connection will fail if queried are pushed too frequently
             # fetch camid field, which relates camera, geometry, and webconfig table records
             match_query = create_match_query(
-                KITS_CONFIG.get("kits_table_camera"), "CAMID", "CAMNUMBER", record["CAMNUMBER"]
+                KITS_CONFIG.get("kits_table_camera"),
+                "CAMID",
+                "CAMNUMBER",
+                record["CAMNUMBER"],
             )
             match_id = kitsutil.data_as_dict(KITS_CREDENTIALS, match_query)
             match_id = int(match_id[0]["CAMID"])
 
-            query_camera = create_delete_query(KITS_CONFIG.get("kits_table_camera"), "CAMID", match_id)
+            query_camera = create_delete_query(
+                KITS_CONFIG.get("kits_table_camera"), "CAMID", match_id
+            )
 
-            query_geo = create_delete_query(KITS_CONFIG.get("kits_table_geom"), "CamID", match_id)
+            query_geo = create_delete_query(
+                KITS_CONFIG.get("kits_table_geom"), "CamID", match_id
+            )
 
-            query_web = create_delete_query(KITS_CONFIG.get("kits_table_web"), "WebID", match_id)
+            query_web = create_delete_query(
+                KITS_CONFIG.get("kits_table_web"), "WebID", match_id
+            )
 
             insert_results = kitsutil.insert_multi_table(
                 KITS_CREDENTIALS, [query_camera, query_geo, query_web]
@@ -403,8 +430,9 @@ def main():
     for result in ["new", "change", "no_change", "delete"]:
         results["total"] += len(data_cd[result])
         results[result] = len(data_cd[result])
-    
+
     return results.get("change")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

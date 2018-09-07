@@ -17,7 +17,6 @@ from config.knack.config import cfg
 from config.secrets import *
 
 
-
 def cli_args():
     parser = argutil.get_parser(
         "dms_message_pub.py",
@@ -33,7 +32,7 @@ def cli_args():
 def main():
 
     args = cli_args()
-    
+
     app_name = args.app_name
 
     CONFIG = cfg["dms"]
@@ -106,6 +105,7 @@ def main():
         )
 
     return len(new_data)
+
 
 if __name__ == "__main__":
     main()

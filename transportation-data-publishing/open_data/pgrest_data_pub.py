@@ -24,6 +24,7 @@ import _setpath
 from config.postgrest.config import PGREST_PUB as cfg
 from config.secrets import *
 
+
 def after_date_query(date_field, date):
     """Summary
     
@@ -118,7 +119,7 @@ def cli_args():
         "dataset",
         "--destination",
         "--replace",
-        "--last_run_date"
+        "--last_run_date",
     )
 
     args = parser.parse_args()

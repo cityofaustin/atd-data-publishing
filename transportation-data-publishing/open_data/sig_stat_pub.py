@@ -135,7 +135,6 @@ def main():
         keys=["operation_state"],
     )
 
-
     if cd_results["new"] or cd_results["change"] or cd_results["delete"]:
 
         adds = add_ids(cd_results["new"])
@@ -166,6 +165,6 @@ def main():
     else:
         return 0
 
-        
+
 if __name__ == "__main__":
     main()
