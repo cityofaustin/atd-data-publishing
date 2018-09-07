@@ -16,7 +16,6 @@ import _setpath
 from config.secrets import *
 from config.knack.config import TCP_BUSINESS_DAYS as config
 
-
 def get_calendar():
     """Summary
     
@@ -173,8 +172,7 @@ def main():
 
         for i, record in enumerate(kn.data):
             print("Update record {} of {}".format(i, len(kn.data)))
-            update_record(record, obj, creds)
-
+            update_record(record, config["obj"], creds)
     return len(kn.data)
 
 if __name__ == "__main__":
