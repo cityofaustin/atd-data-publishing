@@ -168,7 +168,7 @@ cfg = {
         "scene": "scene_589",
         "view": "view_1597",
         "service_url": "http://services.arcgis.com/0L95CJ0VTaxqcmED/ArcGIS/rest/services/pole_attachments/FeatureServer/0/",
-        "service_id": "3a5a777f780447db940534b5808d4`7",
+        "service_id": "3a5a777f780447db940534b5808d4ba7",
         "include_ids": True,
         "socrata_resource_id": "btg5-ebcy",
         "ip_field": None,
