@@ -88,7 +88,7 @@ def cli_args():
         TYPE: Description
     """
     parser = argutil.get_parser(
-        "count_data_pub.py",
+        "radar_count_pub.py",
         "Publish radar count data from KITS DB to City of Austin Open Data Portal.",
         "--replace",
     )
@@ -187,8 +187,7 @@ def main():
         )
 
     else:
-        print("NO NEW DATA")
-        # logger.info('No Data to export')
+        # No new data
         return 0
 
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, kits_query)
