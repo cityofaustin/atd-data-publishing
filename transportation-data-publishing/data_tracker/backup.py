@@ -8,12 +8,11 @@ import arrow
 import knackpy
 
 import _setpath
+from config.knack.config import cfg
 from config.secrets import *
 
+from tdutils import argutil
 from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
 
 import requests
 
@@ -55,7 +54,62 @@ def mask_objects(app_name):
 
 def main(job):
 
-    job.start()
+def mask_objects(app_name, blacklist):
+    """mask "no backup" objects from the list of objects that will be backupped
+    
+    Args:
+        app_name (str): name of the application [data_tracker_prod, data_tracker_test etc.]
+        blacklist (list): list of object keys to exclude from backup
+
+    Returns:
+        list: a list of object ID exclude objects listed in no_backup list
+    """
+    obj_count = knackpy.get_app_data(KNACK_CREDENTIALS[app_name]["app_id"])
+
+    obj_all = list(obj_count["counts"].keys())
+
+    objects_for_backup = [x for x in obj_all if x not in blacklist and "object_" in x]
+
+    return objects_for_backup
+
+
+def cli_args():
+
+    parser = argutil.get_parser(
+        "backup.py", "Backup objects from knack application to csv.", "app_name"
+    )
+
+    parsed = parser.parse_args()
+
+    return parsed
+
+
+def set_workdir():
+    #  set the working directory to the location of this script
+    #  ensures file outputs go to their intended places when
+    #  script is run by an external  fine (e.g., the launcher)
+    path = os.path.dirname(__file__)
+    os.chdir(path)
+
+
+def main():
+    """Summary
+    
+    Args:
+        None
+    
+    Returns:
+        int: number of objects that has been backup
+    """
+
+    args = cli_args()
+
+    set_workdir()
+
+    app_name = args.app_name
+    blacklist = cfg["backup"]["objects"]
+
+    objects = mask_objects(app_name, blacklist)
 
     count = 0
 
