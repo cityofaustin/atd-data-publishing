@@ -577,3 +577,21 @@ TCP_BUSINESS_DAYS = {
     "elapsed_key": "DAYS_ELAPSED",
     "update_fields": ["DAYS_ELAPSED", "id"],
 }
+
+
+PURCHASE_REQUEST_COPIER = {
+    "purchase_requests" : {
+        'scene' : 'scene_84',
+        'view' : 'view_211',
+        'ref_obj' : ['object_1'],
+        'unique_id_field_name' : 'AUTO_INCREMENT',
+        'copy_field_id' : 'field_268',
+        'requester_field_id' : 'field_12',
+        'copied_by_field_id' : 'field_283'
+    },
+    "items" : {
+        'obj' : 'object_4',
+        'pr_field_id' : 'field_269',
+        'pr_connection_field_name' : 'purchase_request'
+    }
+}
