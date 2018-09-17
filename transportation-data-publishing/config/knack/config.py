@@ -511,7 +511,7 @@ MARKINGS_AGOL = [
         "name": ",materials",
         "scene": "scene_774",
         "view": "view_2273",
-        "ref_obj": ["object_36", "object_140", "object_141"],
+        "ref_obj": ["object_36", "object_140", "object_141", "object_15"],
         "modified_date_field_id": "field_771",
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "TRANSACTION_ID",
