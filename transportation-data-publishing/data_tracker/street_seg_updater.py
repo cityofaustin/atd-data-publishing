@@ -1,8 +1,5 @@
 # Update Knack street segments with data from
 # COA ArcGIS Online Street Segment Feature Service
-
-import pdb
-
 import arrow
 import knackpy
 from tdutils import agolutil
@@ -14,6 +11,24 @@ from tdutils import knackutil
 import _setpath
 from config.secrets import *
 from config.knack.config import STREET_SEG_UPDATER as config
+
+
+def are_equal(knack_dict, agol_dict):
+    # Return True if field values from a knack dict match 
+    # values in reference ArcGIS Online dict. Only compare keys from the knack dict
+    # that are in the reference dict.
+    for key in knack_dict:
+        if key in agol_dict:
+            if agol_dict[key] == None: # convert NoneTypes from AGOL to match empty strings from Data Tracker
+                agol_dict[key] = ''
+            
+            if str(knack_dict[key]) == str(agol_dict[key]):
+                continue
+            else:
+                return False
+
+    return True
+
 
 
 def filter_by_date(data, date_field, compare_date):
@@ -98,21 +113,28 @@ def main():
             unmatched_segments.append(street_segment[config["primary_key"]])
             continue
 
-        segment_data["id"] = street_segment["id"]
-
-        #  preserve mod date in data tracker (otherwise will be
-        #  overwritten with modified date in GIS layer)
+        #  we don't want to compare modified dates
+        #  because we don't keep that value in sync with the source data on AGOL
+        #  because we use our own modified date set in the data tracker
         segment_data.pop(config["modified_date_field"])
-        segment_data["MODIFIED_BY"] = "api-update"
-        payload.append(segment_data)
+        street_segment.pop(config["modified_date_field"])
+        
+        #  compare new data (segment data) against old (street_segment)
+        #  we only want to upload values that have changed
+        if not are_equal(street_segment, segment_data):
+            segment_data["id"] = street_segment["id"]
+            segment_data[config["modified_date_field"]] = datautil.local_timestamp()
+            payload.append(segment_data)
 
     payload = datautil.reduce_to_keys(payload, kn.fieldnames)
     payload = datautil.replace_keys(payload, kn.field_map)
 
     update_response = []
-    count = 1
+    count = 0
 
     for record in payload:
+        count += 1
+
         print("updating record {} of {}".format(count, len(payload)))
 
         #  remove whitespace from janky Esri attributes
@@ -127,8 +149,6 @@ def main():
             api_key=knack_creds["api_key"],
             method="update",
         )
-
-        count += 1
 
         update_response.append(res)
 
