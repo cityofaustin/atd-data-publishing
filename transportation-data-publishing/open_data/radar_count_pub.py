@@ -40,25 +40,27 @@ def my_round(x, base=15):
 
 def get_timebin(minute, hour):
     """
-    Round an arbitrary minue/hour to the nearest 15 minutes
+    Round an arbitrary minue/hour to the nearest 15 minutes. We expect
+    radar count timestamsp to come in at 15 minute increments (this is a device configuration),
+    however sometimes they are off by +/- a minute or two).
     
     Args:
-        minute (TYPE): Description
-        hour (TYPE): Description
+        minute (int)
+        hour (int)
     
     Returns:
-        TYPE: Description
+        TYPE: String in 15-minute time format "HH:mm"
     """
     minute = my_round(minute)
-    hour_offset = 0
 
     if minute == 60:
         minute = 0
-        hour_offset = 1
+        hour = hour + 1 if hour != 23 else 0
 
-    timebin = "{}:{}".format(hour + hour_offset, minute)
-
-    return arrow.get(timebin, "H:m").format("HH:mm")
+    timebin = "{}:{}".format(hour, minute)
+    minute = str(minute).zfill(2)
+    hour = str(hour).zfill(2)
+    return "{}:{}".format(hour, minute)
 
 
 def get_direction(lane):
