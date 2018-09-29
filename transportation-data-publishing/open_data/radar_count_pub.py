@@ -58,8 +58,9 @@ def get_timebin(minute, hour):
         hour = hour + 1 if hour != 23 else 0
 
     timebin = "{}:{}".format(hour, minute)
-
-    return arrow.get(timebin, "H:m").format("HH:mm")
+    minute = str(minute).zfill(2)
+    hour = str(hour).zfill(2)
+    return "{}:{}".format(hour, minute)
 
 
 def get_direction(lane):
