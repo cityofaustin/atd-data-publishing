@@ -7,5 +7,5 @@ knackpy==0.0.11
 pandas==0.22.0
 pymssql
 pyyaml
-tdutils==0.0.6
+tdutils==0.0.11
 yagmail

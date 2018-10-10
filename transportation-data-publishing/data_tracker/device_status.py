@@ -1,17 +1,15 @@
+'''Ping network devices and update ip comm status in Knack database.
 
-# Ping network devices and update ip comm status in Knack database.
-
-# command ex: device_status_check.py travel_sensors data_tracker_prod
-
-# TODO: move write to JSON to a separate script. it doesn't belong here.
-
+TODO:
+- move write to JSON to a separate script. it doesn't belong here.
+'''
 
 import json
 from multiprocessing.dummy import Pool as ThreadPool
 import os
 from os import system as system_call
-import pdb
 from platform import system as system_name
+import pdb
 import socket
 
 import arrow
@@ -24,7 +22,7 @@ from config.knack.config import cfg
 from config.secrets import *
 
 
-def ping_ip(ip, timeout=3):
+def ping_ip(ip, timeout):
     """
     Ping an IP address
     https://stackoverflow.com/questions/2953462/pinging-servers-in-python
@@ -58,7 +56,7 @@ def ping_ip(ip, timeout=3):
         return "ONLINE"
 
 
-def open_socket(ip, port, timeout=3):
+def open_socket(ip, port, timeout):
 
     with socket.socket() as s:
         print(ip)
@@ -80,13 +78,13 @@ def get_status(device):
 
     if ip:
         if device_type != "gridsmart":
-            state_new = ping_ip(device[ip_field])
+            state_new = ping_ip(device[ip_field], timeout)
 
         else:
             """
             Gridsmart default port is 8902
             """
-            state_new = open_socket(device[ip_field], port=8902)
+            state_new = open_socket(device[ip_field], timeout, port=8902)
 
     else:
         #  set to NO COMMUINICATION if no IP address
@@ -98,14 +96,31 @@ def get_status(device):
         #  timestamps into and out of knack are naive
         #  so we create a naive local timestamp by replacing
         #  a localized timestamp's timezone info with UTC
-        device["COMM_STATUS_DATETIME_UTC"] = (
-            arrow.now().replace(tzinfo="UTC").timestamp * 1000
-        )
+        device["COMM_STATUS_DATETIME_UTC"] = datautil.local_timestamp()
 
         return device
 
     else:
         return None
+
+
+def apply_modified_date(dicts, key="MODIFIED_DATE", offset=600000):
+    #  set the record modified date as a "local" timestamp (knack-friendly)
+    #  also apply a forward offset to ensure modified records are picked up
+    #  by the publishing scripts which are checking for recently modded data
+    for record in dicts:
+        record[key] = datautil.local_timestamp() + offset
+
+    return dicts
+
+
+def apply_modified_by(dicts, key="MODIFIED_BY", user_id="5bbd6eaa7810a00b02a87bcd"):
+    #  set the record modified by field. The default value applies a generica API
+    #  user name
+    for record in dicts:
+        record[key] = user_id
+
+    return dicts
 
 
 def set_workdir():
@@ -142,9 +157,16 @@ def main():
 
     primary_key = cfg[device_type]["primary_key"]
     ip_field = cfg[device_type]["ip_field"]
+    
+    global timeout
+    timeout = cfg[device_type].get("timeout")
+    
+    if not timeout:
+        timeout = 3
+
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    out_fields_upload = ["id", ip_field, "IP_COMM_STATUS", "COMM_STATUS_DATETIME_UTC"]
+    out_fields_upload = ["id", ip_field, "IP_COMM_STATUS", "COMM_STATUS_DATETIME_UTC", "MODIFIED_DATE", "MODIFIED_BY"]
 
     out_fields_json = [
         "id",
@@ -163,7 +185,9 @@ def main():
         app_id=knack_creds["app_id"],
         api_key=knack_creds["api_key"],
     )
-
+    
+    #  append config data to each item to be processed
+    #  this is a hacky way to pass args to each thread
     for i in kn.data:
         i["ip_field"] = ip_field
         i["device_type"] = device_type
@@ -191,7 +215,10 @@ def main():
         """
         if result:
             #  format for upload to Knack
-            result = datautil.reduce_to_keys([result], out_fields_upload)
+            result = [result]
+            result = apply_modified_date(result)
+            result = apply_modified_by(result)
+            result = datautil.reduce_to_keys(result, out_fields_upload)
             result = datautil.replace_keys(result, kn.field_map)
 
             res = knackpy.record(
@@ -208,7 +235,7 @@ def main():
     pool.close()
     pool.join()
 
-    return True
+    return len([record for record in results if record])
 
 
 if __name__ == "__main__":
