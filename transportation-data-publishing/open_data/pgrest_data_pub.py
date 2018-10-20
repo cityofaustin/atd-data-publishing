@@ -93,9 +93,8 @@ def main():
 
     last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
 
-    pgrest = pgrestutil.Postgrest(cfg_dataset["base_url"], auth=JOB_DB_API_TOKEN)
+    pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
 
-    query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
     records = pgrest.select(query_string)
 
     if not records:

@@ -74,6 +74,16 @@ cfg = {
         "status_filter_comm_status": ["TURNED_ON"],
         "view": "view_395",
     },
+    "csr_flex_notes": {
+        "include_ids": True,
+        "modified_date_field": "CREATED_DATE",
+        "modified_date_field_id": "field_2775",
+        "obj": None,
+        "ref_obj": ["object_95"],
+        "scene": "scene_923",
+        "view": "view_2356",
+        "pgrest_base_url" : "http://transportation-data-test.austintexas.io/csr_flex_notes"
+    },
     "detectors": {
         "primary_key": "DETECTOR_ID",
         "ref_obj": ["object_98", "object_12"],
