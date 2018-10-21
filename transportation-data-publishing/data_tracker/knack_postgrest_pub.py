@@ -65,7 +65,7 @@ def main():
     pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN_test)
 
     for record in kn.data:
-        # convert "local" mills timestamp to iso
+        # convert mills timestamp to iso
         record[cfg_dataset["modified_date_field"]] = arrow.get((record[cfg_dataset["modified_date_field"]] / 1000)).format()
 
     kn.data = datautil.lower_case_keys(kn.data)
@@ -79,8 +79,8 @@ def cli_args():
     parser = argutil.get_parser(
         "pgrest_data_pub.py",
         "Publish Knack Data to postgREST.",
-        "app_name",
         "dataset",
+        "app_name",
         "--last_run_date",
     )
 
