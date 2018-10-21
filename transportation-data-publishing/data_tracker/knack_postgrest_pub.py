@@ -44,9 +44,6 @@ def main():
 
     cfg_dataset = cfg[args.dataset]
 
-    if not args.last_run_date:
-        raise Exception("Last run date is required for flex note publishing.")
-
     filters = knackutil.date_filter_on_or_after(
         args.last_run_date, cfg_dataset["modified_date_field_id"]
     )
