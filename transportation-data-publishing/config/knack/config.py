@@ -82,7 +82,7 @@ cfg = {
         "ref_obj": ["object_95"],
         "scene": "scene_923",
         "view": "view_2356",
-        "pgrest_base_url" : "http://transportation-data-test.austintexas.io/csr_flex_notes"
+        "pgrest_base_url" : "http://transportation-data.austintexas.io/csr_flex_notes"
     },
     "detectors": {
         "primary_key": "DETECTOR_ID",

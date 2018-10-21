@@ -62,7 +62,7 @@ def main():
             kn.data, cfg_dataset["modified_date_field"], last_run_timestamp
         )
 
-    pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN_test)
+    pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
 
     for record in kn.data:
         # convert mills timestamp to iso
