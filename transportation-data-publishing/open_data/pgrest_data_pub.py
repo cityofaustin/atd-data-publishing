@@ -5,37 +5,20 @@ By default, destination data is incrementally updated based on a
 modified date field defined in the configuration file. Alternatively use
 --replace to truncate/replace the entire dataset. CSV output is always handled
 with --replace.
-
-#TODO: agol pub
-
 """
 import argparse
 import pdb
 import sys
-import urllib.parse
 
 import arrow
+from pypgrest import Postgrest
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import pgrestutil
 from tdutils import socratautil
 
 import _setpath
 from config.postgrest.config import PGREST_PUB as cfg
 from config.secrets import *
-
-
-def after_date_query(date_field, date):
-    """Summary
-    
-    Args:
-        date_field (TYPE): Description
-        date (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
-    return f"{date_field}=gte.{date}"
 
 
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):
@@ -73,43 +56,75 @@ def socrata_pub(records, cfg_dataset, replace, date_fields=None):
 
 
 def main():
-    """
-    Args:
-        args (list, required): Command line arguments.
-    
-    Returns:
-        int: The number of records processed.
-        
-    """
     args = cli_args()
 
     cfg_dataset = cfg[args.dataset]
 
-    last_run_date = args.last_run_date
+    limit = cfg_dataset.get("limit")
 
-    if not last_run_date or args.replace:
-        # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1970-01-01"
+    if not args.last_run_date or args.replace:
+        last_run_date = "1970-01-01T00:00:00"
+    else:
+        last_run_date = arrow.get(args.last_run_date).format()
 
-    last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
+    pgrest = Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
+    '''
+    The `interval` is the number of records which will be processed on each loop.
+    It servers as the `offset` paramenter, so it's the means by which we chunk
+    records.
 
-    pgrest = pgrestutil.Postgrest(cfg_dataset["base_url"], auth=JOB_DB_API_TOKEN)
+    1000 matches the max records of returned by our postgres instance,
+    so each loop = 1 request to the source db (postgrest). We have disabled
+    pagination in our requests (see below), so it's very important that our
+    `offset` does not exceed the number of records the API will return
+    in one request.
+    '''
+    interval = 1000
 
-    query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
-    records = pgrest.select(query_string)
+    offset = 0
 
-    if not records:
-        return 0
+    records_processed = 0
 
-    date_fields = [
-        "traffic_report_status_date_time",
-        "published_date",
-    ]  # TODO: extract from API definition
+    while True:
+        '''
+        Download records in chunks, posting each chunk to socrata.
 
-    if args.destination[0] == "socrata":
-        pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)
+        Note that the `order` param ensures that each offset request
+        returns the expected chunk of records, by preserving the order
+        in which records are returned. Ordering slows down the response
+        from the postgREST, but it's necessary to ensure consistent
+        results.
+        '''
+        params = {
+            cfg_dataset["modified_date_field"]: f"gte.{last_run_date}",
+            "limit": limit,
+            "order": "{}.asc".format(cfg_dataset["modified_date_field"]),
+            "offset" : offset
+        }
 
-    return len(records)
+        '''
+        We disable `pagination` in this request because we are simulating
+        pagination by manually passing an `offest` to each request.
+        '''
+        records = pgrest.select(params=params, pagination=False)
+
+        print("got {} records".format(len(records)))
+        
+        if not records:
+            break
+
+        if args.destination[0] == "socrata":
+            date_fields = cfg_dataset.get("date_fields")
+
+            pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)
+            
+            print("Published {} records.".format(len(records)))
+
+        offset += interval
+
+        records_processed += len(records)
+
+    return records_processed
 
 
 def cli_args():

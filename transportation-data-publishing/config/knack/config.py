@@ -74,6 +74,41 @@ cfg = {
         "status_filter_comm_status": ["TURNED_ON"],
         "view": "view_395",
     },
+    "cameras_not_cell_modem": {
+        "include_ids": True,
+        "ip_field": "CAMERA_IP",
+        "modified_date_field": "MODIFIED_DATE",
+        "modified_date_field_id": "field_714",
+        "obj": None,
+        "primary_key": "CAMERA_ID",
+        "ref_obj": ["object_53"],
+        "scene": "scene_144",
+        "status_field": "CAMERA_STATUS",
+        "view": "view_2348",
+    },
+    "cameras_cell_modem": {
+        "include_ids": True,
+        "ip_field": "CAMERA_IP",
+        "modified_date_field": "MODIFIED_DATE",
+        "modified_date_field_id": "field_714",
+        "obj": None,
+        "primary_key": "CAMERA_ID",
+        "ref_obj": ["object_53"],
+        "scene": "scene_144",
+        "status_field": "CAMERA_STATUS",
+        "view": "view_2347",
+        "timeout" : 10
+    }
+    "csr_flex_notes": {
+        "include_ids": True,
+        "modified_date_field": "CREATED_DATE",
+        "modified_date_field_id": "field_2775",
+        "obj": None,
+        "ref_obj": ["object_95"],
+        "scene": "scene_923",
+        "view": "view_2356",
+        "pgrest_base_url" : "http://transportation-data.austintexas.io/csr_flex_notes"
+    },
     "detectors": {
         "primary_key": "DETECTOR_ID",
         "ref_obj": ["object_98", "object_12"],
@@ -593,5 +628,73 @@ PURCHASE_REQUEST_COPIER = {
         'obj' : 'object_4',
         'pr_field_id' : 'field_269',
         'pr_connection_field_name' : 'purchase_request'
+    }
+}
+
+SIGNAL_PMS_POSTGRE_KNACK = {
+    "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
+    "postgre_url" : "http://transportation-data.austintexas.io/signal_pms",
+    "knack_pms": {
+        "scene" : "scene_952",
+        "view" : "view_2405",
+        "ref_obj" : ["object_84"],
+    },
+    "knack_signals": {
+        "scene" : "scene_73",
+        "view" : "view_197",
+        "ref_obj" : ["object_12"]
+    }, 
+    "knack_technicians" : {
+        "objects" : "object_9"
+    }   
+}
+
+SR_DUE_DATE = {
+    "tmc_issues" : {
+        'scene' : 'scene_514',
+        'view' : 'view_2351',
+        'ref_obj' : ['object_83'],
+        'due_date_field_id' : 'field_2772'
+    },
+    "flex_notes" : {
+        'scene' : 'scene_514',
+        'view' : 'view_2352',
+        'ref_obj' : ['object_95'],
+        'sr_id_field' : 'field_1452'
+    }
+}
+
+SR_ASSET_ASSIGNER = {
+    "tmc_issues" : {
+        "scene" : "scene_514",
+        "view" : "view_2362",
+        "ref_obj" : ["object_83"],
+        "x_field" : "CSR_Y_VALUE",
+        "y_field" : "CSR_X_VALUE",
+        "primary_key" : "field_1678", # TMC_ISSUE_ID
+        "connection_field_keys" : {
+            "signals" : "field_1367"
+        },
+        "assign_status_field_id" : "field_2813"
+    },
+    "tmc_asset_form" : {
+        "scene" : "scene_428",
+        "view" : "view_1521",
+        "input_fields" : ["ASSET_TYPE"]
+    },
+    "signals" : {
+        "scene" : "scene_73",
+        "view" : "view_197",
+        "ref_obj" : ["object_12"],
+        "primary_key" : "field_199", # SIGNAL_ID
+        "display_name" : "Signal",
+        "layer" : {
+            "service_name": "TRANSPORTATION_signals2",
+            "outFields": "SIGNAL_ID",
+            "layer_id": 0,
+            "distance": 10,
+            "units": "esriSRUnit_Foot",
+            "primary_key" : "SIGNAL_ID"
+        }
     }
 }
