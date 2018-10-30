@@ -630,3 +630,20 @@ PURCHASE_REQUEST_COPIER = {
         'pr_connection_field_name' : 'purchase_request'
     }
 }
+
+
+SR_DUE_DATE = {
+    "tmc_issues" : {
+        'scene' : 'scene_514',
+        'view' : 'view_2351',
+        'ref_obj' : ['object_83'],
+        'due_date_field_id' : 'field_2772'
+    },
+    "flex_notes" : {
+        'scene' : 'scene_514',
+        'view' : 'view_2352',
+        'ref_obj' : ['object_95'],
+        'sr_id_field' : 'field_1452'
+    }
+}
+
