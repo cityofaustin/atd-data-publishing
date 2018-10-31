@@ -38,7 +38,7 @@ def get_due_date(date):
 
 def cli_args():
     parser = argutil.get_parser(
-        "sr_due_date.py", "Update 311 SRs with their due date.", "app_name"
+        "sr_due_date.py", "Update 311 SRs with their due date.","app_name"
     )
 
     args = parser.parse_args()
@@ -59,6 +59,8 @@ def main():
         app_id=KNACK_CREDENTIALS[app_name]["app_id"],
         api_key=KNACK_CREDENTIALS[app_name]["api_key"],
     )
+
+    count = 0
 
     for sr in srs.data:
 
@@ -94,6 +96,9 @@ def main():
             method="update",
         )
 
+        count +=1
+
+    return count
 
 if __name__ == "__main__":
     main()
