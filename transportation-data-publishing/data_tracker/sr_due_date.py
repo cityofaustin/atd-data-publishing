@@ -62,6 +62,9 @@ def main():
 
     count = 0
 
+    if not srs.data:
+        return 0
+        
     for sr in srs.data:
 
         filters = sr_filter(sr["SR_NUMBER"], cfg["flex_notes"]["sr_id_field"])
