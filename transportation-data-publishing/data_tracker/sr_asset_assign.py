@@ -184,6 +184,7 @@ def main():
             asset_id,
         )
 
+    return len(tmc_issues.data)
 
 if __name__ == "__main__":
     main()
