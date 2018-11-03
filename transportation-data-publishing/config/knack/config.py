@@ -647,3 +647,39 @@ SR_DUE_DATE = {
     }
 }
 
+
+
+SR_ASSET_ASSIGNER = {
+    "tmc_issues" : {
+        "scene" : "scene_514",
+        "view" : "view_2362",
+        "ref_obj" : ["object_83"],
+        "x_field" : "CSR_Y_VALUE",
+        "y_field" : "CSR_X_VALUE",
+        "primary_key" : "field_1678", # TMC_ISSUE_ID
+        "connection_field_keys" : {
+            "signals" : "field_1367"
+        },
+        "assign_status_field_id" : "field_2813"
+    },
+    "tmc_asset_form" : {
+        "scene" : "scene_428",
+        "view" : "view_1521",
+        "input_fields" : ["ASSET_TYPE"]
+    },
+    "signals" : {
+        "scene" : "scene_73",
+        "view" : "view_197",
+        "ref_obj" : ["object_12"],
+        "primary_key" : "field_199", # SIGNAL_ID
+        "display_name" : "Signal",
+        "layer" : {
+            "service_name": "TRANSPORTATION_signals2",
+            "outFields": "SIGNAL_ID",
+            "layer_id": 0,
+            "distance": 10,
+            "units": "esriSRUnit_Foot",
+            "primary_key" : "SIGNAL_ID"
+        }
+    }
+}
