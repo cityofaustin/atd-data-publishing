@@ -6,10 +6,10 @@ import pdb
 
 import arrow
 import knackpy
+from pypgrest import Postgrest
 from tdutils import argutil
 from tdutils import datautil
 from tdutils import knackutil
-from tdutils import pgrestutil
 
 
 import _setpath
@@ -50,23 +50,28 @@ def main():
 
     kn = knackpy_wrapper(cfg_dataset, auth, filters=filters)
 
-    if kn.data:
-        # Filter data for records that have been modifed after the last
-        # job run
-        last_run_timestamp = arrow.get(args.last_run_date).timestamp * 1000
-        
-        kn.data = filter_by_date(
-            kn.data, cfg_dataset["modified_date_field"], last_run_timestamp
-        )
+    if not kn.data:
+        return 0
 
-    pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
+    # Filter data for records that have been modifed after the last
+    # job run
+    last_run_timestamp = arrow.get(args.last_run_date).timestamp * 1000
+
+    kn.data = filter_by_date(
+        kn.data, cfg_dataset["modified_date_field"], last_run_timestamp
+    )
+
+    if not kn.data:
+        return 0
+
+    pgrest = Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
 
     for record in kn.data:
         # convert mills timestamp to iso
         record[cfg_dataset["modified_date_field"]] = arrow.get((record[cfg_dataset["modified_date_field"]] / 1000)).format()
 
     kn.data = datautil.lower_case_keys(kn.data)
-
+    
     pgrest.upsert(kn.data)
 
     return len(kn.data)
