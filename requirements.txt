@@ -9,3 +9,4 @@ pymssql
 pyyaml
 tdutils==0.0.12
 yagmail
+pypgrest
