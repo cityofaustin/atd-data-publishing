@@ -85,6 +85,8 @@ def main():
 
     cfg_dataset = cfg[args.dataset]
 
+    limit = cfg_dataset.get('limit')
+
     last_run_date = args.last_run_date
 
     if not last_run_date or args.replace:
@@ -97,15 +99,12 @@ def main():
     
     query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
 
-    records = pgrest.select(query_string)
-
+    records = pgrest.select(query_string, limit=limit)
+    
     if not records:
         return 0
 
-    date_fields = [
-        "traffic_report_status_date_time",
-        "published_date",
-    ]  # TODO: extract from API definition
+    date_fields = cfg_dataset.get('date_fields')
 
     if args.destination[0] == "socrata":
         pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)

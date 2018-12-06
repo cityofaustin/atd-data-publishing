@@ -2,6 +2,7 @@ PGREST_PUB = {
     "traffic_reports": {
         "pgrest_base_url": "http://transportation-data.austintexas.io/traffic_reports",
         "primary_key": "traffic_report_id",
+        'limit' : 2000000,
         "modified_date_field": "traffic_report_status_date_time",
         "service_id": "444c8a2b4388485283c2968bd99ddf6c",
         "socrata_resource_id": "dx9v-zd7x",
@@ -10,6 +11,22 @@ PGREST_PUB = {
             "lon": "longitude",
             "location_field": "location",
         },
+        "date_fields" : [
+            "traffic_report_status_date_time",
+            "published_date",
+        ]
+    },
+    "dockless_trips": {
+        "pgrest_base_url": "http://transportation-data.austintexas.io/dockless_public",
+        "primary_key": "trip_id",
+        'limit' : 2000000,
+        "modified_date_field": "modified_date",
+        "socrata_resource_id": "k5pc-e6wr",
+        "date_fields" : [
+            "start_time",
+            "end_time",
+            "modified_date"
+        ]
     }
 }
 
