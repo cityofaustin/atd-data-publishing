@@ -12,30 +12,16 @@ with --replace.
 import argparse
 import pdb
 import sys
-import urllib.parse
 
 import arrow
+from pypgrest import Postgrest
 from tdutils import argutil
 from tdutils import datautil
-from tdutils import pgrestutil
 from tdutils import socratautil
 
 import _setpath
 from config.postgrest.config import PGREST_PUB as cfg
 from config.secrets import *
-
-
-def after_date_query(date_field, date):
-    """Summary
-    
-    Args:
-        date_field (TYPE): Description
-        date (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
-    return f"{date_field}=gte.{date}"
 
 
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):
@@ -85,26 +71,27 @@ def main():
 
     cfg_dataset = cfg[args.dataset]
 
-    limit = cfg_dataset.get('limit')
+    limit = cfg_dataset.get("limit")
 
-    last_run_date = args.last_run_date
+    last_run_date = arrow.get(args.last_run_date).format()
 
     if not last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1970-01-01"
 
-    last_run_date = urllib.parse.quote_plus(arrow.get(last_run_date).format())
+    pgrest = Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
 
-    pgrest = pgrestutil.Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
-    
-    query_string = after_date_query(cfg_dataset["modified_date_field"], last_run_date)
+    params = {
+        cfg_dataset["modified_date_field"]: f"gte.{last_run_date}",
+        "limit": limit,
+    }
 
-    records = pgrest.select(query_string, limit=limit)
-    
+    records = pgrest.select(params=params)
+
     if not records:
         return 0
 
-    date_fields = cfg_dataset.get('date_fields')
+    date_fields = cfg_dataset.get("date_fields")
 
     if args.destination[0] == "socrata":
         pub = socrata_pub(records, cfg_dataset, args.replace, date_fields=date_fields)
