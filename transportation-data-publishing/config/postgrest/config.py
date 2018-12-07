@@ -21,7 +21,7 @@ PGREST_PUB = {
         "primary_key": "trip_id",
         'limit' : 2000000,
         "modified_date_field": "modified_date",
-        "socrata_resource_id": "k5pc-e6wr",
+        "socrata_resource_id": "7d8e-dm7r",
         "date_fields" : [
             "start_time",
             "end_time",
