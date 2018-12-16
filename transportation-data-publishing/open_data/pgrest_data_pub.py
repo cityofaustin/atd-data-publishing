@@ -72,7 +72,7 @@ def main():
 
     if not args.last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
-        last_run_date = "1970-01-01"
+        last_run_date = "1970-01-01T00:00:00"
     else:
         last_run_date = arrow.get(args.last_run_date).format()
 
@@ -84,7 +84,7 @@ def main():
     }
 
     records = pgrest.select(params=params)
-    
+
     print("got {} records".format(len(records)))
     
     if not records:
