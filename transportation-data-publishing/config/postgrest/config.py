@@ -19,7 +19,7 @@ PGREST_PUB = {
     "dockless_trips": {
         "pgrest_base_url": "http://transportation-data.austintexas.io/dockless_public",
         "primary_key": "trip_id",
-        'limit' : 2000000,
+        'limit' : 100000,
         "modified_date_field": "modified_date",
         "socrata_resource_id": "7d8e-dm7r",
         "date_fields" : [
