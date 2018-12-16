@@ -5,9 +5,6 @@ By default, destination data is incrementally updated based on a
 modified date field defined in the configuration file. Alternatively use
 --replace to truncate/replace the entire dataset. CSV output is always handled
 with --replace.
-
-#TODO: agol pub
-
 """
 import argparse
 import pdb
@@ -73,11 +70,11 @@ def main():
 
     limit = cfg_dataset.get("limit")
 
-    last_run_date = arrow.get(args.last_run_date).format()
-
-    if not last_run_date or args.replace:
+    if not args.last_run_date or args.replace:
         # replace dataset by setting the last run date to a long, long time ago
         last_run_date = "1970-01-01"
+    else:
+        last_run_date = arrow.get(args.last_run_date).format()
 
     pgrest = Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
 
@@ -87,7 +84,9 @@ def main():
     }
 
     records = pgrest.select(params=params)
-
+    
+    print("got {} records".format(len(records)))
+    
     if not records:
         return 0
 
