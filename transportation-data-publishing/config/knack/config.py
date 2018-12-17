@@ -98,7 +98,7 @@ cfg = {
         "status_field": "CAMERA_STATUS",
         "view": "view_2347",
         "timeout" : 10
-    }
+    },
     "csr_flex_notes": {
         "include_ids": True,
         "modified_date_field": "CREATED_DATE",
@@ -630,7 +630,6 @@ PURCHASE_REQUEST_COPIER = {
         'pr_connection_field_name' : 'purchase_request'
     }
 }
-
 SIGNAL_PMS_POSTGRE_KNACK = {
     "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
     "postgre_url" : "http://transportation-data.austintexas.io/signal_pms",
@@ -698,3 +697,4 @@ SR_ASSET_ASSIGNER = {
         }
     }
 }
+
