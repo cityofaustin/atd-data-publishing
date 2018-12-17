@@ -321,10 +321,10 @@ def prepare_signals_payloads(payloads, signals_records):
     Prepare signal payloads by change data type and map new signal information to
     the signal object. 
     Args:
-        payloads (TYPE): Description
+        payloads (TYPE): the raw payload in list of dictionaries format 
     
     Returns:
-        TYPE: Description
+        TYPE: a list of dictionary
     """
 
     # signals_records = get_signals_records()
