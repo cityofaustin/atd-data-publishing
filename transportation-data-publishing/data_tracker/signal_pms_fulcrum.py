@@ -308,14 +308,7 @@ def replace_pm_records(
 
 
 def datetime_to_unix_timestamp(dateandtime):
-    """Summary
-    
-    Args:
-        dateandtime (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
+
     return (
         int(
             time.mktime(datetime.strptime(dateandtime, "%Y-%m-%dT%H:%M:%S").timetuple())
