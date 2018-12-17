@@ -38,7 +38,3 @@ TRAFFIC_REPORT_SCRAPER = {
     "date_field": "published_date",
     "status_date_field": "traffic_report_status_date_time",
 }
-
-SIGNAL_PMS_TO_POSTGRE = {
-    
-}
