@@ -20,8 +20,10 @@ import _setpath
 from config.secrets import *
 from config.knack.config import SIGNAL_PMS_POSTGRE_KNACK as cfg
 
-from tdutils.pgrestutil import Postgrest
+# from tdutils.pgrestutil import Postgrest
 from tdutils import argutil, datautil
+from pypgrest import Postgrest
+
 
 key = FULCRUM.get("api_key")
 
@@ -36,7 +38,10 @@ def get_postgre_records():
     Returns:
         list: list of dictionaries of all pgrest records
     """
-    postgre_records = pgrest.select("*")
+    params = {}
+
+    postgre_records = pgrest.select(params=params)
+    print(postgre_records)
 
     return postgre_records
 
