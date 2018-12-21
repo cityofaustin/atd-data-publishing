@@ -7,10 +7,10 @@ modified date field defined in the configuration file. Alternatively use
 with --replace.
 """
 import argparse
+from datetime import datetime
 import pdb
 import sys
 
-import arrow
 from pypgrest import Postgrest
 from tdutils import argutil
 from tdutils import datautil
@@ -65,7 +65,8 @@ def main():
     if not args.last_run_date or args.replace:
         last_run_date = "1970-01-01T00:00:00"
     else:
-        last_run_date = arrow.get(args.last_run_date).format()
+        last_run_date = datetime.utcfromtimestamp(int(args.last_run_date))
+        last_run_date = last_run_date.isoformat()
 
     pgrest = Postgrest(cfg_dataset["pgrest_base_url"], auth=JOB_DB_API_TOKEN)
     '''
