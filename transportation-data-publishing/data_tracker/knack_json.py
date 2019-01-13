@@ -1,7 +1,5 @@
 """
 Write knack records to JSON.
-
-#TODO update configs
 """
 
 import json
