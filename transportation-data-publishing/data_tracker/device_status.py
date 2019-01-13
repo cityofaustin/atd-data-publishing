@@ -1,6 +1,6 @@
-'''
+"""
 Ping network devices and update ip comm status in Knack database.
-'''
+"""
 from multiprocessing.dummy import Pool as ThreadPool
 import os
 from os import system as system_call
@@ -151,16 +151,23 @@ def main():
 
     primary_key = cfg[device_type]["primary_key"]
     ip_field = cfg[device_type]["ip_field"]
-    
+
     global timeout
     timeout = cfg[device_type].get("timeout")
-    
+
     if not timeout:
         timeout = 3
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    out_fields_upload = ["id", ip_field, "IP_COMM_STATUS", "COMM_STATUS_DATETIME_UTC", "MODIFIED_DATE", "MODIFIED_BY"]
+    out_fields_upload = [
+        "id",
+        ip_field,
+        "IP_COMM_STATUS",
+        "COMM_STATUS_DATETIME_UTC",
+        "MODIFIED_DATE",
+        "MODIFIED_BY",
+    ]
 
     #  get device data from Knack application
     kn = knackpy.Knack(
@@ -171,7 +178,7 @@ def main():
         app_id=knack_creds["app_id"],
         api_key=knack_creds["api_key"],
     )
-    
+
     #  append config data to each item to be processed
     #  this is a hacky way to pass args to each thread
     for i in kn.data:
