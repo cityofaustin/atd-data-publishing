@@ -631,7 +631,23 @@ PURCHASE_REQUEST_COPIER = {
         'pr_connection_field_name' : 'purchase_request'
     }
 }
-
+SIGNAL_PMS_POSTGRE_KNACK = {
+    "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
+    "postgre_url" : "http://transportation-data.austintexas.io/signal_pms",
+    "knack_pms": {
+        "scene" : "scene_952",
+        "view" : "view_2405",
+        "ref_obj" : ["object_84"],
+    },
+    "knack_signals": {
+        "scene" : "scene_73",
+        "view" : "view_197",
+        "ref_obj" : ["object_12"]
+    }, 
+    "knack_technicians" : {
+        "objects" : "object_9"
+    }   
+}
 
 SR_DUE_DATE = {
     "tmc_issues" : {
@@ -647,8 +663,6 @@ SR_DUE_DATE = {
         'sr_id_field' : 'field_1452'
     }
 }
-
-
 
 SR_ASSET_ASSIGNER = {
     "tmc_issues" : {
@@ -684,3 +698,4 @@ SR_ASSET_ASSIGNER = {
         }
     }
 }
+
