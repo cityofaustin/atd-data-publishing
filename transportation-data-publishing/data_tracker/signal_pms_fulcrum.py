@@ -15,6 +15,7 @@ import pdb
 import json
 from datetime import datetime, timedelta, date
 import time
+import copy
 
 import _setpath
 from config.secrets import *
@@ -41,7 +42,6 @@ def get_postgre_records():
     params = {}
 
     postgre_records = pgrest.select(params=params)
-    print(postgre_records)
 
     return postgre_records
 
@@ -115,22 +115,20 @@ def cli_args():
 def get_last_run(args, knack_records):
     """Summary: get the most recent modified date from all knack
     signal_pm object
-    
+
     Args:
         args (namespace): command line inputs
         knack_records (knack object): a list of all knack pm records
         with fulcrum id
-    
+
     Returns:
-        
+
     """
     knack_records_data = knack_records.data
 
-    if args.last_run_date:
+    if args.last_run_date or args.last_run_date == 0:
         return args.last_run_date
-
     else:
-
         for record in knack_records_data:
 
             last_run_date_item = max(
@@ -163,6 +161,8 @@ def map_knack_id_signal_id(signals_records, payloads):
         right=signal_records_df, left_on="signal_id", right_on="SIGNAL_ID", how="left"
     )
 
+    signal_id_mapped_payloads = signal_id_mapped_payloads.drop(["signal_id"], axis = 1)
+    
     return signal_id_mapped_payloads
 
 
@@ -207,6 +207,7 @@ def prepare_pm_payloads(
     pgrest_records_df["PM_STATUS"] = "COMPLETED"
 
     pgrest_records_df = map_knack_id_signal_id(signal_records, pgrest_records_df)
+
     pgrest_records_df.columns = map(str.upper, pgrest_records_df.columns)
     pgrest_records_df = pgrest_records_df.rename(columns={"ID": "id"})
 
@@ -283,6 +284,23 @@ def replace_pm_records(
         pm_update_payloads, knack_technicians
     )
 
+
+    # update signal modified time in replace method
+
+    pm_replace_payloads_shallow = pm_update_payloads + pm_insert_payloads
+    pm_replace_payloads = copy.deepcopy(pm_replace_payloads_shallow)
+
+    for d in pm_replace_payloads:
+        del d["id"]
+
+    signal_payloads = prepare_signals_payloads(pm_replace_payloads, signal_records)
+    signals_payloads = datautil.replace_keys(
+        signal_payloads, signal_records.field_map
+    )
+    signal_results = update_signals_modified_time(signals_payloads, app_name)
+
+    # end update signal modified time in replace method
+
     pm_insert_payloads = datautil.replace_keys(
         pm_insert_payloads, knack_pm_records.field_map
     )
@@ -291,6 +309,7 @@ def replace_pm_records(
     )
 
     for payload in pm_insert_payloads:
+        print("inserting", payload)
 
         insert_res = knackpy.record(
             payload,
@@ -301,6 +320,8 @@ def replace_pm_records(
         )
 
     for payload in pm_update_payloads:
+        print("updating", payload)
+
         update_res = knackpy.record(
             payload,
             obj_key="object_84",
@@ -337,6 +358,8 @@ def prepare_signals_payloads(payloads, signals_records):
 
     payloads = pd.DataFrame.from_dict(payloads)
 
+
+
     signals_records_df["SIGNAL_ID"] = signals_records_df["SIGNAL_ID"].astype("str")
 
     payloads["SIGNAL_ID"] = payloads["SIGNAL_ID"].astype("str")
@@ -366,11 +389,11 @@ def insert_pms(payloads, app_name):
     Returns:
         TYPE: Description
     """
-    # print(payloads)
 
     responses_list = []
 
     for payload in payloads:
+        print("inserting", payload)
 
         response = knackpy.record(
             payload,
@@ -402,7 +425,7 @@ def update_signals_modified_time(signals_payloads, app_name):
 
         response = knackpy.record(
             signal_payload,
-            obj_key="object_12",  # "cfg["knack_signals"]["ref_obj"]",
+            obj_key="object_12",
             api_key=KNACK_CREDENTIALS[app_name]["api_key"],
             app_id=KNACK_CREDENTIALS[app_name]["app_id"],
             method="update",
@@ -438,6 +461,7 @@ def main():
             knack_technicians_records,
             app_name,
         )
+
     else:
         pm_payloads = prepare_pm_payloads(
             last_run_date,
@@ -447,7 +471,9 @@ def main():
             knack_technicians_records,
         )
 
+
         if len(pm_payloads) == 0:
+
             return 0
         else:
             signal_payloads = prepare_signals_payloads(pm_payloads, signals_records)
@@ -461,13 +487,6 @@ def main():
             signal_results = update_signals_modified_time(signals_payloads, app_name)
 
             results = insert_pms(pm_payloads, app_name)
-
-            results = len(results)
-
-            results = insert_pms(pm_payloads, app_name)
-
-            results = insert_pms(pm_payloads, app_name)
-            results = insert_pms(pm_payloads)
 
             results = len(results)
 
