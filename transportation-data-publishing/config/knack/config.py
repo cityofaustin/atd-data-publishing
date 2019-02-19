@@ -635,8 +635,8 @@ SIGNAL_PMS_POSTGRE_KNACK = {
     "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
     "postgre_url" : "http://transportation-data.austintexas.io/signal_pms",
     "knack_pms": {
-        "scene" : "scene_952",
-        "view" : "view_2405",
+        "scene" : "scene_920",
+        "view" : "view_2350",
         "ref_obj" : ["object_84"],
     },
     "knack_signals": {
