@@ -1,10 +1,6 @@
-'''Ping network devices and update ip comm status in Knack database.
-
-TODO:
-- move write to JSON to a separate script. it doesn't belong here.
-'''
-
-import json
+"""
+Ping network devices and update ip comm status in Knack database.
+"""
 from multiprocessing.dummy import Pool as ThreadPool
 import os
 from os import system as system_call
@@ -138,7 +134,6 @@ def cli_args():
         "Ping network devices to verify connenectivity.",
         "device_type",
         "app_name",
-        "--json",
         "--replace",
     )
 
@@ -152,28 +147,26 @@ def main():
     args = cli_args()
 
     device_type = args.device_type
-    out_json = args.json
     app_name = args.app_name
 
     primary_key = cfg[device_type]["primary_key"]
     ip_field = cfg[device_type]["ip_field"]
-    
+
     global timeout
     timeout = cfg[device_type].get("timeout")
-    
+
     if not timeout:
         timeout = 3
 
     knack_creds = KNACK_CREDENTIALS[app_name]
 
-    out_fields_upload = ["id", ip_field, "IP_COMM_STATUS", "COMM_STATUS_DATETIME_UTC", "MODIFIED_DATE", "MODIFIED_BY"]
-
-    out_fields_json = [
+    out_fields_upload = [
         "id",
         ip_field,
         "IP_COMM_STATUS",
         "COMM_STATUS_DATETIME_UTC",
-        primary_key,
+        "MODIFIED_DATE",
+        "MODIFIED_BY",
     ]
 
     #  get device data from Knack application
@@ -185,24 +178,12 @@ def main():
         app_id=knack_creds["app_id"],
         api_key=knack_creds["api_key"],
     )
-    
+
     #  append config data to each item to be processed
     #  this is a hacky way to pass args to each thread
     for i in kn.data:
         i["ip_field"] = ip_field
         i["device_type"] = device_type
-
-    #  optionally write to JSON
-    #  this is a special case for CCTV cameras.
-    #  we copy the JSON to our internal web server
-    if out_json:
-        set_workdir()
-        out_dir = IP_JSON_DESTINATION
-        json_data = datautil.reduce_to_keys(kn.data, out_fields_json)
-        filename = "{}/device_data_{}.json".format(out_dir, device_type)
-
-        with open(filename, "w") as of:
-            json.dump(json_data, of)
 
     pool = ThreadPool(8)
 

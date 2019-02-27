@@ -71,6 +71,7 @@ cfg = {
         "service_id": "52f2b5e51b9a4b5e918b0be5646f27b2",
         "socrata_resource_id": "b4k4-adkb",
         "status_field": "CAMERA_STATUS",
+        "to_json_fields" : ["CAMERA_ID", "CAMERA_IP"],
         "status_filter_comm_status": ["TURNED_ON"],
         "view": "view_395",
     },
