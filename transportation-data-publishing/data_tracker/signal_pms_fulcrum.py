@@ -284,14 +284,14 @@ def replace_pm_records(
         pm_update_payloads, knack_technicians
     )
 
-
     # update signal modified time in replace method
 
     pm_replace_payloads_shallow = pm_update_payloads + pm_insert_payloads
     pm_replace_payloads = copy.deepcopy(pm_replace_payloads_shallow)
 
     for d in pm_replace_payloads:
-        del d["id"]
+        if "id" in d:
+            del d["id"]
 
     signal_payloads = prepare_signals_payloads(pm_replace_payloads, signal_records)
     signals_payloads = datautil.replace_keys(
