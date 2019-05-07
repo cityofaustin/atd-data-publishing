@@ -174,9 +174,10 @@ def map_technicians_id_pm_payloads(payloads, knack_technicians):
         knack_technicians_mapped[item["Email_email"]] = item["id"]
 
     for i, payload in enumerate(payloads):
-        payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
-            payload.get("PM_COMPLETED_BY")
-        ]
+        if payload.get("PM_COMPLETED_BY") in knack_technicians_mapped:
+            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
+                payload.get("PM_COMPLETED_BY")
+            ]
 
     return payloads
 
@@ -239,8 +240,13 @@ def replace_pm_records(
     Returns:
         TYPE: Description
     """
+
+
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
-    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)
+    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)    
+
+    # temporary fix to remove duplicate pm records
+    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
 
     pm_insert_payloads = postgre_records_df[
         ~postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
@@ -249,6 +255,13 @@ def replace_pm_records(
     pm_update_payloads = postgre_records_df[
         postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
     ].copy()
+
+    # # get the current year
+    # now = datetime.now()
+    # current_year = now.year
+    # pm_insert_payloads["pm_completed_date"] = pd.to_datetime(pm_insert_payloads["pm_completed_date"])
+    # # catch the case of pms withouth fulcrum_id but already in the system
+    # pm_update_payloads_current_year = pm_update_payloads.loc[pm_update_payloads["pm_completed_date"] >= "2019-1-1"]
 
     pm_insert_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
     pm_update_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
@@ -495,4 +508,20 @@ def main():
 
 if __name__ == "__main__":
 
-    print(main())
+
+    # args = cli_args()
+    # app_name = args.app_name
+    app_name = "data_tracker_prod"
+
+    pgrest_records = get_postgre_records()
+    knack_records = get_knack_pm_records(app_name)
+    signals_records = get_signals_records(app_name)
+    knack_technicians_records = get_technicians_records(app_name)
+
+    signal_results = replace_pm_records(
+            pgrest_records,
+            knack_records,
+            signals_records,
+            knack_technicians_records,
+            app_name,
+        )
