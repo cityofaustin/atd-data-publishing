@@ -42,6 +42,12 @@ def get_postgre_records():
     params = {}
 
     postgre_records = pgrest.select(params=params)
+    postgre_records_df = pd.DataFrame.from_dict(postgre_records)
+
+    # temporary fix to remove duplicate pm records
+    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
+
+    postgre_records = postgre_records_df.to_dict(orient="records")
 
     return postgre_records
 
@@ -174,10 +180,9 @@ def map_technicians_id_pm_payloads(payloads, knack_technicians):
         knack_technicians_mapped[item["Email_email"]] = item["id"]
 
     for i, payload in enumerate(payloads):
-        if payload.get("PM_COMPLETED_BY") in knack_technicians_mapped:
-            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
-                payload.get("PM_COMPLETED_BY")
-            ]
+        payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
+            payload.get("PM_COMPLETED_BY")
+        ]
 
     return payloads
 
@@ -244,9 +249,6 @@ def replace_pm_records(
 
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
     knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)    
-
-    # temporary fix to remove duplicate pm records
-    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
 
     pm_insert_payloads = postgre_records_df[
         ~postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
@@ -317,6 +319,7 @@ def replace_pm_records(
     pm_insert_payloads = datautil.replace_keys(
         pm_insert_payloads, knack_pm_records.field_map
     )
+
     pm_update_payloads = datautil.replace_keys(
         pm_update_payloads, knack_pm_records.field_map
     )
