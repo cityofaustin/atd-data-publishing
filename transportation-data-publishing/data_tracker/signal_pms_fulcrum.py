@@ -258,13 +258,6 @@ def replace_pm_records(
         postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
     ].copy()
 
-    # # get the current year
-    # now = datetime.now()
-    # current_year = now.year
-    # pm_insert_payloads["pm_completed_date"] = pd.to_datetime(pm_insert_payloads["pm_completed_date"])
-    # # catch the case of pms withouth fulcrum_id but already in the system
-    # pm_update_payloads_current_year = pm_update_payloads.loc[pm_update_payloads["pm_completed_date"] >= "2019-1-1"]
-
     pm_insert_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
     pm_update_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
 
@@ -510,21 +503,21 @@ def main():
 
 
 if __name__ == "__main__":
-
+    signal_results = main()
 
     # args = cli_args()
     # app_name = args.app_name
-    app_name = "data_tracker_prod"
+    # app_name = "data_tracker_prod"
 
-    pgrest_records = get_postgre_records()
-    knack_records = get_knack_pm_records(app_name)
-    signals_records = get_signals_records(app_name)
-    knack_technicians_records = get_technicians_records(app_name)
+    # pgrest_records = get_postgre_records()
+    # knack_records = get_knack_pm_records(app_name)
+    # signals_records = get_signals_records(app_name)
+    # knack_technicians_records = get_technicians_records(app_name)
 
-    signal_results = replace_pm_records(
-            pgrest_records,
-            knack_records,
-            signals_records,
-            knack_technicians_records,
-            app_name,
-        )
+    # signal_results = replace_pm_records(
+    #         pgrest_records,
+    #         knack_records,
+    #         signals_records,
+    #         knack_technicians_records,
+    #         app_name,
+    #     )
