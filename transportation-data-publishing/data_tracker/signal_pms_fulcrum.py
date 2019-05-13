@@ -42,6 +42,12 @@ def get_postgre_records():
     params = {}
 
     postgre_records = pgrest.select(params=params)
+    postgre_records_df = pd.DataFrame.from_dict(postgre_records)
+
+    # temporary fix to remove duplicate pm records
+    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
+
+    postgre_records = postgre_records_df.to_dict(orient="records")
 
     return postgre_records
 
@@ -239,8 +245,10 @@ def replace_pm_records(
     Returns:
         TYPE: Description
     """
+
+
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
-    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)
+    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)    
 
     pm_insert_payloads = postgre_records_df[
         ~postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
@@ -304,6 +312,7 @@ def replace_pm_records(
     pm_insert_payloads = datautil.replace_keys(
         pm_insert_payloads, knack_pm_records.field_map
     )
+
     pm_update_payloads = datautil.replace_keys(
         pm_update_payloads, knack_pm_records.field_map
     )
@@ -494,5 +503,21 @@ def main():
 
 
 if __name__ == "__main__":
+    signal_results = main()
 
-    print(main())
+    # args = cli_args()
+    # app_name = args.app_name
+    # app_name = "data_tracker_prod"
+
+    # pgrest_records = get_postgre_records()
+    # knack_records = get_knack_pm_records(app_name)
+    # signals_records = get_signals_records(app_name)
+    # knack_technicians_records = get_technicians_records(app_name)
+
+    # signal_results = replace_pm_records(
+    #         pgrest_records,
+    #         knack_records,
+    #         signals_records,
+    #         knack_technicians_records,
+    #         app_name,
+    #     )
