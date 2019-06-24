@@ -16,10 +16,10 @@ import requests
 
 import _setpath
 from config.secrets import *
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-from tdutils import socratautil
+import emailutil
+import jobutil
+import logutil
+import socratautil
 
 
 # define config variables
