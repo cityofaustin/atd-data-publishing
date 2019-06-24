@@ -10,8 +10,8 @@ import socket
 
 import arrow
 import knackpy
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 import _setpath
 from config.knack.config import cfg

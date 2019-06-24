@@ -12,9 +12,9 @@ import pdb
 import sys
 
 from pypgrest import Postgrest
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import socratautil
+import argutil
+import datautil
+import socratautil
 
 import _setpath
 from config.postgrest.config import PGREST_PUB as cfg

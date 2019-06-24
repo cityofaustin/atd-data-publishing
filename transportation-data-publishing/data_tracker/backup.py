@@ -10,8 +10,8 @@ import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 
 def mask_objects(app_name, blacklist):

@@ -8,9 +8,9 @@ import sys
 
 import arrow
 import knackpy
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import kitsutil
+import argutil
+import datautil
+import kitsutil
 
 import _setpath
 from config.knack.config import cfg

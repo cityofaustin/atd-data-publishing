@@ -9,10 +9,10 @@ import _setpath
 from config.secrets import *
 from config.knack.config import MARKINGS_AGOL as config
 
-from tdutils import agolutil
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import knackutil
+import agolutil
+import argutil
+import datautil
+import knackutil
 
 
 def remove_empty_strings(records):

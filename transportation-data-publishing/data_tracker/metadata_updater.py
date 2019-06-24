@@ -8,8 +8,8 @@ import pdb
 import arrow
 import knackpy
 import requests
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 import _setpath
 from config.metadata.config import cfg
