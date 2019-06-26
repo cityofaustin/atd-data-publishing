@@ -10,9 +10,15 @@ jobs:
 
     # Our build steps
     steps:
+      # Get out scripts
       - checkout
-      # We are simply going to source our docker helper script
-      # and run our build process.
+
+      # We need docker enabled
+      - setup_remote_docker:
+          version: 18.09.3
+          docker_layer_caching: true
+
+      # We are simply going to source our docker helper script and run our build process.
       - run:
           name: "Building Packages"
           command: |
