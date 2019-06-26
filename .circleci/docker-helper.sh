@@ -12,7 +12,7 @@ function build_containers {
     docker login -u $ATD_DOCKER_USER -p $ATD_DOCKER_PASS
 
     echo "docker build --no-cache -f Dockerfile -t $ATD_IMAGE:$ATD_TAG .";
-    docker build --no-cache -f Dockerfile -t $ATD_IMAGE:$ATD_TAG .
+    docker build -f Dockerfile -t $ATD_IMAGE:$ATD_TAG .
 
     echo "docker tag $ATD_IMAGE:$ATD_TAG $ATD_IMAGE:$ATD_TAG;";
     docker tag $ATD_IMAGE:$ATD_TAG $ATD_IMAGE:$ATD_TAG;
