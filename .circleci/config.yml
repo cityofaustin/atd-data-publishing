@@ -11,7 +11,8 @@ jobs:
     # Our build steps
     steps:
       - checkout
-
+      # We are simply going to source our docker helper script
+      # and run our build process.
       - run:
           name: "Building Packages"
           command: |
