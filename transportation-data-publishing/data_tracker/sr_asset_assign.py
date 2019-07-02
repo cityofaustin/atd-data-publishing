@@ -5,8 +5,8 @@ import _setpath
 from config.secrets import *
 from config.knack.config import SR_ASSET_ASSIGNER as cfg
 
-from tdutils import agolutil
-from tdutils import argutil
+import agolutil
+import argutil
 
 
 def cli_args():

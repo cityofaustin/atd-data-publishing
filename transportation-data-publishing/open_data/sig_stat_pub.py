@@ -8,12 +8,12 @@ import pdb
 import sys
 
 import arrow
-from tdutils import kitsutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-from tdutils import socratautil
+import kitsutil
+import datautil
+import emailutil
+import jobutil
+import logutil
+import socratautil
 
 import _setpath
 from config.knack.config import cfg

@@ -16,8 +16,8 @@ import _setpath
 from config.secrets import *
 from config.knack.config import DETETECTION_STATUS_SIGNALS as cfg
 
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 
 def groupBySignal(detector_data):

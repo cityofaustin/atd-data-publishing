@@ -12,8 +12,8 @@ import arrow
 
 import _setpath
 from config.secrets import *
-from tdutils import emailutil
-from tdutils import logutil
+import emailutil
+import logutil
 
 script = os.path.basename(__file__).replace(".py", "")
 logfile = f"{LOG_DIRECTORY}/{script}.log"

@@ -30,11 +30,11 @@ import _setpath
 from config.kits.config import *
 from config.secrets import *
 
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import kitsutil
-from tdutils import logutil
+import datautil
+import emailutil
+import jobutil
+import kitsutil
+import logutil
 
 
 fieldmap = KITS_CONFIG["fieldmap"]

@@ -14,7 +14,7 @@ import _setpath
 from config.knack.config import PURCHASE_REQUEST_COPIER as cfg
 from config.secrets import *
 
-from tdutils import datautil
+import datautil
 
 def knackpy_wrapper(cfg, auth, filters=None, raw_connections=False):
 

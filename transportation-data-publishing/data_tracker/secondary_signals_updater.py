@@ -6,7 +6,7 @@ import pdb
 
 import arrow
 import knackpy
-from tdutils import argutil
+import argutil
 
 import _setpath
 from config.knack.config import SECONDARY_SIGNALS_UPDATER as cfg

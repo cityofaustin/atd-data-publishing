@@ -12,9 +12,9 @@ import _setpath
 from config.secrets import *
 from config.knack.config import LOCATION_UPDATER as cfg
 
-from tdutils import agolutil
-from tdutils import argutil
-from tdutils import datautil
+import agolutil
+import argutil
+import datautil
 
 
 def format_stringify_list(input_list):

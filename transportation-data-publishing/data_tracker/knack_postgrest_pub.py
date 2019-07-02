@@ -7,9 +7,9 @@ import pdb
 import arrow
 import knackpy
 from pypgrest import Postgrest
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import knackutil
+import argutil
+import datautil
+import knackutil
 
 
 import _setpath
