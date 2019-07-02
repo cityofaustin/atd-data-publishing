@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export ATD_IMAGE="atddocker/atd-data-publishing";
+export ATD_IMAGE="atddocker/tdp";
 
 #
 # We need to assign the name of the branch as the tag to be deployed
