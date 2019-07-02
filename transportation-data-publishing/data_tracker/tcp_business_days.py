@@ -9,8 +9,8 @@ import knackpy
 import pandas as pd
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 import _setpath
 from config.secrets import *

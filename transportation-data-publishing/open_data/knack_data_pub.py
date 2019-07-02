@@ -17,11 +17,11 @@ import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
-from tdutils import agolutil
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import knackutil
-from tdutils import socratautil
+import agolutil
+import argutil
+import datautil
+import knackutil
+import socratautil
 
 
 def socrata_pub(records, cfg_dataset, replace, date_fields=None):

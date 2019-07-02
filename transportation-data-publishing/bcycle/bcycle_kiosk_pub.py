@@ -17,12 +17,12 @@ import requests
 
 import _setpath
 from config.secrets import *
-from tdutils import agolutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-from tdutils import socratautil
+import agolutil
+import datautil
+import emailutil
+import jobutil
+import logutil
+import socratautil
 
 service_id = "7d4d0b1369504383a42b943bd9c03f9a"
 socrata_resource_id = "qd73-bsdg"

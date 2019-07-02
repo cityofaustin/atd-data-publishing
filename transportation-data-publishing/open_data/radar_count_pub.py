@@ -11,13 +11,13 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import logutil
-from tdutils import kitsutil
-from tdutils import socratautil
+import argutil
+import datautil
+import emailutil
+import jobutil
+import logutil
+import kitsutil
+import socratautil
 
 # define config variables
 

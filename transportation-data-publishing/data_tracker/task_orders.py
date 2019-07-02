@@ -5,8 +5,8 @@ import pdb
 import knackpy
 from bs4 import BeautifulSoup
 import requests
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 import _setpath
 from config.knack.config import cfg

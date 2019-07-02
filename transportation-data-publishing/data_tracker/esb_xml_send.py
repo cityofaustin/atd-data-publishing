@@ -12,8 +12,8 @@ import requests
 import _setpath
 from config.esb.config import cfg as CONFIG
 from config.secrets import *
-from tdutils import argutil
-from tdutils import datautil
+import argutil
+import datautil
 
 
 def get_record_id_from_file(directory, file):

@@ -18,11 +18,11 @@ import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
-from tdutils import argutil
-from tdutils import emailutil
-from tdutils import jobutil
-from tdutils import datautil
-from tdutils import logutil
+import argutil
+import emailutil
+import jobutil
+import datautil
+import logutil
 
 
 LOG_OBJ = "object_131"

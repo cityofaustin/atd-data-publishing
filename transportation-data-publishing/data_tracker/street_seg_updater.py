@@ -2,11 +2,11 @@
 # COA ArcGIS Online Street Segment Feature Service
 import arrow
 import knackpy
-from tdutils import agolutil
-from tdutils import argutil
-from tdutils import datautil
-from tdutils import jobutil
-from tdutils import knackutil
+import agolutil
+import argutil
+import datautil
+import jobutil
+import knackutil
 
 import _setpath
 from config.secrets import *

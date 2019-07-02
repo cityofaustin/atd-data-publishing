@@ -22,7 +22,7 @@ from config.secrets import *
 from config.knack.config import SIGNAL_PMS_POSTGRE_KNACK as cfg
 
 # from tdutils.pgrestutil import Postgrest
-from tdutils import argutil, datautil
+import argutil, datautil
 from pypgrest import Postgrest
 
 
