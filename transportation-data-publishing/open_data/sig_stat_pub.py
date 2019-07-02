@@ -76,7 +76,7 @@ def main():
         TYPE: Description
     """
     # get current traffic signal data from Socrata
-    socr = socratautil.Soda(resource=SOCR_SIG_RES_ID, fetch_metadata=True)
+    socr = socratautil.Soda(resource=SOCR_SIG_RES_ID)
     signal_data = socr.data
 
     kits_query = kitsutil.status_query()
@@ -112,7 +112,7 @@ def main():
         new_data = []
 
     #  get current signal status DATASET and metadata from socrata
-    sig_status = socratautil.Soda(resource=SOCR_SIG_STAT_RES_ID, fetch_metadata=True)
+    sig_status = socratautil.Soda(resource=SOCR_SIG_STAT_RES_ID)
 
     #  add special socrata deleted field
     #  required for sending delete requests to socrata
