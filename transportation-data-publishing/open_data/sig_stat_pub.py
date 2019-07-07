@@ -158,6 +158,7 @@ def main():
             lon_field="location_longitude",
             location_field="location",
             replace=False,
+            source="kits"
         )
 
         return len(payload)
