@@ -7,7 +7,7 @@ atd-jobs-util
 atd-kits-util
 atd-knack-util
 atd-log-util
-atd-socrata-util-dev==0.0.5
+atd-socrata-util
 bs4
 dropbox
 feedparser==5.2.1
