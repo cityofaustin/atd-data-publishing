@@ -1,7 +1,7 @@
-'''
+"""
 Generate XML message to update 311 Service Reqeusts
 via Enterprise Service Bus
-'''
+"""
 import os
 import pdb
 
@@ -9,7 +9,7 @@ import arrow
 import knackpy
 
 import _setpath
-from config.esb.config import cfg as CONFIG #TODO: update config for signsmarkings
+from config.esb.config import cfg as CONFIG  # TODO: update config for signsmarkings
 from config.secrets import *
 
 import argutil
@@ -17,10 +17,10 @@ import datautil
 
 
 def encode_special_characters(text, lookup):
-    '''
+    """
     ESB requires ASCII characters only.
     We drop non-ASCII characters by encoding as ASCII with "ignore" flag
-    '''
+    """
     text = text.encode("ascii", errors="ignore")
     text = text.decode("ascii")
 
@@ -131,7 +131,9 @@ def cli_args():
 
 
 def main():
-
+    # TODO: Find equivalent of TMC_ACTIVITY_DATETIME in data for signsmarkigns
+    # TODO: find equivalent of ATD_ACTIVITY_ID in data for signsmarkings
+    # TODO: Create API endpoint for activities
     set_workdir()
 
     args = cli_args()
