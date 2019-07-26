@@ -9,7 +9,7 @@ import arrow
 import knackpy
 
 import _setpath
-from config.esb.config import cfg as CONFIG  # TODO: update config for signsmarkings
+from config.esb.config import cfg as CONFIG
 from config.secrets import *
 
 import argutil
@@ -80,10 +80,9 @@ def get_data(app_name, cfg):
 
 
 def build_xml_payload(record, lookup, cfg):
-
-    record[cfg["activity_details_field_name"]] = format_activity_details(record)
-    record[cfg["activity_details_field_name"]] = encode_special_characters(
-        record[cfg["activity_details_field_name"]], lookup
+    record[cfg["activity_details_fieldname"]] = format_activity_details(record, cfg["activity_name_fieldname"], cfg["activity_details_fieldname"])
+    record[cfg["activity_details_fieldname"]] = encode_special_characters(
+        record[cfg["activity_details_fieldname"]], lookup
     )
 
     record["PUBLICATION_DATETIME"] = arrow.now().format()
@@ -131,16 +130,17 @@ def cli_args():
 
 
 def main():
-    # TODO: Find equivalent of TMC_ACTIVITY_DATETIME in data for signsmarkigns
-    # TODO: find equivalent of ATD_ACTIVITY_ID in data for signsmarkings
-    # TODO: Create API endpoint for activities
+
     set_workdir()
 
     args = cli_args()
 
-    app_name = args.app_name  # TODO: add bew app name new choice: signs_markings
+    app_name = args.app_name
 
-    source = args.source  # TODO: update args to have new "source" argument or whatever
+    if "data_tracker" in app_name:
+        source = "tmc_activities"
+    elif "signs" in app_name:
+        source = "signs_markings_activities"
 
     cfg = CONFIG[source]
 
