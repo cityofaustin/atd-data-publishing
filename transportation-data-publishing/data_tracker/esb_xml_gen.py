@@ -80,7 +80,9 @@ def get_data(app_name, cfg):
 
 
 def build_xml_payload(record, lookup, cfg):
-    record[cfg["activity_details_fieldname"]] = format_activity_details(record, cfg["activity_name_fieldname"], cfg["activity_details_fieldname"])
+    record[cfg["activity_details_fieldname"]] = format_activity_details(
+        record, cfg["activity_name_fieldname"], cfg["activity_details_fieldname"]
+    )
     record[cfg["activity_details_fieldname"]] = encode_special_characters(
         record[cfg["activity_details_fieldname"]], lookup
     )
