@@ -1,6 +1,7 @@
-# Generate XML message to update 311 Service Reqeusts
-# via Enterprise Service Bus
-
+"""
+Generate XML message to update 311 Service Reqeusts
+via Enterprise Service Bus
+"""
 import os
 import pdb
 
@@ -16,8 +17,10 @@ import datautil
 
 
 def encode_special_characters(text, lookup):
-    #  ESB requires ASCII characters only
-    #  We drop non-ASCII characters by encoding as ASCII with "ignore" flag
+    """
+    ESB requires ASCII characters only.
+    We drop non-ASCII characters by encoding as ASCII with "ignore" flag
+    """
     text = text.encode("ascii", errors="ignore")
     text = text.decode("ascii")
 
@@ -62,9 +65,11 @@ def check_for_data(app_name, cfg):
 
 
 def get_data(app_name, cfg):
-    #  get data at public enpoint and also get
-    #  necessary field metadata (which is not public)
-    #  field dat ais fetched because we provide a ref_obj array
+    """
+    get data at public enpoint and also get
+    necessary field metadata (which is not public)
+    field data is fetched because we provide a ref_obj array
+    """
     return knackpy.Knack(
         ref_obj=cfg["ref_obj"],
         view=cfg["view"],
@@ -75,10 +80,13 @@ def get_data(app_name, cfg):
 
 
 def build_xml_payload(record, lookup, cfg):
-    record["TMC_ACTIVITY_DETAILS"] = format_activity_details(record)
-    record["TMC_ACTIVITY_DETAILS"] = encode_special_characters(
-        record["TMC_ACTIVITY_DETAILS"], lookup
+    record[cfg["activity_details_fieldname"]] = format_activity_details(
+        record, cfg["activity_name_fieldname"], cfg["activity_details_fieldname"]
     )
+    record[cfg["activity_details_fieldname"]] = encode_special_characters(
+        record[cfg["activity_details_fieldname"]], lookup
+    )
+
     record["PUBLICATION_DATETIME"] = arrow.now().format()
 
     with open(cfg["template"], "r") as fin:
@@ -86,9 +94,9 @@ def build_xml_payload(record, lookup, cfg):
         return template.format(**record)
 
 
-def format_activity_details(record):
-    activity = record["TMC_ACTIVITY"]
-    details = record["TMC_ACTIVITY_DETAILS"]
+def format_activity_details(record, activty_field_name, activity_details_field_name):
+    activity = record[activty_field_name]
+    details = record[activity_details_field_name]
 
     if activity and details:
         return "{} - {}".format(activity, details)
@@ -99,9 +107,11 @@ def format_activity_details(record):
 
 
 def set_workdir():
-    #  set the working directory to the location of this script
-    #  ensures file outputs go to their intended places when
-    #  script is run by an external  fine (e.g., the launcher)
+    """
+    Set the working directory to the location of this script to
+    ensure file outputs go to their intended places when
+    script is run by an external file (e.g., the launcher)
+    """
     path = os.path.dirname(__file__)
 
     if path:
@@ -129,7 +139,12 @@ def main():
 
     app_name = args.app_name
 
-    cfg = CONFIG["tmc_activities"]
+    if "data_tracker" in app_name:
+        source = "tmc_activities"
+    elif "signs" in app_name:
+        source = "signs_markings_activities"
+
+    cfg = CONFIG[source]
 
     #  invalid XLM characters to be encoded
     SPECIAL_CHAR_LOOKUP = {
@@ -178,7 +193,10 @@ def main():
         don't change the message format without considering esb_xml_send.py
         """
         with open(
-            "{}/{}_{}.xml".format(outpath, record["ATD_ACTIVITY_ID"], record["id"]), "w"
+            "{}/{}_{}.xml".format(
+                outpath, record[cfg["activity_id_field"]], record["id"]
+            ),
+            "w",
         ) as fout:
             fout.write(payload)
 
