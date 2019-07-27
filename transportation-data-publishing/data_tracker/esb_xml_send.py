@@ -152,8 +152,14 @@ def main():
     app_name = args.app_name
 
     knack_creds = KNACK_CREDENTIALS[app_name]
-
-    cfg = CONFIG["tmc_activities"]
+    
+    # TODO: add a dedicated arg for source
+    if "data_tracker" in app_name:
+        source = "tmc_activities"
+    elif "signs" in app_name:
+        source = "signs_markings_activities"
+    
+    cfg = CONFIG[source]
 
     base_path = os.path.abspath(ESB_XML_DIRECTORY)
     inpath = "{}/{}".format(base_path, "ready_to_send")
@@ -178,7 +184,7 @@ def main():
         and update Knack record with status of SENT.
         """
         record_id = get_record_id_from_file(inpath, filename)
-
+        
         msg = get_msg(inpath, filename)
 
         res = send_msg(msg, ESB_ENDPOINT["prod"], cfg["path_cert"], cfg["path_key"])
