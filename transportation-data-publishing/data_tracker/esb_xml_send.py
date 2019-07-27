@@ -61,7 +61,7 @@ def get_sorted_file_list(path, app_name):
     for file in os.listdir(path):
         filename = os.fsdecode(file)
 
-        if app_name in filename and filename.endswith(".xml")
+        if app_name in filename and filename.endswith(".xml"):
             files.append(file)
 
     files.sort()
