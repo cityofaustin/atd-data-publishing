@@ -20,13 +20,13 @@ def get_record_id_from_file(directory, file):
     """
     Extract Knack record id from filename.
     
-    Expects XML messages to be named with incremental record ID as well as
+    Expects XML messages to be named with the app name, incremental record ID, as well as
     Knack database ID. The former is used to sort records in chronological
     order (not returned by this function) and the latter is used to update
     the Knack record with a 'SENT' status when message has been successfully
     transmitted to ESB.
     
-    Expected format is incrementaId_knackId.xml. E.g. 10034_axc3345f23msf0.xml
+    Expected format is incrementaId_knackId.xml. E.g. data_tracker_prod_10034_axc3345f23msf0.xml
     
     Args:
         directory (TYPE): Description
@@ -36,10 +36,10 @@ def get_record_id_from_file(directory, file):
         TYPE: Description
     """
     record_data = file.split(".")[0]
-    return record_data.split("_")[1]
+    return record_data.split("_-_")[2]
 
 
-def get_sorted_file_list(path):
+def get_sorted_file_list(path, app_name):
     """
     Retrieve XML files from directory and return a sorted list of
     files based on filename.
@@ -61,7 +61,7 @@ def get_sorted_file_list(path):
     for file in os.listdir(path):
         filename = os.fsdecode(file)
 
-        if filename.endswith(".xml"):
+        if app_name in filename and filename.endswith(".xml"):
             files.append(file)
 
     files.sort()
@@ -152,8 +152,14 @@ def main():
     app_name = args.app_name
 
     knack_creds = KNACK_CREDENTIALS[app_name]
-
-    cfg = CONFIG["tmc_activities"]
+    
+    # TODO: add a dedicated arg for source
+    if "data_tracker" in app_name:
+        source = "tmc_activities"
+    elif "signs" in app_name:
+        source = "signs_markings_activities"
+    
+    cfg = CONFIG[source]
 
     base_path = os.path.abspath(ESB_XML_DIRECTORY)
     inpath = "{}/{}".format(base_path, "ready_to_send")
@@ -170,7 +176,7 @@ def main():
     Get files in order by incremental ID. This ensures messages
     are transmitted chronologically.
     """
-    files = get_sorted_file_list(inpath)
+    files = get_sorted_file_list(inpath, app_name)
 
     for filename in files:
         """

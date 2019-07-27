@@ -193,8 +193,8 @@ def main():
         don't change the message format without considering esb_xml_send.py
         """
         with open(
-            "{}/{}_{}.xml".format(
-                outpath, record[cfg["activity_id_field"]], record["id"]
+            "{}/{}_-_{}_-_{}.xml".format(
+                outpath, app_name, record[cfg["activity_id_field"]], record["id"]
             ),
             "w",
         ) as fout:
