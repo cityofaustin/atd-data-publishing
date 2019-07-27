@@ -39,7 +39,7 @@ def get_record_id_from_file(directory, file):
     return record_data.split("_-_")[2]
 
 
-def get_sorted_file_list(path):
+def get_sorted_file_list(path, app_name):
     """
     Retrieve XML files from directory and return a sorted list of
     files based on filename.
@@ -61,7 +61,7 @@ def get_sorted_file_list(path):
     for file in os.listdir(path):
         filename = os.fsdecode(file)
 
-        if filename.endswith(".xml"):
+        if app_name in filename and filename.endswith(".xml")
             files.append(file)
 
     files.sort()
@@ -176,7 +176,7 @@ def main():
     Get files in order by incremental ID. This ensures messages
     are transmitted chronologically.
     """
-    files = get_sorted_file_list(inpath)
+    files = get_sorted_file_list(inpath, app_name)
 
     for filename in files:
         """
