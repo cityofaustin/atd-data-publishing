@@ -20,13 +20,13 @@ def get_record_id_from_file(directory, file):
     """
     Extract Knack record id from filename.
     
-    Expects XML messages to be named with incremental record ID as well as
+    Expects XML messages to be named with the app name, incremental record ID, as well as
     Knack database ID. The former is used to sort records in chronological
     order (not returned by this function) and the latter is used to update
     the Knack record with a 'SENT' status when message has been successfully
     transmitted to ESB.
     
-    Expected format is incrementaId_knackId.xml. E.g. 10034_axc3345f23msf0.xml
+    Expected format is incrementaId_knackId.xml. E.g. data_tracker_prod_10034_axc3345f23msf0.xml
     
     Args:
         directory (TYPE): Description
@@ -36,7 +36,7 @@ def get_record_id_from_file(directory, file):
         TYPE: Description
     """
     record_data = file.split(".")[0]
-    return record_data.split("_")[1]
+    return record_data.split("_-_")[2]
 
 
 def get_sorted_file_list(path):
@@ -184,7 +184,7 @@ def main():
         and update Knack record with status of SENT.
         """
         record_id = get_record_id_from_file(inpath, filename)
-        
+
         msg = get_msg(inpath, filename)
 
         res = send_msg(msg, ESB_ENDPOINT["prod"], cfg["path_cert"], cfg["path_key"])
