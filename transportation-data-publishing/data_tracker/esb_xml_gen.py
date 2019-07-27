@@ -194,7 +194,7 @@ def main():
         """
         with open(
             "{}/{}_-_{}_-_{}.xml".format(
-                app_name, outpath, record[cfg["activity_id_field"]], record["id"]
+                outpath, app_name, record[cfg["activity_id_field"]], record["id"]
             ),
             "w",
         ) as fout:
