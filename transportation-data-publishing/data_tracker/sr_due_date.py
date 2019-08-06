@@ -100,11 +100,11 @@ def main():
         """
         due_date = get_due_date(flex_note.data[0]["FLEX_ATTRIBUTE_VALUE"])
 
-        record = {cfg["tmc_issues"]["due_date_field_id"]: due_date, "id": sr["id"]}
+        record = {cfg["issues"]["due_date_field_id"]: due_date, "id": sr["id"]}
 
         res = knackpy.record(
             record,
-            obj_key=cfg["tmc_issues"]["ref_obj"][0],
+            obj_key=cfg["issues"]["ref_obj"][0],
             app_id=KNACK_CREDENTIALS[app_name]["app_id"],
             api_key=KNACK_CREDENTIALS[app_name]["api_key"],
             method="update",
