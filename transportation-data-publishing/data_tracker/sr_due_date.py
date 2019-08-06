@@ -52,10 +52,17 @@ def main():
 
     app_name = args.app_name
 
+    # look up the corresponding configuration based on app name
+    # with this pattern, "data_tracker_prod" and "data_tracker_test"
+    # returns the same config, which is what we want
+    for cfg_name in cfg.keys():
+        if cfg_name in app_name:
+            cfg = cfg[cfg_name] 
+
     srs = knackpy.Knack(
-        view=cfg["tmc_issues"]["view"],
-        scene=cfg["tmc_issues"]["scene"],
-        ref_obj=cfg["tmc_issues"]["ref_obj"],
+        view=cfg["issues"]["view"],
+        scene=cfg["issues"]["scene"],
+        ref_obj=cfg["issues"]["ref_obj"],
         app_id=KNACK_CREDENTIALS[app_name]["app_id"],
         api_key=KNACK_CREDENTIALS[app_name]["api_key"],
     )
