@@ -19,7 +19,11 @@ def sr_filter(sr_id, flex_note_code_field_id, sr_field_id):
     return {
         "match": "and",
         "rules": [
-            {"field": f"{flex_note_code_field_id}", "operator": "is", "value": f"SRSLADAT"},
+            {
+                "field": f"{flex_note_code_field_id}",
+                "operator": "is",
+                "value": f"SRSLADAT",
+            },
             {"field": f"{sr_field_id}", "operator": "is", "value": f"{sr_id}"},
         ],
     }
@@ -38,7 +42,7 @@ def get_due_date(date):
 
 def cli_args():
     parser = argutil.get_parser(
-        "sr_due_date.py", "Update 311 SRs with their due date.","app_name"
+        "sr_due_date.py", "Update 311 SRs with their due date.", "app_name"
     )
 
     args = parser.parse_args()
@@ -57,7 +61,7 @@ def main():
     # returns the same config, which is what we want
     for cfg_name in SR_DUE_DATE.keys():
         if cfg_name in app_name:
-            cfg = SR_DUE_DATE[cfg_name] 
+            cfg = SR_DUE_DATE[cfg_name]
 
     srs = knackpy.Knack(
         view=cfg["issues"]["view"],
@@ -71,13 +75,13 @@ def main():
 
     if not srs.data:
         return 0
-    
+
     for sr in srs.data_raw:
 
         filters = sr_filter(
             sr[cfg["issues"]["sr_field_id"]],
             cfg["flex_notes"]["flex_question_code_field_id"],
-            cfg["flex_notes"]["sr_id_field"]
+            cfg["flex_notes"]["sr_id_field"],
         )
 
         flex_note = knackpy.Knack(
@@ -110,9 +114,10 @@ def main():
             method="update",
         )
 
-        count +=1
+        count += 1
 
     return count
+
 
 if __name__ == "__main__":
     main()
