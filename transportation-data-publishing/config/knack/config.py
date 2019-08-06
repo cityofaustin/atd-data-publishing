@@ -650,17 +650,34 @@ SIGNAL_PMS_POSTGRE_KNACK = {
 }
 
 SR_DUE_DATE = {
-    "tmc_issues" : {
-        'scene' : 'scene_514',
-        'view' : 'view_2351',
-        'ref_obj' : ['object_83'],
-        'due_date_field_id' : 'field_2772'
+    "data_trackerd" : {
+        "issues" : {
+            'scene' : 'scene_514',
+            'view' : 'view_2351',
+            'ref_obj' : ['object_83'],
+            'due_date_field_id' : 'field_2772'
+        },
+        "flex_notes" : {
+            'scene' : 'scene_514',
+            'view' : 'view_2352',
+            'ref_obj' : ['object_95'],
+            'sr_id_field' : 'field_1452'
+        },
     },
-    "flex_notes" : {
-        'scene' : 'scene_514',
-        'view' : 'view_2352',
-        'ref_obj' : ['object_95'],
-        'sr_id_field' : 'field_1452'
+    "signs_markings" : {
+        "issues" : {
+            'scene' : 'scene_1232',
+            'view' : 'view_3059',
+            'ref_obj' : ['object_171'],
+            'due_date_field_id' : 'field_3527'
+        },
+        "flex_notes" : {
+            'scene' : 'scene_1232',
+            'view' : 'view_3060',
+            'ref_obj' : ['object_172'],
+            'sr_id_field' : 'field_3128'
+        },
+
     }
 }
 
