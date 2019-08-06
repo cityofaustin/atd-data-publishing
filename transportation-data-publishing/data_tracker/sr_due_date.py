@@ -9,18 +9,18 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from config.knack.config import SR_DUE_DATE as cfg
+from config.knack.config import SR_DUE_DATE
 
 import argutil
 
 
-def sr_filter(sr_id, field_id):
+def sr_filter(sr_id, flex_note_code_field_id, sr_field_id):
 
     return {
         "match": "and",
         "rules": [
-            {"field": f"field_1455", "operator": "is", "value": f"SRSLADAT"},
-            {"field": f"{field_id}", "operator": "is", "value": f"{sr_id}"},
+            {"field": f"{flex_note_code_field_id}", "operator": "is", "value": f"SRSLADAT"},
+            {"field": f"{sr_field_id}", "operator": "is", "value": f"{sr_id}"},
         ],
     }
 
@@ -55,9 +55,9 @@ def main():
     # look up the corresponding configuration based on app name
     # with this pattern, "data_tracker_prod" and "data_tracker_test"
     # returns the same config, which is what we want
-    for cfg_name in cfg.keys():
+    for cfg_name in SR_DUE_DATE.keys():
         if cfg_name in app_name:
-            cfg = cfg[cfg_name] 
+            cfg = SR_DUE_DATE[cfg_name] 
 
     srs = knackpy.Knack(
         view=cfg["issues"]["view"],
@@ -71,10 +71,14 @@ def main():
 
     if not srs.data:
         return 0
-        
-    for sr in srs.data:
+    
+    for sr in srs.data_raw:
 
-        filters = sr_filter(sr["SR_NUMBER"], cfg["flex_notes"]["sr_id_field"])
+        filters = sr_filter(
+            sr[cfg["issues"]["sr_field_id"]],
+            cfg["flex_notes"]["flex_question_code_field_id"],
+            cfg["flex_notes"]["sr_id_field"]
+        )
 
         flex_note = knackpy.Knack(
             view=cfg["flex_notes"]["view"],
