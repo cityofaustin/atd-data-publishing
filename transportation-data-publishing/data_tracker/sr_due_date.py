@@ -9,18 +9,22 @@ import knackpy
 
 import _setpath
 from config.secrets import *
-from config.knack.config import SR_DUE_DATE as cfg
+from config.knack.config import SR_DUE_DATE
 
 import argutil
 
 
-def sr_filter(sr_id, field_id):
+def sr_filter(sr_id, flex_note_code_field_id, sr_field_id):
 
     return {
         "match": "and",
         "rules": [
-            {"field": f"field_1455", "operator": "is", "value": f"SRSLADAT"},
-            {"field": f"{field_id}", "operator": "is", "value": f"{sr_id}"},
+            {
+                "field": f"{flex_note_code_field_id}",
+                "operator": "is",
+                "value": f"SRSLADAT",
+            },
+            {"field": f"{sr_field_id}", "operator": "is", "value": f"{sr_id}"},
         ],
     }
 
@@ -38,7 +42,7 @@ def get_due_date(date):
 
 def cli_args():
     parser = argutil.get_parser(
-        "sr_due_date.py", "Update 311 SRs with their due date.","app_name"
+        "sr_due_date.py", "Update 311 SRs with their due date.", "app_name"
     )
 
     args = parser.parse_args()
@@ -52,10 +56,17 @@ def main():
 
     app_name = args.app_name
 
+    # look up the corresponding configuration based on app name
+    # with this pattern, "data_tracker_prod" and "data_tracker_test"
+    # returns the same config, which is what we want
+    for cfg_name in SR_DUE_DATE.keys():
+        if cfg_name in app_name:
+            cfg = SR_DUE_DATE[cfg_name]
+
     srs = knackpy.Knack(
-        view=cfg["tmc_issues"]["view"],
-        scene=cfg["tmc_issues"]["scene"],
-        ref_obj=cfg["tmc_issues"]["ref_obj"],
+        view=cfg["issues"]["view"],
+        scene=cfg["issues"]["scene"],
+        ref_obj=cfg["issues"]["ref_obj"],
         app_id=KNACK_CREDENTIALS[app_name]["app_id"],
         api_key=KNACK_CREDENTIALS[app_name]["api_key"],
     )
@@ -64,10 +75,14 @@ def main():
 
     if not srs.data:
         return 0
-        
-    for sr in srs.data:
 
-        filters = sr_filter(sr["SR_NUMBER"], cfg["flex_notes"]["sr_id_field"])
+    for sr in srs.data_raw:
+
+        filters = sr_filter(
+            sr[cfg["issues"]["sr_field_id"]],
+            cfg["flex_notes"]["flex_question_code_field_id"],
+            cfg["flex_notes"]["sr_id_field"],
+        )
 
         flex_note = knackpy.Knack(
             view=cfg["flex_notes"]["view"],
@@ -89,19 +104,20 @@ def main():
         """
         due_date = get_due_date(flex_note.data[0]["FLEX_ATTRIBUTE_VALUE"])
 
-        record = {cfg["tmc_issues"]["due_date_field_id"]: due_date, "id": sr["id"]}
+        record = {cfg["issues"]["due_date_field_id"]: due_date, "id": sr["id"]}
 
         res = knackpy.record(
             record,
-            obj_key=cfg["tmc_issues"]["ref_obj"][0],
+            obj_key=cfg["issues"]["ref_obj"][0],
             app_id=KNACK_CREDENTIALS[app_name]["app_id"],
             api_key=KNACK_CREDENTIALS[app_name]["api_key"],
             method="update",
         )
 
-        count +=1
+        count += 1
 
     return count
+
 
 if __name__ == "__main__":
     main()
