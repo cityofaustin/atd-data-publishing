@@ -140,8 +140,10 @@ def main():
         params["geometry"] = get_geom(cfg, record)
 
         res = agolutil.point_in_poly(layer["service_name"], layer["layer_id"], params)
-
-        if not res["features"]:
+        
+        res.raise_for_status()
+        
+        if not res.get("features"):
             # no nearby asset found
             payload = no_asset_found_payload(
                 record["id"], cfg["tmc_issues"]["assign_status_field_id"]
