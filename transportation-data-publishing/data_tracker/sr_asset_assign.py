@@ -140,8 +140,10 @@ def main():
         params["geometry"] = get_geom(cfg, record)
 
         res = agolutil.point_in_poly(layer["service_name"], layer["layer_id"], params)
-        
-        res.raise_for_status()
+
+        # we have to manually check for response errors. The API returns `200` regardless
+        if "error" in res:
+            raise Exception(res)
         
         if not res.get("features"):
             # no nearby asset found
