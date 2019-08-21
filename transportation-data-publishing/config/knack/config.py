@@ -71,7 +71,7 @@ cfg = {
         "service_id": "52f2b5e51b9a4b5e918b0be5646f27b2",
         "socrata_resource_id": "b4k4-adkb",
         "status_field": "CAMERA_STATUS",
-        "to_json_fields" : ["CAMERA_ID", "CAMERA_IP"],
+        "to_json_fields": ["CAMERA_ID", "CAMERA_IP"],
         "status_filter_comm_status": ["TURNED_ON"],
         "view": "view_395",
     },
@@ -98,7 +98,7 @@ cfg = {
         "scene": "scene_144",
         "status_field": "CAMERA_STATUS",
         "view": "view_2347",
-        "timeout" : 10
+        "timeout": 10,
     },
     "csr_flex_notes": {
         "include_ids": True,
@@ -108,7 +108,7 @@ cfg = {
         "ref_obj": ["object_95"],
         "scene": "scene_923",
         "view": "view_2356",
-        "pgrest_base_url" : "http://transportation-data.austintexas.io/csr_flex_notes"
+        "pgrest_base_url": "http://transportation-data.austintexas.io/csr_flex_notes",
     },
     "detectors": {
         "primary_key": "DETECTOR_ID",
@@ -616,86 +616,97 @@ TCP_BUSINESS_DAYS = {
 
 
 PURCHASE_REQUEST_COPIER = {
-    "purchase_requests" : {
-        'scene' : 'scene_84',
-        'view' : 'view_211',
-        'ref_obj' : ['object_1'],
-        'unique_id_field_name' : 'AUTO_INCREMENT',
-        'copy_field_id' : 'field_268',
-        'requester_field_id' : 'field_12',
-        'copied_by_field_id' : 'field_283'
+    "purchase_requests": {
+        "scene": "scene_84",
+        "view": "view_211",
+        "ref_obj": ["object_1"],
+        "unique_id_field_name": "AUTO_INCREMENT",
+        "copy_field_id": "field_268",
+        "requester_field_id": "field_12",
+        "copied_by_field_id": "field_283",
     },
-    "items" : {
-        'obj' : 'object_4',
-        'pr_field_id' : 'field_269',
-        'pr_connection_field_name' : 'purchase_request'
-    }
+    "items": {
+        "obj": "object_4",
+        "pr_field_id": "field_269",
+        "pr_connection_field_name": "purchase_request",
+    },
 }
 SIGNAL_PMS_POSTGRE_KNACK = {
     "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
-    "postgre_url" : "http://transportation-data.austintexas.io/signal_pms",
-    "knack_pms": {
-        "scene" : "scene_920",
-        "view" : "view_2350",
-        "ref_obj" : ["object_84"],
-    },
+    "postgre_url": "http://transportation-data.austintexas.io/signal_pms",
+    "knack_pms": {"scene": "scene_920", "view": "view_2350", "ref_obj": ["object_84"]},
     "knack_signals": {
-        "scene" : "scene_73",
-        "view" : "view_197",
-        "ref_obj" : ["object_12"]
-    }, 
-    "knack_technicians" : {
-        "objects" : "object_9"
-    }   
+        "scene": "scene_73",
+        "view": "view_197",
+        "ref_obj": ["object_12"],
+    },
+    "knack_technicians": {"objects": "object_9"},
 }
 
 SR_DUE_DATE = {
-    "tmc_issues" : {
-        'scene' : 'scene_514',
-        'view' : 'view_2351',
-        'ref_obj' : ['object_83'],
-        'due_date_field_id' : 'field_2772'
+    "data_trackerd": {
+        "issues": {
+            "scene": "scene_514",
+            "view": "view_2351",
+            "ref_obj": ["object_83"],
+            "due_date_field_id": "field_2772",
+            "sr_field_id": "field_1232",
+        },
+        "flex_notes": {
+            "scene": "scene_514",
+            "view": "view_2352",
+            "ref_obj": ["object_95"],
+            "sr_id_field": "field_1452",
+            "flex_question_code_field_id": "field_1455",
+        },
     },
-    "flex_notes" : {
-        'scene' : 'scene_514',
-        'view' : 'view_2352',
-        'ref_obj' : ['object_95'],
-        'sr_id_field' : 'field_1452'
-    }
+    "signs_markings": {
+        "issues": {
+            "scene": "scene_1232",
+            "view": "view_3059",
+            "ref_obj": ["object_171"],
+            "due_date_field_id": "field_3527",
+            "sr_field_id": "field_3071",
+        },
+        "flex_notes": {
+            "scene": "scene_1232",
+            "view": "view_3060",
+            "ref_obj": ["object_172"],
+            "sr_id_field": "field_3128",
+            "flex_question_code_field_id": "field_3131",
+        },
+    },
 }
 
 SR_ASSET_ASSIGNER = {
-    "tmc_issues" : {
-        "scene" : "scene_514",
-        "view" : "view_2362",
-        "ref_obj" : ["object_83"],
-        "x_field" : "CSR_Y_VALUE",
-        "y_field" : "CSR_X_VALUE",
-        "primary_key" : "field_1678", # TMC_ISSUE_ID
-        "connection_field_keys" : {
-            "signals" : "field_1367"
-        },
-        "assign_status_field_id" : "field_2813"
+    "tmc_issues": {
+        "scene": "scene_514",
+        "view": "view_2362",
+        "ref_obj": ["object_83"],
+        "x_field": "CSR_Y_VALUE",
+        "y_field": "CSR_X_VALUE",
+        "primary_key": "field_1678",  # TMC_ISSUE_ID
+        "connection_field_keys": {"signals": "field_1367"},
+        "assign_status_field_id": "field_2813",
     },
-    "tmc_asset_form" : {
-        "scene" : "scene_428",
-        "view" : "view_1521",
-        "input_fields" : ["ASSET_TYPE"]
+    "tmc_asset_form": {
+        "scene": "scene_428",
+        "view": "view_1521",
+        "input_fields": ["ASSET_TYPE"],
     },
-    "signals" : {
-        "scene" : "scene_73",
-        "view" : "view_197",
-        "ref_obj" : ["object_12"],
-        "primary_key" : "field_199", # SIGNAL_ID
-        "display_name" : "Signal",
-        "layer" : {
+    "signals": {
+        "scene": "scene_73",
+        "view": "view_197",
+        "ref_obj": ["object_12"],
+        "primary_key": "field_199",  # SIGNAL_ID
+        "display_name": "Signal",
+        "layer": {
             "service_name": "TRANSPORTATION_signals2",
             "outFields": "SIGNAL_ID",
             "layer_id": 0,
             "distance": 10,
             "units": "esriSRUnit_Foot",
-            "primary_key" : "SIGNAL_ID"
-        }
-    }
+            "primary_key": "SIGNAL_ID",
+        },
+    },
 }
-
