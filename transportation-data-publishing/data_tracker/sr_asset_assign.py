@@ -141,7 +141,11 @@ def main():
 
         res = agolutil.point_in_poly(layer["service_name"], layer["layer_id"], params)
 
-        if not res["features"]:
+        # we have to manually check for response errors. The API returns `200` regardless
+        if "error" in res:
+            raise Exception(res)
+        
+        if not res.get("features"):
             # no nearby asset found
             payload = no_asset_found_payload(
                 record["id"], cfg["tmc_issues"]["assign_status_field_id"]
