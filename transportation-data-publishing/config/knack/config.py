@@ -644,7 +644,7 @@ SIGNAL_PMS_POSTGRE_KNACK = {
 }
 
 SR_DUE_DATE = {
-    "data_trackerd": {
+    "data_tracker": {
         "issues": {
             "scene": "scene_514",
             "view": "view_2351",
