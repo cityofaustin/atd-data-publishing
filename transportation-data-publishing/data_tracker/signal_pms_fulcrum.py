@@ -32,6 +32,7 @@ key = FULCRUM.get("api_key")
 
 pgrest = Postgrest(cfg.get("postgre_url"), auth=JOB_DB_API_TOKEN)
 
+
 def get_postgre_records():
     """Summary
     get postgreSQL records for all signal pms currently in postgreSQL
@@ -45,7 +46,9 @@ def get_postgre_records():
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
 
     # temporary fix to remove duplicate pm records
-    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
+    postgre_records_df = postgre_records_df.sort_values(
+        "modified_date"
+    ).drop_duplicates(subset="fulcrum_id", keep="last")
 
     postgre_records = postgre_records_df.to_dict(orient="records")
 
@@ -168,16 +171,16 @@ def map_knack_id_signal_id(signals_records, payloads):
         right=signal_records_df, left_on="signal_id", right_on="SIGNAL_ID", how="left"
     )
 
-    signal_id_mapped_payloads = signal_id_mapped_payloads.drop(["signal_id"], axis = 1)
-    
+    signal_id_mapped_payloads = signal_id_mapped_payloads.drop(["signal_id"], axis=1)
+
     return signal_id_mapped_payloads
 
 
 def map_technicians_id_pm_payloads(payloads, knack_technicians):
-    '''
+    """
     Retrieve the Knack record ID of each technician and set payload
     values accordingly.
-    '''
+    """
     knack_technicians = knack_technicians.data
     knack_technicians_mapped = {}
 
@@ -191,11 +194,13 @@ def map_technicians_id_pm_payloads(payloads, knack_technicians):
         if "choice_values" in completed_by:
             # multiple technicians selected, but knack expectes one "complted_by" value only
             # so we take the first
-            
+
             completed_by = json.loads(completed_by)
-            
-            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[completed_by["choice_values"][0]]
-            
+
+            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
+                completed_by["choice_values"][0]
+            ]
+
         else:
             # only one technician selected
             payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
@@ -267,7 +272,7 @@ def replace_pm_records(
         TYPE: Description
     """
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
-    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)    
+    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)
 
     pm_insert_payloads = postgre_records_df[
         ~postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
@@ -321,9 +326,7 @@ def replace_pm_records(
             del d["id"]
 
     signal_payloads = prepare_signals_payloads(pm_replace_payloads, signal_records)
-    signals_payloads = datautil.replace_keys(
-        signal_payloads, signal_records.field_map
-    )
+    signals_payloads = datautil.replace_keys(signal_payloads, signal_records.field_map)
     signal_results = update_signals_modified_time(signals_payloads, app_name)
 
     # end update signal modified time in replace method
@@ -395,7 +398,7 @@ def prepare_signals_payloads(payloads, signals_records):
     )
 
     signals_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
-    
+
     signals_payloads = signals_payloads[["SIGNAL_ID", "MODIFIED_DATE", "id"]]
 
     signals_payloads = signals_payloads.rename(
@@ -497,7 +500,6 @@ def main():
             knack_records,
             knack_technicians_records,
         )
-
 
         if len(pm_payloads) == 0:
 
