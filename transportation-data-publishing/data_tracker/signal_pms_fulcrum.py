@@ -32,6 +32,7 @@ key = FULCRUM.get("api_key")
 
 pgrest = Postgrest(cfg.get("postgre_url"), auth=JOB_DB_API_TOKEN)
 
+
 def get_postgre_records():
     """Summary
     get postgreSQL records for all signal pms currently in postgreSQL
@@ -45,7 +46,9 @@ def get_postgre_records():
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
 
     # temporary fix to remove duplicate pm records
-    postgre_records_df = postgre_records_df.sort_values('modified_date').drop_duplicates(subset = 'fulcrum_id',keep='last')
+    postgre_records_df = postgre_records_df.sort_values(
+        "modified_date"
+    ).drop_duplicates(subset="fulcrum_id", keep="last")
 
     postgre_records = postgre_records_df.to_dict(orient="records")
 
@@ -159,6 +162,7 @@ def map_knack_id_signal_id(signals_records, payloads):
     signal_records_df = pd.DataFrame.from_dict(signals_records.data)
 
     signal_records_df = signal_records_df[["SIGNAL_ID", "id"]]
+
     signal_records_df = signal_records_df.rename(columns={"id": "SIGNAL"})
 
     signal_records_df["SIGNAL_ID"] = signal_records_df["SIGNAL_ID"].astype(str)
@@ -167,22 +171,41 @@ def map_knack_id_signal_id(signals_records, payloads):
         right=signal_records_df, left_on="signal_id", right_on="SIGNAL_ID", how="left"
     )
 
-    signal_id_mapped_payloads = signal_id_mapped_payloads.drop(["signal_id"], axis = 1)
-    
+    signal_id_mapped_payloads = signal_id_mapped_payloads.drop(["signal_id"], axis=1)
+
     return signal_id_mapped_payloads
 
 
 def map_technicians_id_pm_payloads(payloads, knack_technicians):
+    """
+    Retrieve the Knack record ID of each technician and set payload
+    values accordingly.
+    """
     knack_technicians = knack_technicians.data
-    knack_technicians_mapped = dict()
+    knack_technicians_mapped = {}
 
     for item in knack_technicians:
         knack_technicians_mapped[item["Email_email"]] = item["id"]
 
     for i, payload in enumerate(payloads):
-        payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
-            payload.get("PM_COMPLETED_BY")
-        ]
+
+        completed_by = payload.get("PM_COMPLETED_BY")
+
+        if "choice_values" in completed_by:
+            # multiple technicians selected, but knack expectes one "complted_by" value only
+            # so we take the first
+
+            completed_by = json.loads(completed_by)
+
+            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
+                completed_by["choice_values"][0]
+            ]
+
+        else:
+            # only one technician selected
+            payloads[i]["PM_COMPLETED_BY"] = knack_technicians_mapped[
+                payload.get("PM_COMPLETED_BY")
+            ]
 
     return payloads
 
@@ -207,14 +230,17 @@ def prepare_pm_payloads(
     """
 
     pgrest_records_df = pd.DataFrame.from_dict(pgrest_records)
+
     pgrest_records_df["modified_date"] = pgrest_records_df["modified_date"].apply(
         datetime_to_unix_timestamp
     )
+
     pgrest_records_df["PM_STATUS"] = "COMPLETED"
 
     pgrest_records_df = map_knack_id_signal_id(signal_records, pgrest_records_df)
 
     pgrest_records_df.columns = map(str.upper, pgrest_records_df.columns)
+
     pgrest_records_df = pgrest_records_df.rename(columns={"ID": "id"})
 
     pgrest_records_list = pgrest_records_df.to_dict(orient="records")
@@ -245,10 +271,8 @@ def replace_pm_records(
     Returns:
         TYPE: Description
     """
-
-
     postgre_records_df = pd.DataFrame.from_dict(postgre_records)
-    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)    
+    knack_pm_records_df = pd.DataFrame.from_dict(knack_pm_records.data)
 
     pm_insert_payloads = postgre_records_df[
         ~postgre_records_df["fulcrum_id"].isin(knack_pm_records_df["FULCRUM_ID"])
@@ -302,9 +326,7 @@ def replace_pm_records(
             del d["id"]
 
     signal_payloads = prepare_signals_payloads(pm_replace_payloads, signal_records)
-    signals_payloads = datautil.replace_keys(
-        signal_payloads, signal_records.field_map
-    )
+    signals_payloads = datautil.replace_keys(signal_payloads, signal_records.field_map)
     signal_results = update_signals_modified_time(signals_payloads, app_name)
 
     # end update signal modified time in replace method
@@ -367,8 +389,6 @@ def prepare_signals_payloads(payloads, signals_records):
 
     payloads = pd.DataFrame.from_dict(payloads)
 
-
-
     signals_records_df["SIGNAL_ID"] = signals_records_df["SIGNAL_ID"].astype("str")
 
     payloads["SIGNAL_ID"] = payloads["SIGNAL_ID"].astype("str")
@@ -378,6 +398,7 @@ def prepare_signals_payloads(payloads, signals_records):
     )
 
     signals_payloads["MODIFIED_DATE"] = datautil.local_timestamp()
+
     signals_payloads = signals_payloads[["SIGNAL_ID", "MODIFIED_DATE", "id"]]
 
     signals_payloads = signals_payloads.rename(
@@ -479,7 +500,6 @@ def main():
             knack_records,
             knack_technicians_records,
         )
-
 
         if len(pm_payloads) == 0:
 
