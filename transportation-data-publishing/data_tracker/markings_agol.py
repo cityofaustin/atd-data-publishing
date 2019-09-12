@@ -1,19 +1,34 @@
 # Publish pavement markings work orders to ArcGIS Online
+import copy
 import pdb
 import traceback
 
+import agolutil
+import argutil
 import arrow
+import datautil
+import emailutil
+import knackutil
 import knackpy
 
 import _setpath
 from config.secrets import *
 from config.knack.config import MARKINGS_AGOL as config
 
-import agolutil
-import argutil
-import datautil
-import knackutil
 
+# we use this global to store wo geometries so they can be accessed
+# when fetching geometries for jobs. it aint pretty, but is it really so bad?
+work_order_geometries = None
+
+def get_paths_from_work_orders(records, match_field="ATD_WORK_ORDER_ID", output_field="paths"):
+    # copy work order geometries from work order to child jobs
+    for record in records:
+        for wo in work_order_geometries:    
+            if record[match_field] == wo[match_field]:
+                record[output_field] = wo[output_field]
+                continue
+
+    return records
 
 def remove_empty_strings(records):
     new_records = []
@@ -125,7 +140,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=10000,
+        page_limit=1000000
     )
 
 
@@ -166,6 +181,7 @@ def main():
     we receive it.
     """
     for cfg in config:
+        print(cfg["name"])
         filters = knackutil.date_filter_on_or_after(
             last_run_date, cfg["modified_date_field_id"]
         )
@@ -186,22 +202,15 @@ def main():
 
         records = kn.data
 
-        if cfg.get("geometry_service_id"):
-            #  dataset has geomteries to be retrieved from another dataset
-            if cfg.get("multi_source_geometry"):
-                source_ids = datautil.unique_from_list_field(
-                    records, list_field=cfg["geometry_record_id_field"]
-                )
+        if cfg.get("name") == "markings_work_orders":
+            #  markings work order geometries are retrieved from AGOL
+            
+            # reduce to unique segment ids from all records
+            segment_ids = datautil.unique_from_list_field(
+                records, list_field=cfg["geometry_record_id_field"]
+            )
 
-            else:
-                source_ids = datautil.get_values(
-                    records, cfg["geometry_record_id_field"]
-                )
-
-            where_ids = ", ".join(f"'{x}'" for x in source_ids)
-
-            if where_ids:
-                where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
+            if segment_ids:
 
                 geometry_layer = agolutil.get_item(
                     auth=AGOL_CREDENTIALS,
@@ -209,20 +218,43 @@ def main():
                     layer_id=cfg["geometry_layer_id"],
                 )
 
-                source_geometries = geometry_layer.query(
-                    where=where, outFields=cfg["geometry_record_id_field"]
-                )
+                source_geometries_all = []
 
-                if not source_geometries:
-                    raise Exception(
-                        "No features returned from source geometry layer query"
-                    )
+                chunksize = 200
 
+                for i in range(0, len(segment_ids), chunksize):
+                    # fetch agol source geometries in chunks
+
+                    print(f"Chunk {i}-{i+chunksize}")
+                    where_ids = ", ".join(f"'{x}'" for x in segment_ids[i : i + chunksize])
+
+                    if where_ids:
+                        where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
+
+                        source_geometries_chunk = geometry_layer.query(
+                            where=where, outFields=cfg["geometry_record_id_field"]
+                        )
+
+                        if not source_geometries_chunk:
+                            raise Exception(
+                                "No features returned from source geometry layer query"
+                            )
+
+                        source_geometries_all.extend(source_geometries_chunk)
+                
                 records = append_paths(
                     kn.data,
-                    source_geometries,
+                    source_geometries_all,
                     path_id_field=cfg["geometry_record_id_field"],
                 )
+
+                global work_order_geometries
+                work_order_geometries = copy.deepcopy(records)
+
+
+        elif cfg.get("name") == "markings_jobs":
+            # get data from markings records
+            records = get_paths_from_work_orders(records)
 
         if cfg.get("extract_attachment_url"):
             records = knackutil.attachment_url(
@@ -237,7 +269,7 @@ def main():
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
-
+        
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
@@ -260,6 +292,7 @@ def main():
             agolutil.handle_response(res)
 
         for i in range(0, len(records), 1000):
+            # insert agol features in chunks
             adds = agolutil.feature_collection(
                 records[i : i + 1000], spatial_ref=102739
             )
