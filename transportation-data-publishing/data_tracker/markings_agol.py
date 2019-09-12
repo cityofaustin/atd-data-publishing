@@ -20,15 +20,19 @@ from config.knack.config import MARKINGS_AGOL as config
 # when fetching geometries for jobs. it aint pretty, but is it really so bad?
 work_order_geometries = None
 
-def get_paths_from_work_orders(records, match_field="ATD_WORK_ORDER_ID", output_field="paths"):
+
+def get_paths_from_work_orders(
+    records, match_field="ATD_WORK_ORDER_ID", output_field="paths"
+):
     # copy work order geometries from work order to child jobs
     for record in records:
-        for wo in work_order_geometries:    
+        for wo in work_order_geometries:
             if record[match_field] == wo[match_field]:
                 record[output_field] = wo[output_field]
                 continue
 
     return records
+
 
 def remove_empty_strings(records):
     new_records = []
@@ -45,7 +49,11 @@ def remove_empty_strings(records):
 def remove_empty_strings(records):
     new_records = []
     for record in records:
-        new_record = { key : record[key] for key in record.keys() if not (type(record[key]) == str and not record[key]) }
+        new_record = {
+            key: record[key]
+            for key in record.keys()
+            if not (type(record[key]) == str and not record[key])
+        }
         new_records.append(new_record)
     return new_records
 
@@ -140,7 +148,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=1000000
+        page_limit=1000000,
     )
 
 
@@ -204,7 +212,7 @@ def main():
 
         if cfg.get("name") == "markings_work_orders":
             #  markings work order geometries are retrieved from AGOL
-            
+
             # reduce to unique segment ids from all records
             segment_ids = datautil.unique_from_list_field(
                 records, list_field=cfg["geometry_record_id_field"]
@@ -226,10 +234,14 @@ def main():
                     # fetch agol source geometries in chunks
 
                     print(f"Chunk {i}-{i+chunksize}")
-                    where_ids = ", ".join(f"'{x}'" for x in segment_ids[i : i + chunksize])
+                    where_ids = ", ".join(
+                        f"'{x}'" for x in segment_ids[i : i + chunksize]
+                    )
 
                     if where_ids:
-                        where = "{} in ({})".format(cfg["geometry_record_id_field"], where_ids)
+                        where = "{} in ({})".format(
+                            cfg["geometry_record_id_field"], where_ids
+                        )
 
                         source_geometries_chunk = geometry_layer.query(
                             where=where, outFields=cfg["geometry_record_id_field"]
@@ -241,7 +253,7 @@ def main():
                             )
 
                         source_geometries_all.extend(source_geometries_chunk)
-                
+
                 records = append_paths(
                     kn.data,
                     source_geometries_all,
@@ -250,7 +262,6 @@ def main():
 
                 global work_order_geometries
                 work_order_geometries = copy.deepcopy(records)
-
 
         elif cfg.get("name") == "markings_jobs":
             # get data from markings records
@@ -261,15 +272,17 @@ def main():
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
 
-        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
-        
+        records = remove_empty_strings(
+            records
+        )  # AGOL has unexepected handling of empty values
+
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
-        
+
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
