@@ -27,6 +27,45 @@ get materials
 
 """
 
+def append_locations(records, locations, join_field, work_order_id_field, lon_field="x", lat_field="y"):
+    """
+    Append location attributes to spec actual records.
+
+    Parameters
+    ----------
+    records : list (required)
+        The specification records retrieved from Knack.
+    locations : dict (required)
+        The location records dict whose data will be appened to the spec records.
+    join_field : string (required)
+        The field in the source records that identifies the matching location record.
+    work_order_id_field : string (required)
+        The field which identifies the parent work order.
+    lon_field : string (required)
+        The field in the location records which contains the longitude value.
+    lat_field : string (required)
+        The field in the location records which contains the latitude value.
+
+    Returns
+    -------
+    List of specification records with location attributes appended.
+    """
+    for record in records:
+        location = locations.get(record[join_field])
+        
+        if not location:
+            # TODO: better handling of missing location ids? for some reason the Knack view
+            # does not properly filter to exclude specs with no location (which have been presumably
+            # deleted without the spec being deleted as well)
+            continue
+
+        record[lon_field] = location[lon_field]
+        record[lat_field] = location[lat_field]
+        record[work_order_id_field] = location[work_order_id_field]
+    
+    return records
+
+
 def parse_geometry(record, geometry_field_name):
     """
     Extract lat/lon from knack location record.
@@ -66,7 +105,6 @@ def process_locations(records, geometry_field_name, primary_key, wo_id_field="AT
         x, y = parse_geometry(record, geometry_field_name)
         locations[id_] = {wo_id_field: wo_id, "x" : x, "y" : y}
 
-    pdb.set_trace()
     return locations
 
 
@@ -105,7 +143,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         api_key=auth["api_key"],
         filters=filters,
         page_limit=1,
-        rows_per_page=10
+        rows_per_page=10 # TODO: fetch all records
     )
 
 
@@ -171,25 +209,28 @@ def main():
 
         if cfg["name"] == "work_order_signs_locations":
             # location data from this object is merged to asset spec records
-            process_locations(kn.data, cfg["geometry_field_name"], cfg["primary_key"])
-            print("hi")
+            locations = process_locations(kn.data, cfg["geometry_field_name"], cfg["primary_key"])
+            
+            # stop processing locations
+            continue
 
-        if cfg.get("extract_attachment_url"):
-            records = knackutil.attachment_url(
-                records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
+        if cfg["name"] == "work_orders_signs_asset_spec_actuals":
+            records = append_locations(
+                records, locations, cfg.get("location_join_field"), cfg.get("work_order_id_field")
             )
 
-        records = remove_empty_strings(
-            records
-        )  # AGOL has unexepected handling of empty values
+            # purge records that do not have geometries
+            records = [rec for rec in records if rec.get("x")]
 
-        # update_layer = agolutil.get_item(
-        #     auth=AGOL_CREDENTIALS,
-        #     service_id=cfg["service_id"],
-        #     layer_id=cfg["layer_id"],
-        #     item_type=cfg["item_type"],
-        # )
 
+        update_layer = agolutil.get_item(
+            auth=AGOL_CREDENTIALS,
+            service_id=cfg["service_id"],
+            layer_id=cfg["layer_id"],
+            item_type=cfg["item_type"],
+        )
+
+        pdb.set_trace()
         # if args.replace:
         #     res = update_layer.delete_features(where="1=1")
         #     agolutil.handle_response(res)
