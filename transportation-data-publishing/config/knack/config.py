@@ -580,12 +580,14 @@ SIGNS_AGOL = [
         "name": "work_orders_signs_asset_spec_actuals",
         "scene": "scene_1249",
         "view": "view_3106",
-        "ref_obj": ["object_181", "object_178"],
+        "ref_obj": ["object_181", "object_178", "object_177"],
         "modified_date_field_id": "field_3365",
         "modified_date_field": "MODIFIED_DATE",
+        "location_join_field" : "LOCATION_ID",
+        "work_order_id_field" : "ATD_WORK_ORDER_ID",
         "primary_key": "SPECIFICATION_ID",
         "service_id": "8e97ddf6f9bd4d26a7486b7ee40f7cce",
-        "layer_id": 1,
+        "layer_id": 0,
         "item_type": "layer",
     }
 ]
