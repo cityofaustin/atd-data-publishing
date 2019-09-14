@@ -23,9 +23,10 @@ from config.knack.config import SIGNS_AGOL as config
 -[ ] post specs to agol: in progress
     - handle photos from location records and post to agol
 -[ ] get work orders + post
+    - ready except need to convert to multipoint layer and do geomtries
 -[ ] get attachments + post
 -[ ] get materials + post
-
+- check all columns popualting
 """
 
 
