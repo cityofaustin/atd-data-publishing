@@ -17,13 +17,15 @@ from config.knack.config import SIGNS_AGOL as config
 
 
 
-"""
-get locations
-get specs
-merge them
-get work orders
-get attachments
-get materials
+"""TODO
+-[x] get locations
+-[x] get specs
+-[x] merge locations to specs
+-[ ] post specs to agol: in progress
+    - handle photos from location records and post to agol
+-[ ] get work orders + post
+-[ ] get attachments + post
+-[ ] get materials + post
 
 """
 
@@ -142,8 +144,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=1,
-        rows_per_page=10 # TODO: fetch all records
+        page_limit=10000000
     )
 
 
@@ -233,8 +234,8 @@ def main():
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
-            
-        pdb.set_trace()
+
+        ## TODO: implement this
         # else:
         #     """
         #     Delete objects by primary key. ArcGIS api does not currently support
@@ -252,15 +253,47 @@ def main():
         #     res = update_layer.delete_features(where=where)
         #     agolutil.handle_response(res)
 
-        # for i in range(0, len(records), 1000):
-        #     # insert agol features in chunks
-        #     adds = agolutil.feature_collection(
-        #         records[i : i + 1000], spatial_ref=102739
-        #     )
-        #     res = update_layer.edit_features(adds=adds)
-        #     agolutil.handle_response(res)
-        #     records_processed += len(adds)
+        #### DEBUGGING FIELD LENGHT ISSUES
 
+        # # This block identifies fields by max length
+        # fields = {}
+
+        # for record in records:
+        #     for key in record.keys():
+        #         if key not in fields:
+        #             fields[key] = 0
+
+        #         val = record.get(key)
+        #         if isinstance(val, str):
+        #             field_length = len(val)
+        #             if field_length > fields[key]:
+        #                 fields[key] = field_length
+        #             else:
+        #                 continue
+        
+        # TODO: remove this string truncation after feature sercice is patched
+        for record in records:
+            for key in record.keys():
+                if key in ["CREATED_BY", "MODIFIED_BY"]:
+                    record[key] = record[key][:8]
+
+        ####
+        for i in range(0, len(records), 1000):
+            # insert agol features in chunks
+            
+            # assemble an arcgis feature collection set from records
+            adds = agolutil.feature_collection(
+                records[i : i + 1000], lat_field="y", lon_field="x"
+            )
+
+            # insert new features
+            res = update_layer.edit_features(adds=adds)
+            
+            agolutil.handle_response(res)
+            
+            records_processed += len(adds)
+
+        pdb.set_trace()
     return records_processed
 
 
