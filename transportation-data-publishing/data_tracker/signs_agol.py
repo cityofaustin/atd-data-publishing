@@ -16,7 +16,6 @@ from config.secrets import *
 from config.knack.config import SIGNS_AGOL as config
 
 
-
 """TODO
 -[x] get locations
 -[x] get specs
@@ -29,7 +28,10 @@ from config.knack.config import SIGNS_AGOL as config
 
 """
 
-def append_locations(records, locations, join_field, work_order_id_field, lon_field="x", lat_field="y"):
+
+def append_locations(
+    records, locations, join_field, work_order_id_field, lon_field="x", lat_field="y"
+):
     """
     Append location attributes to spec actual records.
 
@@ -54,7 +56,7 @@ def append_locations(records, locations, join_field, work_order_id_field, lon_fi
     """
     for record in records:
         location = locations.get(record[join_field])
-        
+
         if not location:
             # TODO: better handling of missing location ids? for some reason the Knack view
             # does not properly filter to exclude specs with no location (which have been presumably
@@ -64,7 +66,7 @@ def append_locations(records, locations, join_field, work_order_id_field, lon_fi
         record[lon_field] = location[lon_field]
         record[lat_field] = location[lat_field]
         record[work_order_id_field] = location[work_order_id_field]
-    
+
     return records
 
 
@@ -77,7 +79,9 @@ def parse_geometry(record, geometry_field_name):
     return record.get(lon_field), record.get(lat_field)
 
 
-def process_locations(records, geometry_field_name, primary_key, wo_id_field="ATD_WORK_ORDER_ID"):
+def process_locations(
+    records, geometry_field_name, primary_key, wo_id_field="ATD_WORK_ORDER_ID"
+):
     """
     Construct a dictionary of select location attributes which will
     be joined to spec actual records.
@@ -105,7 +109,7 @@ def process_locations(records, geometry_field_name, primary_key, wo_id_field="AT
         id_ = record.get(primary_key)
         wo_id = record.get(wo_id_field)
         x, y = parse_geometry(record, geometry_field_name)
-        locations[id_] = {wo_id_field: wo_id, "x" : x, "y" : y}
+        locations[id_] = {wo_id_field: wo_id, "x": x, "y": y}
 
     return locations
 
@@ -144,7 +148,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=10000000
+        page_limit=1000000,
     )
 
 
@@ -185,7 +189,7 @@ def main():
     we receive it.
     """
     for cfg in config:
-        
+
         print(cfg["name"])
 
         filters = knackutil.date_filter_on_or_after(
@@ -210,19 +214,48 @@ def main():
 
         if cfg["name"] == "work_order_signs_locations":
             # location data from this object is merged to asset spec records
-            locations = process_locations(kn.data, cfg["geometry_field_name"], cfg["primary_key"])
-            
+            locations = process_locations(
+                kn.data, cfg["geometry_field_name"], cfg["primary_key"]
+            )
+
             # stop processing locations
             continue
 
         if cfg["name"] == "work_orders_signs_asset_spec_actuals":
             records = append_locations(
-                records, locations, cfg.get("location_join_field"), cfg.get("work_order_id_field")
+                records,
+                locations,
+                cfg.get("location_join_field"),
+                cfg.get("work_order_id_field"),
             )
 
             # purge records that do not have geometries
             records = [rec for rec in records if rec.get("x")]
 
+            #### DEBUGGING FIELD LENGHT ISSUES
+            # TODO: Remove this.
+            #
+            # # This block identifies fields by max length
+            # fields = {}
+            #
+            # for record in records:
+            #     for key in record.keys():
+            #         if key not in fields:
+            #             fields[key] = 0
+            #
+            #         val = record.get(key)
+            #         if isinstance(val, str):
+            #             field_length = len(val)
+            #             if field_length > fields[key]:
+            #                 fields[key] = field_length
+            #             else:
+            #                 continue
+            #
+            # TODO: remove this string truncation after feature sercice is patched
+            for record in records:
+                for key in record.keys():
+                    if key in ["CREATED_BY", "MODIFIED_BY"]:
+                        record[key] = record[key][:8]
 
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
@@ -230,7 +263,7 @@ def main():
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
-        
+
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
@@ -253,34 +286,9 @@ def main():
         #     res = update_layer.delete_features(where=where)
         #     agolutil.handle_response(res)
 
-        #### DEBUGGING FIELD LENGHT ISSUES
-
-        # # This block identifies fields by max length
-        # fields = {}
-
-        # for record in records:
-        #     for key in record.keys():
-        #         if key not in fields:
-        #             fields[key] = 0
-
-        #         val = record.get(key)
-        #         if isinstance(val, str):
-        #             field_length = len(val)
-        #             if field_length > fields[key]:
-        #                 fields[key] = field_length
-        #             else:
-        #                 continue
-        
-        # TODO: remove this string truncation after feature sercice is patched
-        for record in records:
-            for key in record.keys():
-                if key in ["CREATED_BY", "MODIFIED_BY"]:
-                    record[key] = record[key][:8]
-
-        ####
         for i in range(0, len(records), 1000):
             # insert agol features in chunks
-            
+
             # assemble an arcgis feature collection set from records
             adds = agolutil.feature_collection(
                 records[i : i + 1000], lat_field="y", lon_field="x"
@@ -288,12 +296,11 @@ def main():
 
             # insert new features
             res = update_layer.edit_features(adds=adds)
-            
+
             agolutil.handle_response(res)
-            
+
             records_processed += len(adds)
 
-        pdb.set_trace()
     return records_processed
 
 
