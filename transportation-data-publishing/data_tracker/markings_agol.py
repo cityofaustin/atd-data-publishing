@@ -30,7 +30,11 @@ def remove_empty_strings(records):
 def remove_empty_strings(records):
     new_records = []
     for record in records:
-        new_record = { key : record[key] for key in record.keys() if not (type(record[key]) == str and not record[key]) }
+        new_record = {
+            key: record[key]
+            for key in record.keys()
+            if not (type(record[key]) == str and not record[key])
+        }
         new_records.append(new_record)
     return new_records
 
@@ -229,8 +233,10 @@ def main():
                 records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
             )
 
-        records = remove_empty_strings(records) # AGOL has unexepected handling of empty values
-        
+        records = remove_empty_strings(
+            records
+        )  # AGOL has unexepected handling of empty values
+
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
