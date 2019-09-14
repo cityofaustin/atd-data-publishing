@@ -229,12 +229,12 @@ def main():
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
-
+        
+        if args.replace:
+            res = update_layer.delete_features(where="1=1")
+            agolutil.handle_response(res)
+            
         pdb.set_trace()
-        # if args.replace:
-        #     res = update_layer.delete_features(where="1=1")
-        #     agolutil.handle_response(res)
-
         # else:
         #     """
         #     Delete objects by primary key. ArcGIS api does not currently support
