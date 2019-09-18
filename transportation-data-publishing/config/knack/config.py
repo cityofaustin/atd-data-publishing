@@ -15,9 +15,9 @@ cfg = {
             "object_138",  # admin_object_meta
             "object_95",  # csr_flex_notes
             "object_67",  # quote_of_the_week
-            "object_1867",  # signal_id_generator
+            "object_77",  # signal_id_generator
             "object_148",  # street_names
-            "object_186",  # street_segments
+            "object_7",  # street_segments
             "object_83",  # tmc_issues
             "object_58",  # tmc_issues_DEPRECTATED_HISTORICAL_DATA_ONLY
             "object_10",  # Asset editor
@@ -27,7 +27,7 @@ cfg = {
             "object_57",  # Supervisor | AMD
             "object_65",  # Technician|AMD
             "object_68",  # Quote of the Week Editor
-            "object_1866",  # Inventory Editor
+            "object_76",  # Inventory Editor
             "object_97",  # Account Administrator
             "object_151",  # Supervisor | Signs&Markings
             "object_152",  # Technician | Signs & Markings
