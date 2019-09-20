@@ -52,7 +52,7 @@ def ping_ip(ip, timeout):
         return "ONLINE"
 
 
-def open_socket(ip, port, timeout):
+def open_socket(ip, timeout, port=8902):
 
     with socket.socket() as s:
         print(ip)
@@ -80,7 +80,7 @@ def get_status(device):
             """
             Gridsmart default port is 8902
             """
-            state_new = open_socket(device[ip_field], timeout, port=8902)
+            state_new = open_socket(device[ip_field], timeout)
 
     else:
         #  set to NO COMMUINICATION if no IP address
