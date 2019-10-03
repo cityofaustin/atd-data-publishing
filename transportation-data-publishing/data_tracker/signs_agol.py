@@ -149,7 +149,8 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=1000000,
+        page_limit=1,
+        rows_per_page=10
     )
 
 
@@ -252,11 +253,9 @@ def main():
             #             else:
             #                 continue
             #
-            # TODO: remove this string truncation after feature sercice is patched
-            for record in records:
-                for key in record.keys():
-                    if key in ["CREATED_BY", "MODIFIED_BY"]:
-                        record[key] = record[key][:8]
+
+        
+        if cfg["name"] == "work_orders_signs_asset_spec_actuals":
 
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
