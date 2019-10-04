@@ -557,11 +557,12 @@ MARKINGS_AGOL = [
     },
 ]
 
-SIGNS_AGOL = [
+SIGNS_AGOL = {
     # Knack and AGOL source object defintions.
     # Order of config elements matters! Work orders must be processed before
     # speccs, materials, etc because work orders are the parent record.
-    {
+    
+    "work_order_signs_locations" : {
         # there is no AGOL feature service for sign locations, instead
         # we merge location attributes to each work_orders_signs_asset_spec_actuals
         "name": "work_order_signs_locations",
@@ -576,7 +577,7 @@ SIGNS_AGOL = [
         "layer_id": None,
         "item_type": None,
     },
-    {
+    "work_orders_signs" : {
         "name": "work_orders_signs",
         "scene": "scene_1249",
         "view": "view_3107",
@@ -588,7 +589,7 @@ SIGNS_AGOL = [
         "layer_id": 2,  # note that this service id is actually 3, but this identifies the table #. not sure where this is exposed or documented. trial and error...
         "item_type": "layer",
     },
-    {
+    "work_orders_signs_asset_spec_actuals" : {
         "name": "work_orders_signs_asset_spec_actuals",
         "scene": "scene_1249",
         "view": "view_3106",
@@ -602,7 +603,7 @@ SIGNS_AGOL = [
         "layer_id": 0,
         "item_type": "layer",
     },
-]
+}
 
 
 SECONDARY_SIGNALS_UPDATER = {
