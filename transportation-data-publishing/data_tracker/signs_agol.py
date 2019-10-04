@@ -3,7 +3,7 @@ import copy
 import pdb
 import traceback
 
-# import agolutil
+import agolutil
 import argutil
 import arrow
 import datautil
@@ -23,10 +23,16 @@ from config.knack.config import SIGNS_AGOL as config
 -[ ] post specs to agol: in progress
     - handle photos from location records and post to agol
 -[ ] get work orders + post
-    - ready except need to convert to multipoint layer and do geomtries
+    - ready publishing except feature service is not multipoint
 -[ ] get attachments + post
 -[ ] get materials + post
-- check all columns popualting
+- check all columns populating
+
+### layer updates needed
+- Add Field Aliases
+- Dig tess number need to be string
+- Change work_orders_signs to multipoint
+
 """
 
 def append_locations_work_orders(config):
@@ -35,7 +41,7 @@ def append_locations_work_orders(config):
     join_field = config["work_orders_signs_asset_spec_actuals"]["work_order_id_field"]
 
     for wo in work_orders:
-        wo["geometry"] = []
+        geometries = []
 
         wo_id = wo.get(join_field)
 
@@ -44,7 +50,11 @@ def append_locations_work_orders(config):
                 x = sp.get("x")
                 y = sp.get("y")
                 if x and y:
-                    wo["geometry"].append((x, y))
+                    geometries.append((x, y))
+
+        # not that `points` key is required by arcgis geometry spec for multipoint features
+        # https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm
+        wo["points"] = geometries
 
     return work_orders
 
@@ -190,7 +200,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=999999,
+        page_limit=9999999,
         rows_per_page=1000
     )
 
@@ -253,46 +263,58 @@ def main():
 
     # TODO refactor below here to work with new config
     for x in [1]:
+        cfg = config["work_orders_signs"]
+
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
+        
+        #TODO: probably remove this
+        cfg["records"] = [x for x in cfg["records"] if x.get("points")]
 
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
-        # TODO: implement this
+        # TODO: test this
         # else:
         #     """
-        #     Delete objects by primary key. ArcGIS api does not currently support
+        #     Delete objects by primary key in chunks. ArcGIS api does not currently support
         #     an upsert method, although the Python api defines one via the
         #     layer.append method, it is apparently still under development. So our
         #     "upsert" consists of a delete by primary key then add.
         #     """
         #     primary_key = cfg.get("primary_key")
 
-        #     delete_ids = [record.get(primary_key) for record in records]
-        #     delete_ids = ", ".join(f"'{x}'" for x in delete_ids)
+        #     for i in range(0, len(cfg["records"]), 1000):
 
-        #     #  generate a SQL-like where statement to identify records for deletion
-        #     where = "{} in ({})".format(primary_key, delete_ids)
-        #     res = update_layer.delete_features(where=where)
-        #     agolutil.handle_response(res)
+        #         delete_ids = [record.get(primary_key) for record in cfg["records"][i : i + 1000]]
+        #         delete_ids = ", ".join(f"'{x}'" for x in delete_ids)
 
-        for i in range(0, len(records), 1000):
+        #         #  generate a SQL-like where statement to identify records for deletion
+        #         where = "{} in ({})".format(primary_key, delete_ids)
+        #         res = update_layer.delete_features(where=where)
+        #         agolutil.handle_response(res)
+
+        for i in range(0, len(cfg["records"]), 1000):
             # insert agol features in chunks
 
             # assemble an arcgis feature collection set from records
-            adds = agolutil.feature_collection(
-                records[i : i + 1000], lat_field="y", lon_field="x"
+            cfg["records"] = agolutil.feature_collection(
+                cfg["records"][i : i + 1000], lat_field="y", lon_field="x"
             )
 
-            # insert new features
-            res = update_layer.edit_features(adds=adds)
+            #TODO: remove this assignment once column type is string
+            for rec in cfg["records"]:
+                rec["DIG_TESS_NUMBER"] = 0
 
+            # insert new features
+            res = update_layer.edit_features(adds=cfg["records"])
+            pdb.set_trace()
+            
             agolutil.handle_response(res)
 
             records_processed += len(adds)
