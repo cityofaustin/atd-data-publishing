@@ -586,7 +586,7 @@ SIGNS_AGOL = {
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "ATD_WORK_ORDER_ID",
         "service_id": "8e97ddf6f9bd4d26a7486b7ee40f7cce",
-        "layer_id": 2,  # note that this service id is actually 3, but this identifies the table #. not sure where this is exposed or documented. trial and error...
+        "layer_id": 1,  # note that this service id is actually 3, but this identifies the table #. not sure where this is exposed or documented. trial and error...
         "item_type": "layer",
     },
     "work_orders_signs_asset_spec_actuals" : {
