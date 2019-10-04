@@ -3,7 +3,7 @@ import copy
 import pdb
 import traceback
 
-import agolutil
+# import agolutil
 import argutil
 import arrow
 import datautil
@@ -29,23 +29,34 @@ from config.knack.config import SIGNS_AGOL as config
 - check all columns popualting
 """
 
+def append_locations_work_orders(config):
+    work_orders = config["work_orders_signs"]["records"]
+    spec_actuals = config["work_orders_signs_asset_spec_actuals"]["records"]
+    join_field = config["work_orders_signs_asset_spec_actuals"]["work_order_id_field"]
 
-def append_locations(
-    records, locations, join_field, work_order_id_field, lon_field="x", lat_field="y"
-):
+    for wo in work_orders:
+        wo["geometry"] = []
+
+        wo_id = wo.get(join_field)
+
+        for sp in spec_actuals:
+            if sp.get(join_field) == wo_id:
+                x = sp.get("x")
+                y = sp.get("y")
+                if x and y:
+                    wo["geometry"].append((x, y))
+
+    return work_orders
+
+
+def append_locations_to_specs(config, lon_field="x", lat_field="y"):
     """
     Append location attributes to spec actual records.
 
     Parameters
     ----------
-    records : list (required)
-        The specification records retrieved from Knack.
-    locations : dict (required)
-        The location records dict whose data will be appened to the spec records.
-    join_field : string (required)
-        The field in the source records that identifies the matching location record.
-    work_order_id_field : string (required)
-        The field which identifies the parent work order.
+    config : list (required)
+        The external configuration object which defines layer parameters.
     lon_field : string (required)
         The field in the location records which contains the longitude value.
     lat_field : string (required)
@@ -53,8 +64,14 @@ def append_locations(
 
     Returns
     -------
-    List of specification records with location attributes appended.
+    Configuration location attributes appended to spec actual records
     """
+        
+    records = config["work_orders_signs_asset_spec_actuals"].get("records")
+    join_field = config["work_orders_signs_asset_spec_actuals"].get("location_join_field")
+    work_order_id_field = config["work_orders_signs_asset_spec_actuals"].get("work_order_id_field")
+    locations = config["work_order_signs_locations"].get("records")
+
     for record in records:
         location = locations.get(record[join_field])
 
@@ -67,6 +84,10 @@ def append_locations(
         record[lon_field] = location[lon_field]
         record[lat_field] = location[lat_field]
         record[work_order_id_field] = location[work_order_id_field]
+
+
+    # exclude records with missing geometry
+    records = [rec for rec in records if rec.get("x")]
 
     return records
 
@@ -115,6 +136,26 @@ def process_locations(
     return locations
 
 
+def fetch_records(cfg, last_run_date, auth):
+
+    filters = knackutil.date_filter_on_or_after(
+            last_run_date, cfg["modified_date_field_id"]
+    )
+
+    kn = knackpy_wrapper(cfg, auth, filters=filters)
+
+    if kn.data:
+        # Filter data for records that have been modifed after the last
+        # job run (see comment above)
+        last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
+        
+        kn.data = filter_by_date(
+            kn.data, cfg["modified_date_field"], last_run_timestamp
+        )
+
+    return kn.data
+
+
 def filter_by_date(data, date_field, compare_date):
     """Summary
     
@@ -149,8 +190,8 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=1,
-        rows_per_page=10
+        page_limit=999999,
+        rows_per_page=1000
     )
 
 
@@ -170,6 +211,7 @@ def cli_args():
 
 
 def main():
+    global config
 
     args = cli_args()
 
@@ -190,73 +232,27 @@ def main():
     (not time), so we must apply an additional filter on the data after
     we receive it.
     """
-    for cfg in config:
+    for cfg in config.items():
+        # fetch data for all config objects
+        print(cfg[0])
 
-        print(cfg["name"])
+        cfg[1]["records"] = fetch_records(cfg[1], last_run_date, auth)
 
-        filters = knackutil.date_filter_on_or_after(
-            last_run_date, cfg["modified_date_field_id"]
-        )
+    config["work_order_signs_locations"]["records"] = process_locations(
+        config["work_order_signs_locations"]["records"],
+        config["work_order_signs_locations"]["geometry_field_name"],
+        config["work_order_signs_locations"]["primary_key"]
+    )
 
-        kn = knackpy_wrapper(cfg, auth, filters=filters)
+    config["work_orders_signs_asset_spec_actuals"]["records"] = append_locations_to_specs(config)
 
-        if kn.data:
-            # Filter data for records that have been modifed after the last
-            # job run (see comment above)
-            last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
-            kn.data = filter_by_date(
-                kn.data, cfg["modified_date_field"], last_run_timestamp
-            )
+    config["work_orders_signs"]["records"] = append_locations_work_orders(config)
 
-        if not kn.data:
-            records_processed += 0
-            continue
+    # TODO: update agolutil feature_collection to build multipoint:
+    #  "points" : [[ <x1>, <y1>] , [ <x2>, <y2> ], ... ]
 
-        records = kn.data
-
-        if cfg["name"] == "work_order_signs_locations":
-            # location data from this object is merged to asset spec records
-            locations = process_locations(
-                kn.data, cfg["geometry_field_name"], cfg["primary_key"]
-            )
-
-            # stop processing locations
-            continue
-
-        if cfg["name"] == "work_orders_signs_asset_spec_actuals":
-            records = append_locations(
-                records,
-                locations,
-                cfg.get("location_join_field"),
-                cfg.get("work_order_id_field"),
-            )
-
-            # purge records that do not have geometries
-            records = [rec for rec in records if rec.get("x")]
-
-            #### DEBUGGING FIELD LENGHT ISSUES
-            # TODO: Remove this.
-            #
-            # # This block identifies fields by max length
-            # fields = {}
-            #
-            # for record in records:
-            #     for key in record.keys():
-            #         if key not in fields:
-            #             fields[key] = 0
-            #
-            #         val = record.get(key)
-            #         if isinstance(val, str):
-            #             field_length = len(val)
-            #             if field_length > fields[key]:
-            #                 fields[key] = field_length
-            #             else:
-            #                 continue
-            #
-
-        
-        if cfg["name"] == "work_orders_signs_asset_spec_actuals":
-
+    # TODO refactor below here to work with new config
+    for x in [1]:
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
             service_id=cfg["service_id"],
@@ -268,7 +264,7 @@ def main():
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
-        ## TODO: implement this
+        # TODO: implement this
         # else:
         #     """
         #     Delete objects by primary key. ArcGIS api does not currently support
