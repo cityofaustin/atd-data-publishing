@@ -16,26 +16,10 @@ from config.secrets import *
 from config.knack.config import SIGNS_AGOL as config
 
 
-"""TODO
--[x] get locations
--[x] get specs
--[x] merge locations to specs
--[ ] post specs to agol: in progress
-    - handle photos from location records and post to agol
--[ ] get work orders + post
-    - ready publishing except feature service is not multipoint
--[ ] get attachments + post
--[ ] get materials + post
-- check all columns populating
-
-### layer updates needed
-- Add Field Aliases
-- Dig tess number need to be string
-- Change work_orders_signs to multipoint
-
-"""
-
 def append_locations_work_orders(config):
+    """
+    Append multiple work location points to each work order
+    """
     work_orders = config["work_orders_signs"]["records"]
     spec_actuals = config["work_orders_signs_asset_spec_actuals"]["records"]
     join_field = config["work_orders_signs_asset_spec_actuals"]["work_order_id_field"]
@@ -181,17 +165,7 @@ def filter_by_date(data, date_field, compare_date):
 
 
 def knackpy_wrapper(cfg, auth, obj=None, filters=None):
-    """Summary
-    
-    Args:
-        cfg (TYPE): Description
-        auth (TYPE): Description
-        obj (None, optional): Description
-        filters (None, optional): Description
-    
-    Returns:
-        TYPE: Description
-    """
+
     return knackpy.Knack(
         obj=obj,
         scene=cfg["scene"],
@@ -200,7 +174,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=9999999,
+        page_limit=9999,
         rows_per_page=1000
     )
 
@@ -244,8 +218,6 @@ def main():
     """
     for cfg in config.items():
         # fetch data for all config objects
-        print(cfg[0])
-
         cfg[1]["records"] = fetch_records(cfg[1], last_run_date, auth)
 
     config["work_order_signs_locations"]["records"] = process_locations(
@@ -258,12 +230,21 @@ def main():
 
     config["work_orders_signs"]["records"] = append_locations_work_orders(config)
 
-    # TODO: update agolutil feature_collection to build multipoint:
-    #  "points" : [[ <x1>, <y1>] , [ <x2>, <y2> ], ... ]
+    # drop work orders with no locations
+    config["work_orders_signs"]["records"] = [x for x in config["work_orders_signs"]["records"] if x.get("points")]
 
-    # TODO refactor below here to work with new config
-    for x in [1]:
-        cfg = config["work_orders_signs"]
+    # extract attachment url from each attachment record
+    config["work_orders_attachments"]["records"] = knackutil.attachment_url(
+                config["work_orders_attachments"]["records"], in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
+    )
+
+    for name, cfg  in config.items():
+
+        if not cfg.get("service_id"):
+            # ignore confige objects that do not hav service ids, i.e., do not
+            # have agol acontent, i.e., the locations object which was merged into
+            # other layers
+            continue
 
         update_layer = agolutil.get_item(
             auth=AGOL_CREDENTIALS,
@@ -272,52 +253,45 @@ def main():
             item_type=cfg["item_type"],
         )
         
-        #TODO: probably remove this
-        cfg["records"] = [x for x in cfg["records"] if x.get("points")]
-
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
 
-        # TODO: test this
-        # else:
-        #     """
-        #     Delete objects by primary key in chunks. ArcGIS api does not currently support
-        #     an upsert method, although the Python api defines one via the
-        #     layer.append method, it is apparently still under development. So our
-        #     "upsert" consists of a delete by primary key then add.
-        #     """
-        #     primary_key = cfg.get("primary_key")
+        else:
+            """
+            Delete objects by primary key in chunks. ArcGIS api does not currently support
+            an upsert method, although the Python api defines one via the
+            layer.append method, it is apparently still under development. So our
+            "upsert" consists of a delete by primary key then add.
+            """
+            primary_key = cfg.get("primary_key")
 
-        #     for i in range(0, len(cfg["records"]), 1000):
+            for i in range(0, len(cfg["records"]), 1000):
 
-        #         delete_ids = [record.get(primary_key) for record in cfg["records"][i : i + 1000]]
-        #         delete_ids = ", ".join(f"'{x}'" for x in delete_ids)
+                delete_ids = [record.get(primary_key) for record in cfg["records"][i : i + 1000]]
+                delete_ids = ", ".join(f"'{x}'" for x in delete_ids)
 
-        #         #  generate a SQL-like where statement to identify records for deletion
-        #         where = "{} in ({})".format(primary_key, delete_ids)
-        #         res = update_layer.delete_features(where=where)
-        #         agolutil.handle_response(res)
+                #  generate a SQL-like where statement to identify records for deletion
+                where = "{} in ({})".format(primary_key, delete_ids)
+                res = update_layer.delete_features(where=where)
+                
+                agolutil.handle_response(res)
+
 
         for i in range(0, len(cfg["records"]), 1000):
             # insert agol features in chunks
 
             # assemble an arcgis feature collection set from records
-            cfg["records"] = agolutil.feature_collection(
+            records = agolutil.feature_collection(
                 cfg["records"][i : i + 1000], lat_field="y", lon_field="x"
             )
 
-            #TODO: remove this assignment once column type is string
-            for rec in cfg["records"]:
-                rec["DIG_TESS_NUMBER"] = 0
-
             # insert new features
-            res = update_layer.edit_features(adds=cfg["records"])
-            pdb.set_trace()
+            res = update_layer.edit_features(adds=records)
             
             agolutil.handle_response(res)
 
-            records_processed += len(adds)
+            records_processed += len(records)
 
     return records_processed
 
