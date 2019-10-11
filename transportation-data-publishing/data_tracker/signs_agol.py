@@ -60,10 +60,14 @@ def append_locations_to_specs(config, lon_field="x", lat_field="y"):
     -------
     Configuration location attributes appended to spec actual records
     """
-        
+
     records = config["work_orders_signs_asset_spec_actuals"].get("records")
-    join_field = config["work_orders_signs_asset_spec_actuals"].get("location_join_field")
-    work_order_id_field = config["work_orders_signs_asset_spec_actuals"].get("work_order_id_field")
+    join_field = config["work_orders_signs_asset_spec_actuals"].get(
+        "location_join_field"
+    )
+    work_order_id_field = config["work_orders_signs_asset_spec_actuals"].get(
+        "work_order_id_field"
+    )
     locations = config["work_order_signs_locations"].get("records")
 
     for record in records:
@@ -78,7 +82,6 @@ def append_locations_to_specs(config, lon_field="x", lat_field="y"):
         record[lon_field] = location[lon_field]
         record[lat_field] = location[lat_field]
         record[work_order_id_field] = location[work_order_id_field]
-
 
     # exclude records with missing geometry
     records = [rec for rec in records if rec.get("x")]
@@ -133,7 +136,7 @@ def process_locations(
 def fetch_records(cfg, last_run_date, auth):
 
     filters = knackutil.date_filter_on_or_after(
-            last_run_date, cfg["modified_date_field_id"]
+        last_run_date, cfg["modified_date_field_id"]
     )
 
     kn = knackpy_wrapper(cfg, auth, filters=filters)
@@ -142,7 +145,7 @@ def fetch_records(cfg, last_run_date, auth):
         # Filter data for records that have been modifed after the last
         # job run (see comment above)
         last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
-        
+
         kn.data = filter_by_date(
             kn.data, cfg["modified_date_field"], last_run_timestamp
         )
@@ -175,7 +178,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         api_key=auth["api_key"],
         filters=filters,
         page_limit=9999,
-        rows_per_page=1000
+        rows_per_page=1000,
     )
 
 
@@ -223,22 +226,28 @@ def main():
     config["work_order_signs_locations"]["records"] = process_locations(
         config["work_order_signs_locations"]["records"],
         config["work_order_signs_locations"]["geometry_field_name"],
-        config["work_order_signs_locations"]["primary_key"]
+        config["work_order_signs_locations"]["primary_key"],
     )
 
-    config["work_orders_signs_asset_spec_actuals"]["records"] = append_locations_to_specs(config)
+    config["work_orders_signs_asset_spec_actuals"][
+        "records"
+    ] = append_locations_to_specs(config)
 
     config["work_orders_signs"]["records"] = append_locations_work_orders(config)
 
     # drop work orders with no locations
-    config["work_orders_signs"]["records"] = [x for x in config["work_orders_signs"]["records"] if x.get("points")]
+    config["work_orders_signs"]["records"] = [
+        x for x in config["work_orders_signs"]["records"] if x.get("points")
+    ]
 
     # extract attachment url from each attachment record
     config["work_orders_attachments"]["records"] = knackutil.attachment_url(
-                config["work_orders_attachments"]["records"], in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
+        config["work_orders_attachments"]["records"],
+        in_fieldname="ATTACHMENT",
+        out_fieldname="ATTACHMENT_URL",
     )
 
-    for name, cfg  in config.items():
+    for name, cfg in config.items():
 
         if not cfg.get("service_id"):
             # ignore confige objects that do not hav service ids, i.e., do not
@@ -252,7 +261,7 @@ def main():
             layer_id=cfg["layer_id"],
             item_type=cfg["item_type"],
         )
-        
+
         if args.replace:
             res = update_layer.delete_features(where="1=1")
             agolutil.handle_response(res)
@@ -268,15 +277,16 @@ def main():
 
             for i in range(0, len(cfg["records"]), 1000):
 
-                delete_ids = [record.get(primary_key) for record in cfg["records"][i : i + 1000]]
+                delete_ids = [
+                    record.get(primary_key) for record in cfg["records"][i : i + 1000]
+                ]
                 delete_ids = ", ".join(f"'{x}'" for x in delete_ids)
 
                 #  generate a SQL-like where statement to identify records for deletion
                 where = "{} in ({})".format(primary_key, delete_ids)
                 res = update_layer.delete_features(where=where)
-                
-                agolutil.handle_response(res)
 
+                agolutil.handle_response(res)
 
         for i in range(0, len(cfg["records"]), 1000):
             # insert agol features in chunks
@@ -288,7 +298,7 @@ def main():
 
             # insert new features
             res = update_layer.edit_features(adds=records)
-            
+
             agolutil.handle_response(res)
 
             records_processed += len(records)
