@@ -561,8 +561,7 @@ SIGNS_AGOL = {
     # Knack and AGOL source object defintions.
     # Order of config elements matters! Work orders must be processed before
     # speccs, materials, etc because work orders are the parent record.
-    
-    "work_order_signs_locations" : {
+    "work_order_signs_locations": {
         # there is no AGOL feature service for sign locations, instead
         # we merge location attributes to each work_orders_signs_asset_spec_actuals
         "name": "work_order_signs_locations",
@@ -577,7 +576,7 @@ SIGNS_AGOL = {
         "layer_id": None,
         "item_type": None,
     },
-    "work_orders_signs" : {
+    "work_orders_signs": {
         "name": "work_orders_signs",
         "scene": "scene_1249",
         "view": "view_3107",
@@ -585,11 +584,11 @@ SIGNS_AGOL = {
         "modified_date_field_id": "field_3206",
         "modified_date_field": "MODIFIED_DATE",
         "primary_key": "ATD_WORK_ORDER_ID",
-        "service_id": "8e97ddf6f9bd4d26a7486b7ee40f7cce",
-        "layer_id": 1,  # note that this service id is actually 3, but this identifies the table #. not sure where this is exposed or documented. trial and error...
+        "service_id": "93e29b23c39b4110ab0bbefde79b4063",
+        "layer_id": 1,
         "item_type": "layer",
     },
-    "work_orders_signs_asset_spec_actuals" : {
+    "work_orders_signs_asset_spec_actuals": {
         "name": "work_orders_signs_asset_spec_actuals",
         "scene": "scene_1249",
         "view": "view_3106",
@@ -599,9 +598,36 @@ SIGNS_AGOL = {
         "location_join_field": "LOCATION_ID",
         "work_order_id_field": "ATD_WORK_ORDER_ID",
         "primary_key": "SPECIFICATION_ID",
-        "service_id": "8e97ddf6f9bd4d26a7486b7ee40f7cce",
+        "service_id": "93e29b23c39b4110ab0bbefde79b4063",
         "layer_id": 0,
         "item_type": "layer",
+    },
+    "work_orders_attachments": {
+        "name": "work_orders_attachments",
+        "scene": "scene_1249",
+        "view": "view_3127",
+        "ref_obj": ["object_153"],
+        "modified_date_field_id": "object_153",
+        "modified_date_field": "MODIFIED_DATE",
+        "work_order_id_field": "ATD_WORK_ORDER_ID",
+        "primary_key": "ATTACHMENT_ID",
+        "service_id": "93e29b23c39b4110ab0bbefde79b4063",
+        "layer_id": 0,
+        "item_type": "table",
+        "extract_attachment_url": True,
+    },
+    "work_orders_materials": {
+        "name": "work_orders_materials",
+        "scene": "scene_1249",
+        "view": "view_3126",
+        "ref_obj": ["object_36", "object_176"],
+        "modified_date_field_id": "field_771",
+        "modified_date_field": "MODIFIED_DATE",
+        "work_order_id_field": "ATD_WORK_ORDER_ID",
+        "primary_key": "TRANSACTION_ID",
+        "service_id": "93e29b23c39b4110ab0bbefde79b4063",
+        "layer_id": 1,  # note that this service id is actually 3, but this identifies the table #. not sure where this is exposed or documented. trial and error...
+        "item_type": "table",
     },
 }
 
