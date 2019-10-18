@@ -325,7 +325,11 @@ def main():
     ]
 
     if args.destination[0] == "socrata":
-        pub = socrata_pub(kn.data, cfg_dataset, args.replace, date_fields=date_fields)
+        try:
+            pub = socrata_pub(kn.data, cfg_dataset, args.replace, date_fields=date_fields)
+        except:
+            import pdb
+            pdb.set_trace()
 
     if args.destination[0] == "agol":
         pub = agol_pub(kn.data, cfg_dataset, args.replace)
