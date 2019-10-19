@@ -108,7 +108,7 @@ cfg = {
         "ref_obj": ["object_95"],
         "scene": "scene_923",
         "view": "view_2356",
-        "pgrest_base_url": "http://transportation-data.austintexas.io/csr_flex_notes",
+        "pgrest_base_url": "http://transportation-data-01-58741847.us-east-1.elb.amazonaws.com/csr_flex_notes",
     },
     "detectors": {
         "primary_key": "DETECTOR_ID",
@@ -704,7 +704,7 @@ PURCHASE_REQUEST_COPIER = {
 }
 SIGNAL_PMS_POSTGRE_KNACK = {
     "form_id": "44359e32-1a7f-41bd-b53e-3ebc039bd21a",
-    "postgre_url": "http://transportation-data.austintexas.io/signal_pms",
+    "postgre_url": "http://transportation-data-01-58741847.us-east-1.elb.amazonaws.com/signal_pms",
     "knack_pms": {"scene": "scene_920", "view": "view_2350", "ref_obj": ["object_84"]},
     "knack_signals": {
         "scene": "scene_73",

@@ -1,6 +1,6 @@
 PGREST_PUB = {
     "traffic_reports": {
-        "pgrest_base_url": "http://transportation-data.austintexas.io/traffic_reports",
+        "pgrest_base_url": "http://transportation-data-01-58741847.us-east-1.elb.amazonaws.com/traffic_reports",
         "primary_key": "traffic_report_id",
         'limit' : 2000000,
         "modified_date_field": "traffic_report_status_date_time",
@@ -17,7 +17,7 @@ PGREST_PUB = {
         ]
     },
     "dockless_trips": {
-        "pgrest_base_url": "http://transportation-data.austintexas.io/dockless_public",
+        "pgrest_base_url": "http://transportation-data-01-58741847.us-east-1.elb.amazonaws.com/dockless_public",
         "primary_key": "trip_id",
         'limit' : 100000,
         "modified_date_field": "modified_date",
@@ -32,7 +32,7 @@ PGREST_PUB = {
 
 TRAFFIC_REPORT_SCRAPER = {
     "feed_url": "http://www.ci.austin.tx.us/qact/qact_rss.cfm",
-    "endpoint": "http://transportation-data.austintexas.io/traffic_reports",
+    "endpoint": "http://transportation-data-01-58741847.us-east-1.elb.amazonaws.com/traffic_reports",
     "primary_key": "traffic_report_id",
     "status_field": "traffic_report_status",
     "date_field": "published_date",
