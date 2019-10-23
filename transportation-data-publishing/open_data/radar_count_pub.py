@@ -138,8 +138,6 @@ def main():
         new_date = arrow.get(record["dettime"], "US/Central")
         record["dettime"] = new_date.timestamp
 
-    pdb.set_trace()
-    
     if replace:
 
         kits_query = """
@@ -158,16 +156,13 @@ def main():
         """
 
     # send new data if the socrata data is behind KITS data
-    
-    elif socrata_data[0]["curdatetime"] < kits_data_recent[0]["dettime"]:
+    # the kits data timestamp is a real unix timestamp (no need to adjust for timezone stupidty)
+    elif arrow.get(socrata_data[0]["curdatetime"]).timestamp < kits_data_recent[0]["dettime"]:
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
-            arrow.get(socrata_data[0]["curdatetime"])
-            .to("US/Central")
-            .format("YYYY-MM-DD HH:mm:ss")
+            arrow.get(socrata_data[0]["curdatetime"]).to("US/Central").format("YYYY-MM-DD HH:mm:ss")
         )
-
         #  INTID is KITS_ID in data tracker / socrata
         #  it uniquely identifies the radar device/location
         #  detname and the lane and should be queried from the DETECTORSRM
