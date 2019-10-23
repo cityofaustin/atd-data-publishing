@@ -157,11 +157,16 @@ def main():
 
     # send new data if the socrata data is behind KITS data
     # the kits data timestamp is a real unix timestamp (no need to adjust for timezone stupidty)
-    elif arrow.get(socrata_data[0]["curdatetime"]).timestamp < kits_data_recent[0]["dettime"]:
+    elif (
+        arrow.get(socrata_data[0]["curdatetime"]).timestamp
+        < kits_data_recent[0]["dettime"]
+    ):
         # create query for counts since most recent socrata data
         #  query start time must be in local US/Central time (KITSDB is naive!)
         strtime = (
-            arrow.get(socrata_data[0]["curdatetime"]).to("US/Central").format("YYYY-MM-DD HH:mm:ss")
+            arrow.get(socrata_data[0]["curdatetime"])
+            .to("US/Central")
+            .format("YYYY-MM-DD HH:mm:ss")
         )
         #  INTID is KITS_ID in data tracker / socrata
         #  it uniquely identifies the radar device/location
