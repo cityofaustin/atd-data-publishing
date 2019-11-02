@@ -21,25 +21,63 @@ from config.secrets import KNACK_CREDENTIALS
 from config.knack.config import cfg
 
 FINANCE_ADMIN_CONFIG = {
-    "data_tracker_finance_record_id_field" : "FINANCE_ADMIN_RECORD_ID" # column in data tracker work orders that contains the record id of the work order in the finance/admin system. if it exists.
+    "data_tracker_finance_record_id_field_name" : "FINANCE_ADMIN_RECORD_ID", # column in data tracker work orders that contains the record id of the work order in the finance/admin system. if it exists.
+    "data_tracker_finance_record_id_field_id" : "field_3424",
+    "work_orders_object" : "object_33" 
 }
 
-FIELDMAP = {}
+FIELDMAP = {
+    "LOCATION_NAME" : "field_722",
+    "WORK_NEEDED" : "field_723",
+    "TECHNICIAN_LEAD" : "field_724",
+    "TECHNICIAN_SUPPORT" : "field_725",
+    "SIGNAL_ID" : "field_726",
+    "SCHOOL_ZONE" : "field_727",
+    "ATD_WORK_ORDER_ID" : "field_721",
+    "WORK_ORDER_STATUS" : "field_728",
+}
+
+def build_data_tracker_payload(
+        finance_admin_record_id,
+        data_tracker_finance_record_id_field_id,
+        data_tracker_id
+    ):
+
+    
+    # prepare a payload to update the data tracker work order with the finance_admin record id
+    return {
+        "id": data_tracker_id,
+        data_tracker_finance_record_id_field_id : finance_admin_record_id
+    }
 
 
-def post_records(payload, config):
+def post_records(payload, auth, obj_key):
     records_processed = 0
 
     for record in payload:
-        if payload.get(FINANCE_ADMIN_CONFIG["data_tracker_finance_record_id_field"]):
+        if record.get(FINANCE_ADMIN_CONFIG["data_tracker_finance_record_id_field_name"]):
             # record already exists in finance system
             method = "update"
             
         else:
             method = "create"
 
-        res = upload_to_finance(record)
-        payload = build_data_tracker_payload(record["id"])
+        import pdb; pdb.set_trace()
+        # update/inset to finance
+        res = knackpy.record(
+            record,
+            obj_key=FINANCE_ADMIN_CONFIG["work_orders_object"],
+            app_id = auth["app_id"],
+            api_key = auth["api_key"],
+            method = method
+        )
+
+        import pdb; pdb.set_trace()
+
+        payload = build_data_tracker_payload(res[0]["id"], record["id"], FINANCE_ADMIN_CONFIG["data_tracker_finance_record_id_field_id"])
+
+        import pdb; pdb.set_trace()
+
         res = update_data_tracker(payload)
         records_processed +=1
     
@@ -62,6 +100,15 @@ def knackpy_wrapper(cfg_dataset, auth, filters=None):
 
 def map_fields(list_of_dicts, fieldmap):
     mapped = []
+    
+    for record in list_of_dicts:
+        new_record = {}
+
+        for key in record.keys():
+            if key in FIELDMAP.keys():
+                new_record[FIELDMAP[key]] = record[key]
+
+        mapped.append(new_record)
 
     return mapped
 
@@ -107,11 +154,11 @@ def main():
     if not work_orders:
         return 0
 
+    payload = map_fields(work_orders.data, FIELDMAP)
+
+    records_processed = post_records(payload, auth_finance_admin, FINANCE_ADMIN_CONFIG["work_orders_object"])
+
     import pdb; pdb.set_trace()
-
-    payload = map_fields(work_orders.data_raw, FIELDMAP)
-
-    records_processed = post_records(payload, auth_finance_admin)
 
     return records_processed
 
