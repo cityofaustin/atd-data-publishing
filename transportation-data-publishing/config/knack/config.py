@@ -374,7 +374,7 @@ cfg = {
         "obj": None,
         "scene": "scene_683",
         "view": "view_1829",
-        "ref_obj": ["object_31", "object_11"],
+        "ref_obj": ["object_31", "object_11", "object_89"],
         "socrata_resource_id": "hst3-hxcz",
         "status_field": "WORK_ORDER_STATUS",
         "location_fields": {
