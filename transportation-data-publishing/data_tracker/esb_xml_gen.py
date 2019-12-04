@@ -181,11 +181,6 @@ def main():
         if kn.fields[f]["type"] in ["date_time", "date"]
     ]
 
-    # TODO - move to config. This is a text formula field that we use to extract
-    # the specific seconds of the activity datetime. seconds are
-    # rounded in the standard knack date fields
-    date_fields_kn.append("TMC_ACTIVITY_DATETIME_UNIX_MILLS")
-
     kn.data = datautil.mills_to_iso(kn.data, date_fields_kn)
 
     for record in kn.data:
