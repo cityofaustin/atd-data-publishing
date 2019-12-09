@@ -4,6 +4,7 @@ via Enterprise Service Bus
 """
 import os
 import pdb
+import time
 
 import arrow
 import knackpy
@@ -202,6 +203,11 @@ def main():
         )
 
         move_file(inpath, outpath, filename)
+
+        # wait a few seconds between between message send
+        # hoping to ensure messages are processed chronologically
+        # by 311
+        time.sleep(10)
 
     return len(files)
 
