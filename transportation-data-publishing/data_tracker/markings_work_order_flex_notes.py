@@ -27,7 +27,7 @@ def knackpy_wrapper(cfg_dataset, auth):
 def main():
 
     args = cli_args()
-    
+
     auth = KNACK_CREDENTIALS[args.app_name]
 
     kn = knackpy_wrapper(cfg_dataset, auth)
@@ -42,7 +42,7 @@ def cli_args():
     parser = argutil.get_parser(
         "markings_awork_order_flex_notes.py",
         "Connect markings work orders to their related flex notes.",
-        "app_name"
+        "app_name",
     )
 
     args = parser.parse_args()
