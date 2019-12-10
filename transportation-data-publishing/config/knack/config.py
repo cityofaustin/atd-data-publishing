@@ -781,3 +781,11 @@ SR_ASSET_ASSIGNER = {
         },
     },
 }
+
+
+MARKINGS_WORK_ORDERS_FLEX_NOTES = {
+    "scene": "scene_1228",
+    "view": "view_3169",
+    "ref_obj": ["object_172"],
+    "SR_CONNECTION_FIELD" "field_3629" 
+}
