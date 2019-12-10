@@ -786,13 +786,17 @@ MARKINGS_WORK_ORDERS_FLEX_NOTES = {
     "flex_notes" : {
         "scene": "scene_1271",
         "view": "view_3169",
+        "obj": None,
         "ref_obj": ["object_172"],
-        "SR_CONNECTION_FIELD_ID": "field_3629",
+        "sr_number_field_id": "field_3128",
+        "work_order_connection_field_id" : "field_3629",
+        "payload_field_ids" : ["id", "field_3629"]
     },
     "work_orders" : {
-        "SR_NUMBER_FIELD_ID" : "field_2352",
+        "sr_number_field_name" : "SR_NUMBER_csr",
         "scene": "scene_1271",
         "view": "view_3170",
-        "ref_obj": ["object_140"],
+        "obj" : None,
+        "ref_obj": ["object_140", "object_171"],
     }
 }
