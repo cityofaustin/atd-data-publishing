@@ -35,17 +35,15 @@ def main():
 
     auth = KNACK_CREDENTIALS[args.app_name]
 
-    kn = knackpy_wrapper(cfg, auth)
+    kn_work_orders = knackpy_wrapper(cfg["work_orders"], auth)
 
     pdb.set_trace()
 
+    
     """
     TODO:
-    - add text formula to SR with work order id
-    - add text formula to flex note with work order id
-    - get connected SR knack record ID, work order id for each flex note
-    - reduce to unique
-    - query knack to get work order knack record id
+    - extract knack work order id
+    - get each flex note record id for SR number of connected work order
     - update flex note work order connection field with work order knack record id
     """
     if not kn.data:
