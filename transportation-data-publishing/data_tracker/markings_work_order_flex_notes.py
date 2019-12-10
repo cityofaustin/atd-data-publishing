@@ -3,6 +3,9 @@ Connect markings work orders  to the flex notes that are connected to their conn
 311 Service Request.
 """
 
+# todo: created a test CSR: 19-00280974. But we're waiting for the ISSUE_TYPE to popualte through to the flext notes, i think.
+
+from pprint import pprint as print
 import pdb
 
 import argutil
@@ -10,7 +13,7 @@ import knackpy
 import knackutil
 
 import _setpath
-from config.knack.config import cfg
+from config.knack.config import MARKINGS_WORK_ORDERS_FLEX_NOTES as cfg
 from config.secrets import *
 
 
@@ -21,21 +24,30 @@ def knackpy_wrapper(cfg_dataset, auth):
         ref_obj=cfg_dataset["ref_obj"],
         app_id=auth["app_id"],
         api_key=auth["api_key"],
+        rows_per_page=10,  # TODO: remove record limits
+        page_limit=1,  # TODO: remove record limits
     )
 
 
 def main():
 
     args = cli_args()
-    
+
     auth = KNACK_CREDENTIALS[args.app_name]
 
-    cfg = cfg["MARKINGS_WORK_ORDERS_FLEX_NOTES"]
-
-    kn = knackpy_wrapper(cfg_dataset, auth)
+    kn = knackpy_wrapper(cfg, auth)
 
     pdb.set_trace()
-    
+
+    """
+    TODO:
+    - add text formula to SR with work order id
+    - add text formula to flex note with work order id
+    - get connected SR knack record ID, work order id for each flex note
+    - reduce to unique
+    - query knack to get work order knack record id
+    - update flex note work order connection field with work order knack record id
+    """
     if not kn.data:
         return 0
 
@@ -46,7 +58,7 @@ def cli_args():
     parser = argutil.get_parser(
         "markings_awork_order_flex_notes.py",
         "Connect markings work orders to their related flex notes.",
-        "app_name"
+        "app_name",
     )
 
     args = parser.parse_args()
