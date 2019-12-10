@@ -125,6 +125,7 @@ def main():
     while not up_to_date:
 
         socrata_dt = max_date_socrata(resource_id)
+
         socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
 
         if dt_current_formatted == socrata_dt_formatted:
@@ -135,7 +136,6 @@ def main():
 
         else:
             #  socrata data is at least one month old
-            print("entered else")
             dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
             dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
 
@@ -144,8 +144,6 @@ def main():
             path = "/{}/{}/{}".format(root, dropbox_year, current_file)
             date_fields = ["checkout_date"]
             try:
-                print("enter try")
-
                 try:
                     data = get_data(path, DROPBOX_BCYCLE_TOKEN)
                     results = len(data)
@@ -169,6 +167,7 @@ def main():
                 records=data,
                 resource=resource_id,
                 location_field=None,
+                source="bcycle"
             )
 
             results = len(data)
