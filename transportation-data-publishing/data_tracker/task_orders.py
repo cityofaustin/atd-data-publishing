@@ -1,6 +1,5 @@
 # Scrape task orders from COA Controller webpage and upload to Data Tracker.
 
-import pdb
 
 import knackpy
 from bs4 import BeautifulSoup
@@ -12,6 +11,8 @@ import _setpath
 from config.knack.config import cfg
 from config.secrets import *
 
+# hardcoded sequency matches column order on task order webpage
+TK_COLS = ["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]
 
 def get_html(url):
     form_data = {"DeptNumber": 2400, "Search": "Search", "TaskOrderName": ""}
@@ -34,7 +35,7 @@ def handle_html(html):
     return parsed
 
 
-def handle_rows(rows, cols=["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]):
+def handle_rows(rows, cols=TK_COLS):
     handled = []
 
     for row in rows:
@@ -45,9 +46,48 @@ def handle_rows(rows, cols=["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]):
     return handled
 
 
-def compare(new_rows, existing_rows, key="TASK_ORDER"):
-    existing_ids = [str(row[key]) for row in existing_rows]
-    return [row for row in new_rows if str(row[key]) not in existing_ids]
+def handle_bools(rows, col="ACTIVE"):
+    # convert yes/no strings to booleans
+    for row in rows:
+        val = row.get(col)
+        row[col] = False if val.lower() == "no" else True
+
+    return rows
+
+
+def compare(new_rows, existing_rows):
+    """
+    Identify new/modified task orders
+    """
+    payload = []
+
+    for new_row in new_rows:
+        matched = False
+        
+        tk = new_row.get("TASK_ORDER")
+
+        if not tk:
+            # this should never happen, TK is priamry key in the finance system
+            continue
+
+        for old_row in existing_rows:
+            # existing TK found; if any value doesn't match between the old/new,
+            # add new record to payload
+            if tk == old_row.get("TASK_ORDER"):
+                matched = True
+                for col in TK_COLS:
+                    if old_row.get(col) != new_row.get(col):
+                        # grab the knack record id of the existing id so that record
+                        # can be updated
+                        new_row["id"] = old_row.get("id")
+                        payload.append(new_row)
+                        break
+                break
+
+        if not matched:
+            payload.append(new_row)
+
+    return payload
 
 
 def cli_args():
@@ -83,18 +123,23 @@ def main():
         api_key=KNACK_CREDS["api_key"],
     )
 
+    rows = handle_bools(rows)
+
     new_rows = compare(rows, kn.data)
 
-    new_rows = datautil.replace_keys(new_rows, kn.field_map)
+    payload = datautil.replace_keys(new_rows, kn.field_map)
 
-    for record in new_rows:
+    for record in payload:
+        
+        method = "update" if record.get("id") else "create"
 
         res = knackpy.record(
             record,
             obj_key=CONFIG["ref_obj"][0],
             app_id=KNACK_CREDS["app_id"],
             api_key=KNACK_CREDS["api_key"],
-            method="create",
+            method=method,
+            timeout=20
         )
 
     return len(new_rows)
