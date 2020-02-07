@@ -23,7 +23,11 @@ def sanitize_html(kn):
     """
     strs = ["<br />", "<", ">"]
 
-    fields = [kn.fields[field]["label"] for field in kn.fields.keys() if kn.fields[field]["type"] == "paragraph_text"]
+    fields = [
+        kn.fields[field]["label"]
+        for field in kn.fields.keys()
+        if kn.fields[field]["type"] == "paragraph_text"
+    ]
 
     for record in kn.data:
         for field in fields:
