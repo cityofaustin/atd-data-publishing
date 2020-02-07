@@ -285,8 +285,12 @@ def main():
         if args.replace:
             # we used to delete all features using a `where="1=1"` statement, but fails with a large number
             # of features. so we now fetch  the OIDs of existing features, and pass them to the delete
-            existing_features = update_layer.query(return_geometry=False, out_fields="OBJECTID")
-            oids = [str(f.attributes.get("OBJECTID")) for f in existing_features.features]
+            existing_features = update_layer.query(
+                return_geometry=False, out_fields="OBJECTID"
+            )
+            oids = [
+                str(f.attributes.get("OBJECTID")) for f in existing_features.features
+            ]
 
             if oids:
                 oid_chunksize = 500
