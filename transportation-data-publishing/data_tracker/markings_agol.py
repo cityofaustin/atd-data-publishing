@@ -232,8 +232,6 @@ def main():
 
                 for i in range(0, len(segment_ids), chunksize):
                     # fetch agol source geometries in chunks
-
-                    print(f"Chunk {i}-{i+chunksize}")
                     where_ids = ", ".join(
                         f"'{x}'" for x in segment_ids[i : i + chunksize]
                     )
@@ -268,9 +266,10 @@ def main():
             records = get_paths_from_work_orders(records)
 
         if cfg.get("extract_attachment_url"):
-            records = knackutil.attachment_url(
-                records, in_fieldname="ATTACHMENT", out_fieldname="ATTACHMENT_URL"
-            )
+            for record in records:
+                if record.get("ATTACHMENT"):
+                    record["ATTACHMENT_URL"] = record.get("ATTACHMENT")
+                    record.pop("ATTACHMENT")
 
         records = remove_empty_strings(
             records
@@ -284,8 +283,22 @@ def main():
         )
 
         if args.replace:
-            res = update_layer.delete_features(where="1=1")
-            agolutil.handle_response(res)
+            # we used to delete all features using a `where="1=1"` statement, but fails with a large number
+            # of features. so we now fetch  the OIDs of existing features, and pass them to the delete
+            existing_features = update_layer.query(
+                return_geometry=False, out_fields="OBJECTID"
+            )
+            oids = [
+                str(f.attributes.get("OBJECTID")) for f in existing_features.features
+            ]
+
+            if oids:
+                oid_chunksize = 500
+                for i in range(0, len(oids), oid_chunksize):
+                    # we delete in chunks because Esri doesn't like deleting lots of features at once
+                    deletes = ", ".join(oids[i : i + oid_chunksize])
+                    res = update_layer.delete_features(deletes=deletes)
+                    agolutil.handle_response(res)
 
         else:
             """
