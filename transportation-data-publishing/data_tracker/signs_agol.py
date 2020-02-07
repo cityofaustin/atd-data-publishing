@@ -16,6 +16,27 @@ from config.secrets import *
 from config.knack.config import SIGNS_AGOL as config
 
 
+def sanitize_html(kn):
+    """
+    Replace html breaks from knack paragraph fields. Also, engineers like to put
+    "<>" in their notes to indicate sign arrows. we have to replace these, too"
+    """
+    strs = ["<br />", "<", ">"]
+
+    fields = [
+        kn.fields[field]["label"]
+        for field in kn.fields.keys()
+        if kn.fields[field]["type"] == "paragraph_text"
+    ]
+
+    for record in kn.data:
+        for field in fields:
+            if record.get(field):
+                for s in strs:
+                    record[field] = record[field].replace(s, "")
+    return kn
+
+
 def append_locations_work_orders(config):
     """
     Append multiple work location points to each work order
@@ -142,6 +163,9 @@ def fetch_records(cfg, last_run_date, auth):
     kn = knackpy_wrapper(cfg, auth, filters=filters)
 
     if kn.data:
+
+        kn = sanitize_html(kn)
+
         # Filter data for records that have been modifed after the last
         # job run (see comment above)
         last_run_timestamp = arrow.get(last_run_date).timestamp * 1000
@@ -177,7 +201,7 @@ def knackpy_wrapper(cfg, auth, obj=None, filters=None):
         app_id=auth["app_id"],
         api_key=auth["api_key"],
         filters=filters,
-        page_limit=9999,
+        page_limit=100000,
         rows_per_page=1000,
     )
 
@@ -241,11 +265,10 @@ def main():
     ]
 
     # extract attachment url from each attachment record
-    config["work_orders_attachments"]["records"] = knackutil.attachment_url(
-        config["work_orders_attachments"]["records"],
-        in_fieldname="ATTACHMENT",
-        out_fieldname="ATTACHMENT_URL",
-    )
+    for record in config["work_orders_attachments"]["records"]:
+        if record.get("ATTACHMENT"):
+            record["ATTACHMENT_URL"] = record.get("ATTACHMENT")
+            record.pop("ATTACHMENT")
 
     for name, cfg in config.items():
 
