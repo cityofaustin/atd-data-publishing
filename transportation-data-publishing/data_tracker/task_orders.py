@@ -14,6 +14,7 @@ from config.secrets import *
 # hardcoded sequency matches column order on task order webpage
 TK_COLS = ["DEPT", "TASK_ORDER", "NAME", "ACTIVE"]
 
+
 def get_html(url):
     form_data = {"DeptNumber": 2400, "Search": "Search", "TaskOrderName": ""}
     res = requests.post(url, data=form_data)
@@ -63,7 +64,7 @@ def compare(new_rows, existing_rows):
 
     for new_row in new_rows:
         matched = False
-        
+
         tk = new_row.get("TASK_ORDER")
 
         if not tk:
@@ -108,7 +109,8 @@ def main():
     args = cli_args()
     app_name = args.app_name
 
-    CONFIG = cfg["task_orders"]
+    CONFIG = cfg["task_orders"][app_name]
+
     KNACK_CREDS = KNACK_CREDENTIALS[app_name]
 
     html = get_html(TASK_ORDERS_ENDPOINT)
@@ -130,7 +132,7 @@ def main():
     payload = datautil.replace_keys(new_rows, kn.field_map)
 
     for record in payload:
-        
+
         method = "update" if record.get("id") else "create"
 
         res = knackpy.record(
@@ -139,7 +141,7 @@ def main():
             app_id=KNACK_CREDS["app_id"],
             api_key=KNACK_CREDS["api_key"],
             method=method,
-            timeout=20
+            timeout=20,
         )
 
     return len(new_rows)
