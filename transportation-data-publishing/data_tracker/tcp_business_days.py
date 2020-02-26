@@ -107,7 +107,8 @@ def business_days_elapsed(start, end, calendar):
     Returns:
         TYPE: Description
     """
-    index = pd.DatetimeIndex(start=start, end=end, freq=calendar)
+    date_range = pd.date_range(start=start, end=end, freq=calendar)
+    index = pd.DatetimeIndex(date_range)
     elapsed = len(index) - 1
     return elapsed
 
@@ -166,8 +167,6 @@ def main():
     kn.data = handle_records(
         kn.data, config["start_key"], config["end_key"], config["elapsed_key"], calendar
     )
-
-    # logger.info( '{} Records to Update'.format(len(kn.data) ))
 
     if kn.data:
         kn.data = datautil.reduce_to_keys(kn.data, config["update_fields"])
