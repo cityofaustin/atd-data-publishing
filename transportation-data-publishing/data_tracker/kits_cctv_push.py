@@ -40,7 +40,6 @@ import logutil
 fieldmap = KITS_CONFIG["fieldmap"]
 
 
-
 def set_technology(dicts):
     for cam in dicts:
         if cam["CAMERA_MFG"] == "Advidia":
@@ -304,7 +303,6 @@ def main():
 
     knack_data_def = set_defaults(knack_data_repl, fieldmap)
     knack_data_repl = create_cam_comment(knack_data_repl)
-    
 
     camera_query = create_camera_query(KITS_CONFIG.get("kits_table_camera"))
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, camera_query)
