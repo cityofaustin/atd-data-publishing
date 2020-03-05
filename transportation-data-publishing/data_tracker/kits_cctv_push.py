@@ -40,6 +40,15 @@ import logutil
 fieldmap = KITS_CONFIG["fieldmap"]
 
 
+def set_technology(dicts):
+    for cam in dicts:
+        if cam["CAMERA_MFG"] == "Advidia":
+            cam["TECHNOLOGY"] = 16
+        else:
+            cam["TECHNOLOGY"] = None
+    return dicts
+
+
 def map_bools(dicts):
     """Summary
     
@@ -97,7 +106,7 @@ def convert_data(data, fieldmap):
     return new_data
 
 
-def setDefaults(dicts, fieldmap):
+def set_defaults(dicts, fieldmap):
     """Summary
     
     Args:
@@ -284,18 +293,19 @@ def main():
             knack_data_filtered, key, KITS_CONFIG["filters"][key]
         )
 
+    knack_data_filtered = set_technology(knack_data_filtered)
+
     knack_data_repl = datautil.replace_keys(knack_data_filtered, fieldmap_knack_kits)
 
     knack_data_repl = datautil.reduce_to_keys(
         knack_data_repl, fieldmap_knack_kits.values()
     )
 
-    knack_data_def = setDefaults(knack_data_repl, fieldmap)
+    knack_data_def = set_defaults(knack_data_repl, fieldmap)
     knack_data_repl = create_cam_comment(knack_data_repl)
 
     camera_query = create_camera_query(KITS_CONFIG.get("kits_table_camera"))
     kits_data = kitsutil.data_as_dict(KITS_CREDENTIALS, camera_query)
-
     kits_data_conv = convert_data(kits_data, fieldmap)
 
     compare_keys = [key for key in fieldmap.keys() if fieldmap[key]["detect_changes"]]

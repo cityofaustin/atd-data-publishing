@@ -29,7 +29,7 @@ KITS_CONFIG = {
     "max_cam_id": 0,
     "filters": {
         "CAMERA_STATUS": ["TURNED_ON"],
-        "CAMERA_MFG": ["Axis", "Sarix", "Spectra Enhanced"],
+        "CAMERA_MFG": ["Axis", "Sarix", "Spectra Enhanced", "Advidia"],
     },
     "fieldmap": {
         # kits_field : data_tracker_field
@@ -49,6 +49,13 @@ KITS_CONFIG = {
             "knack_id": None,
             "type": str,
             "detect_changes": False,
+            "default": None,
+            "table": "KITSDB.KITS.CAMERA",
+        },
+        "TECHNOLOGY": {
+            "knack_id": "TECHNOLOGY", # this field is created by a function in the cctv_push_script
+            "type": int,
+            "detect_changes": True,
             "default": None,
             "table": "KITSDB.KITS.CAMERA",
         },
