@@ -314,7 +314,7 @@ def main():
     data_cd = datautil.detect_changes(
         kits_data_conv, knack_data_repl, "CAMNUMBER", keys=compare_keys
     )
-    pdb.set_trace()
+
     if data_cd["new"]:
         # logger.info('new: {}'.format( len(data_cd['new']) ))
 
