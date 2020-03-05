@@ -53,7 +53,7 @@ KITS_CONFIG = {
             "table": "KITSDB.KITS.CAMERA",
         },
         "TECHNOLOGY": {
-            "knack_id": None,
+            "knack_id": "TECHNOLOGY", # this field is created by a function in the cctv_push_script
             "type": int,
             "detect_changes": False,
             "default": None,
