@@ -195,6 +195,17 @@ cfg = {
             "location_field": "location",
         },
     },
+    "mmc_activities": {
+        "primary_key": "ATD_ACTIVITY_ID",
+        "ref_obj": ["object_75", "object_83"],
+        "obj": None,
+        "scene": "scene_1075",
+        "view": "view_2681",
+        "socrata_resource_id": "p7pt-re4k",
+        "modified_date_field": "MODIFIED_DATE",
+        "modified_date_field_id": "field_2563",
+        "include_ids": False,
+    }",
     "pole_attachments": {
         "primary_key": "POLE_ATTACH_ID",
         "ref_obj": ["object_120"],
