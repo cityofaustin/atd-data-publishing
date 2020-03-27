@@ -195,9 +195,9 @@ cfg = {
             "location_field": "location",
         },
     },
-    "mmc_activities: {
+    "mmc_activities": {
         "primary_key": "ATD_ACTIVITY_ID",
-        "ref_obj": ["object_75"],
+        "ref_obj": ["object_75", "object_83"],
         "obj": None,
         "scene": "scene_1075",
         "view": "view_2681",
