@@ -1,13 +1,13 @@
 arcgis
 atd-agol-util
 atd-args-util
-atd-data-util
+atd-data-util==0.1.0
 atd-email-util
 atd-jobs-util
 atd-kits-util
 atd-knack-util
 atd-log-util
-atd-socrata-util
+atd-socrata-util==0.0.10
 bs4
 dropbox
 feedparser==5.2.1
