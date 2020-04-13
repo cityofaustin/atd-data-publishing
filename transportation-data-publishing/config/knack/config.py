@@ -205,7 +205,7 @@ cfg = {
         "modified_date_field": "MODIFIED_DATE",
         "modified_date_field_id": "field_2563",
         "include_ids": False,
-    }",
+    },
     "pole_attachments": {
         "primary_key": "POLE_ATTACH_ID",
         "ref_obj": ["object_120"],
@@ -301,7 +301,7 @@ cfg = {
         ],
     },
     "task_orders": {
-        "data_tracker_prod" : {
+        "data_tracker_prod": {
             "primary_key": "TASK_ORDER",
             "ref_obj": ["object_86"],
             "obj": None,
@@ -309,14 +309,14 @@ cfg = {
             "view": "view_2229",
             "include_ids": True,
         },
-        "finance_admin_prod" : {
+        "finance_admin_prod": {
             "primary_key": "TASK_ORDER",
             "ref_obj": ["object_32"],
             "obj": None,
             "scene": "scene_84",
             "view": "view_720",
             "include_ids": True,
-        }
+        },
     },
     "traffic_reports": {
         "primary_key": "TRAFFIC_REPORT_ID",
