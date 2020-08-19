@@ -10,6 +10,7 @@ import arrow
 import dropbox
 import requests
 
+import _setpath
 from config.secrets import *
 import socratautil
 
