@@ -1,14 +1,10 @@
-# Check for new b-cycle data in Dropbox share and upload to
-# Open Data portal (Socrata)
-
-# B-Cycle staff put new trip data in Dropbox share on a monthly basis.
-
-# Attributes:
-#     resource_id (str): Description
+"""
+Check for new b-cycle data in Dropbox share and upload to Open Data portal (Socrata)
+B-Cycle staff put new trip data in Dropbox share on a monthly basis.
+"""
 
 import csv
-import os
-import pdb
+from datetime import datetime
 
 import arrow
 import dropbox
@@ -16,9 +12,6 @@ import requests
 
 import _setpath
 from config.secrets import *
-import emailutil
-import jobutil
-import logutil
 import socratautil
 
 
@@ -26,16 +19,7 @@ import socratautil
 resource_id = "tyfh-5r8s"
 
 
-def max_date_socrata(resource_id):
-    """
-    Get the most recent trip date from socrata
-    
-    Args:
-        resource_id (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
+def get_newest_socata_record(resource_id):
     url = "https://data.austintexas.gov/resource/{}.json?$query=SELECT checkout_date as date ORDER BY checkout_date DESC LIMIT 1".format(
         resource_id
     )
@@ -45,16 +29,7 @@ def max_date_socrata(resource_id):
 
 
 def get_data(path, token):
-    """
-    Get trip data file as string from dropbox
-    
-    Args:
-        path (TYPE): Description
-        token (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
+    """Get trip data file as string from dropbox"""
     # logger.info(f"Get data for {path}")
 
     dbx = dropbox.Dropbox(token)
@@ -73,16 +48,8 @@ def get_data(path, token):
 
 
 def handle_data(data):
-    """
-    Convert data file string to csv dict. Source column headers are replaced
-    with database-friendly field names
-    
-    Args:
-        data (TYPE): Description
-    
-    Returns:
-        TYPE: Description
-    """
+    """Convert data file string to csv dict. Source column headers are replaced
+    with database-friendly field names"""
     #  assume fields in this order  :(
 
     fieldnames = (
@@ -99,78 +66,66 @@ def handle_data(data):
     )
 
     rows = data.splitlines()
-    del (rows[0])  #  remove header row
+    del rows[0]  # remove header row
     reader = csv.DictReader(rows, fieldnames)
     return list(reader)
 
 
+def format_checkout_date(data, year, date_field="checkout_date"):
+    # socrautil uses arrow to handle dates, but it no longer understands: mm/dd/yyyy
+    # so convert to yyyy-mm-dd
+    for row in data:
+        month, day, two_digit_year = row[date_field].split("/")
+        row[date_field] = arrow.get(f"{year}-{month}-{day}").format("YYYY-MM-DD")
+    return data
+
+
 def main():
-    """
-    Args:
-        job
-        **kwargs
-    
-    Returns:
-    
-    Raises:
-        e: Description
-    
-    """
+    today = arrow.get(datetime.today())
+    # bcycle dropbox data is only ever available for the previous month
+    max_socrata_dt = today.shift(months=-1)
+    # we want to test against the first day of the last month, so construct that
+    results = 0
 
-    dt_current = arrow.now().replace(months=-1)
-    dt_current_formatted = dt_current.format("MM-YYYY")
-    up_to_date = False
-    results = None
+    while True:
 
-    while not up_to_date:
+        current_dt_socrata = arrow.get(get_newest_socata_record(resource_id))
 
-        socrata_dt = max_date_socrata(resource_id)
+        if current_dt_socrata >= max_socrata_dt:
+            break
 
-        socrata_dt_formatted = arrow.get(socrata_dt).format("MM-YYYY")
+        # try to download the file for month for which we do not have data
+        next_file_date = current_dt_socrata.shift(months=+1)
+        dropbox_file_dt = next_file_date.format("MMYYYY")
 
-        if dt_current_formatted == socrata_dt_formatted:
+        current_file = "TripReport-{}.csv".format(dropbox_file_dt)
+        root = "austinbcycletripdata"  # note the lowercase-ness
+        path = "/{}/{}/{}".format(root, next_file_date.year, current_file)
 
-            up_to_date = True
-
-            results = 0
-
-        else:
-            #  socrata data is at least one month old
-            dropbox_month = arrow.get(socrata_dt).replace(months=1).format("MM")
-            dropbox_year = arrow.get(socrata_dt).replace(months=1).format("YYYY")
-
-            current_file = "TripReport-{}{}.csv".format(dropbox_month, dropbox_year)
-            root = "austinbcycletripdata"  # note the lowercase-ness
-            path = "/{}/{}/{}".format(root, dropbox_year, current_file)
-            date_fields = ["checkout_date"]
-            try:
-                try:
-                    data = get_data(path, DROPBOX_BCYCLE_TOKEN)
-                    results = len(data)
-
-                except TypeError:
-                    results = 0
-
-            except dropbox.exceptions.ApiError as e:
-
-                if "LookupError" in str(e):
-                    # end loop when no file can be found
-                    up_to_date = True
-                    break
-                else:
-                    raise e
-
-            data = handle_data(data)
-
-            socratautil.Soda(
-                auth=SOCRATA_CREDENTIALS,
-                records=data,
-                resource=resource_id,
-                location_field=None,
-                source="bcycle"
-            )
-
+        try:
+            data = get_data(path, DROPBOX_BCYCLE_TOKEN)
             results = len(data)
+        except TypeError:
+            results = 0
+        except dropbox.exceptions.ApiError as e:
+
+            if "LookupError" in str(e):
+                # end loop when no file can be found
+                break
+            else:
+                raise e
+
+        data = handle_data(data)
+        data = format_checkout_date(data, next_file_date.year)
+        socratautil.Soda(
+            auth=SOCRATA_CREDENTIALS,
+            records=data,
+            resource=resource_id,
+            location_field=None,
+            source="bcycle",
+        )
+
+        results += len(data)
 
     return results
 
