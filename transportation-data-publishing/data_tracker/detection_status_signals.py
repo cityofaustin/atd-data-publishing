@@ -88,12 +88,6 @@ def getStatus(sig, det_status):
         #  any broken detector, status is BROKEN
         if "BROKEN" in det_status[sig_id]["statuses"]:
             return "BROKEN"
-        #  any unknown detector, status is UNKNOWN
-        if "UNKNOWN" in det_status[sig_id]["statuses"]:
-            return "UNKNOWN"
-        #  detection has been removed and not updated, or who knows what
-        if "OK" not in det_status[sig_id]["statuses"]:
-            return "UNKNOWN"
         #  detection must be OK
         return "OK"
     else:
