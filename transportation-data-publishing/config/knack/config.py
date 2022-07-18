@@ -480,7 +480,7 @@ LOCATION_UPDATER = {
             "handle_features": "use_first",
         },
         {
-            "service_name": "ATD_signal_engineer_areas",
+            "service_name": "TRANSPORTATION_signal_engineer_areas",
             "outFields": "SIGNAL_ENG_AREA",
             "updateFields": ["SIGNAL_ENG_AREA"],
             "layer_id": 0,
