@@ -20,7 +20,7 @@ PGREST_PUB = {
 
 TRAFFIC_REPORT_SCRAPER = {
     "feed_url": "http://www.ci.austin.tx.us/qact/qact_rss.cfm",
-    "endpoint": "http://https://atd-postgrest.austinmobility.io/traffic_reports",
+    "endpoint": "https://atd-postgrest.austinmobility.io/traffic_reports",
     "primary_key": "traffic_report_id",
     "status_field": "traffic_report_status",
     "date_field": "published_date",
