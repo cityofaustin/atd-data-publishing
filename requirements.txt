@@ -1,4 +1,5 @@
 arcgis
+arrow==0.*
 atd-agol-util
 atd-args-util
 atd-data-util==0.1.0
