@@ -12,9 +12,9 @@ bs4
 dropbox
 feedparser==5.2.1
 fulcrum
-knackpy
+knackpy==1.*
 pandas==1.0.1
 pymssql
-pyyaml
+pyyaml==5.*
 yagmail
 pypgrest
