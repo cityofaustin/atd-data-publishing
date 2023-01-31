@@ -1,4 +1,5 @@
 arcgis
+arrow==0.*
 atd-agol-util
 atd-args-util
 atd-data-util==0.1.0
@@ -12,9 +13,9 @@ bs4
 dropbox
 feedparser==5.2.1
 fulcrum
-knackpy
+knackpy==0.*
 pandas==1.0.1
 pymssql
-pyyaml
+pyyaml==5.*
 yagmail
-pypgrest
+pypgrest==0.0.3
